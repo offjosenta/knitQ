@@ -6,7 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Вязальный трекер">
-  <meta name="theme-color" content="#0e1116">
+  <meta name="theme-color" content="#0d0f12">
   <meta name="description" content="Автономный счетчик петель и органайзер проектов по вязанию для iPhone">
   
   <title>Вязальный трекер</title>
@@ -61,14 +61,13 @@
       <section class="glass-card">
         <h2 class="glass-card-title">Каркас приложения готов</h2>
         <p class="glass-card-desc">
-          Полноэкранное PWA-приложение для iPhone 15 с поддержкой работы офлайн (Service Worker), защитой экрана от засыпания (Screen Wake Lock) и переключением тем оформления.
+          Полноэкранное автономное PWA-приложение для iPhone 15. Добавляется на экран «Домой», работает офлайн и поддерживает темы в стиле Apple Liquid Glass.
         </p>
-      </section>
-
-      <section class="glass-card">
-        <h2 class="glass-card-title">Темы оформления</h2>
-        <p class="glass-card-desc">Выберите желаемый стиль интерфейса:</p>
-        <div id="theme-options-list" class="theme-options-grid"></div>
+        <div style="margin-top: 16px;">
+          <button id="btn-quick-settings" class="btn-icon" style="width: auto; padding: 10px 18px; border-radius: 20px; font-weight: 600; font-size: 0.9rem; gap: 8px;">
+            <span>Настройки и темы</span>
+          </button>
+        </div>
       </section>
     </main>
 
@@ -101,6 +100,7 @@
             <div class="setting-label">Тема оформления</div>
             <div class="setting-desc">Мгновенное переключение стилей</div>
           </div>
+          <div id="theme-options-list" class="theme-options-grid" style="width: 100%;"></div>
         </div>
       </div>
     </div>

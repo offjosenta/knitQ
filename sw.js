@@ -58,7 +58,7 @@ self.addEventListener('fetch', (event) => {
         .catch(() => {
           // If offline and navigation request, return index.html
           if (event.request.mode === 'navigate') {
-            return caches.match('./index.html') || caches.match('./');
+            return caches.match('./index.html').then((res) => res || caches.match('./'));
           }
           return new Response('Офлайн режим. Ресурс недоступен без интернета.', {
             status: 503,

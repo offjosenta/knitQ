@@ -25,6 +25,7 @@ export function initApp() {
   // 4. UI Elements
   const settingsModal = document.getElementById('settings-modal');
   const openSettingsBtn = document.getElementById('btn-open-settings');
+  const quickSettingsBtn = document.getElementById('btn-quick-settings');
   const closeSettingsBtn = document.getElementById('btn-close-settings');
   const themeListContainer = document.getElementById('theme-options-list');
   const wakeLockToggle = /** @type {HTMLInputElement | null} */ (document.getElementById('toggle-wake-lock'));
@@ -65,6 +66,10 @@ export function initApp() {
 
   // Settings Modal handlers
   openSettingsBtn?.addEventListener('click', () => {
+    settingsModal?.classList.add('open');
+  });
+
+  quickSettingsBtn?.addEventListener('click', () => {
     settingsModal?.classList.add('open');
   });
 

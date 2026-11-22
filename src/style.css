@@ -5,7 +5,7 @@
 :root,
 [data-theme="liquid-silver"] {
   --color-scheme: dark;
-  --bg-primary: #0e1116;
+  --bg-primary: #0d0f12;
   --bg-secondary: #161b22;
   --bg-card: rgba(26, 31, 39, 0.8);
   --bg-card-hover: rgba(36, 43, 54, 0.9);
