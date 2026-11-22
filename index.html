@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="liquid-silver">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Вязальный трекер">
+  <meta name="theme-color" content="#0e1116">
+  <meta name="description" content="Автономный счетчик петель и органайзер проектов по вязанию для iPhone">
+  
+  <title>Вязальный трекер</title>
+
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+
+  <link rel="stylesheet" href="src/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Top Bar -->
+    <header class="top-bar">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="8"></circle>
+            <path d="m4.93 4.93 4.24 4.24"></path>
+            <path d="m14.83 9.17 4.24-4.24"></path>
+            <path d="M12 4v2"></path>
+            <path d="M12 18v2"></path>
+          </svg>
+        </div>
+        <h1 class="brand-title">Knit Tracker</h1>
+      </div>
+
+      <div class="header-actions">
+        <!-- Status Badges -->
+        <div id="wake-lock-status-pill" class="status-bar-pill" title="Блокировка засыпания экрана">
+          <span id="wake-lock-dot" class="status-dot"></span>
+          <span id="wake-lock-text">Экран: авто</span>
+        </div>
+
+        <div id="offline-status-pill" class="status-bar-pill" style="display: none;" title="Работает автономно без интернета">
+          <span class="status-dot active" style="background-color: #f59e0b; box-shadow: 0 0 8px #f59e0b;"></span>
+          <span>Офлайн</span>
+        </div>
+
+        <!-- Settings Button -->
+        <button id="btn-open-settings" class="btn-icon" aria-label="Настройки">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main PWA Shell Content -->
+    <main class="main-content" id="app-main">
+      <section class="glass-card">
+        <h2 class="glass-card-title">Каркас приложения готов</h2>
+        <p class="glass-card-desc">
+          Полноэкранное PWA-приложение для iPhone 15 с поддержкой работы офлайн (Service Worker), защитой экрана от засыпания (Screen Wake Lock) и переключением тем оформления.
+        </p>
+      </section>
+
+      <section class="glass-card">
+        <h2 class="glass-card-title">Темы оформления</h2>
+        <p class="glass-card-desc">Выберите желаемый стиль интерфейса:</p>
+        <div id="theme-options-list" class="theme-options-grid"></div>
+      </section>
+    </main>
+
+    <!-- Settings Modal Sheet -->
+    <div id="settings-modal" class="modal-backdrop">
+      <div class="modal-sheet">
+        <div class="modal-header">
+          <h3 class="modal-title">Настройки</h3>
+          <button id="btn-close-settings" class="modal-close-btn" aria-label="Закрыть">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <div class="setting-row">
+          <div>
+            <div class="setting-label">Не гасить экран при вязании</div>
+            <div class="setting-desc">Screen Wake Lock API предотвращает затухание дисплея</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="toggle-wake-lock" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="setting-row" style="flex-direction: column; align-items: flex-start; gap: 12px; border-bottom: none;">
+          <div>
+            <div class="setting-label">Тема оформления</div>
+            <div class="setting-desc">Мгновенное переключение стилей</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="src/app.js"></script>
+</body>
+</html>

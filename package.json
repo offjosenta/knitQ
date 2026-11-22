@@ -1,0 +1,21 @@
+{
+  "name": "knit-tracker",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Счетчик петель и органайзер проектов по вязанию",
+  "scripts": {
+    "test": "node --test test/**/*.test.js",
+    "check": "tsc --noEmit"
+  },
+  "keywords": [
+    "knit",
+    "tracker",
+    "pwa"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "typescript": "^5.0.0"
+  }
+}
