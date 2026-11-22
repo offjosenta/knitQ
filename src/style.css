@@ -1,5 +1,5 @@
 /* ==========================================================================
-   CSS CUSTOM PROPERTIES / THEMES (DARK & LIGHT ONLY)
+   CSS CUSTOM PROPERTIES / THEMES (DARK & LIGHT)
    ========================================================================== */
 
 :root,
@@ -7,21 +7,22 @@
   --color-scheme: dark;
   --bg-primary: #0d0f12;
   --bg-secondary: #161b22;
-  --bg-card: rgba(22, 27, 34, 0.85);
-  --bg-card-hover: rgba(30, 36, 44, 0.95);
+  --bg-card: #161b22;
+  --bg-card-hover: #1f242d;
   --border-color: rgba(255, 255, 255, 0.12);
   --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-glow: rgba(255, 255, 255, 0.35);
   
-  --accent-color: #f8fafc;
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
+  --text-primary: #ffffff;
+  --text-secondary: #cbd5e1;
+  --text-muted: #808d9e;
   
-  --card-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
   --button-bg: rgba(255, 255, 255, 0.08);
-  --button-border: rgba(255, 255, 255, 0.15);
-  --pill-active-bg: rgba(255, 255, 255, 0.14);
+  --button-border: rgba(255, 255, 255, 0.14);
+  
+  --segment-container-bg: #10141a;
+  --segment-active-bg: #272f38;
+  --segment-active-text: #ffffff;
+  --segment-active-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 [data-theme="light-minimal"] {
@@ -32,21 +33,22 @@
   --bg-card-hover: #f1f5f9;
   --border-color: rgba(203, 213, 225, 0.85);
   --border-subtle: rgba(226, 232, 240, 0.9);
-  --border-glow: rgba(15, 23, 42, 0.15);
   
-  --accent-color: #0f172a;
   --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #94a3b8;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
   
-  --card-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.06);
   --button-bg: #f1f5f9;
   --button-border: rgba(203, 213, 225, 0.9);
-  --pill-active-bg: rgba(15, 23, 42, 0.08);
+  
+  --segment-container-bg: #e2e8f0;
+  --segment-active-bg: #ffffff;
+  --segment-active-text: #0f172a;
+  --segment-active-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 /* ==========================================================================
-   BASE & RESET FOR IPHONE 15
+   BASE & RESET FOR IPHONE 15 (NO SCROLLBARS, NO BLUR BUGS)
    ========================================================================== */
 
 * {
@@ -54,12 +56,12 @@
   margin: 0;
   padding: 0;
   -webkit-tap-highlight-color: transparent;
-  scrollbar-width: none; /* Hide scrollbar Firefox */
-  -ms-overflow-style: none; /* Hide scrollbar IE/Edge */
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
 }
 
 *::-webkit-scrollbar {
-  display: none !important; /* Hide scrollbar Chrome/Safari/iOS */
+  display: none !important;
   width: 0 !important;
   height: 0 !important;
 }
@@ -69,7 +71,7 @@ html, body {
   height: 100%;
   height: 100dvh;
   max-height: 100dvh;
-  overflow: hidden; /* Prevent scrolling of entire screen */
+  overflow: hidden;
   background-color: var(--bg-primary);
   color: var(--text-primary);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", sans-serif;
@@ -96,10 +98,10 @@ html, body {
   max-height: 100dvh;
   overflow: hidden;
   box-sizing: border-box;
-  padding-top: calc(env(safe-area-inset-top, 50px) + 8px);
+  padding-top: calc(env(safe-area-inset-top, 54px) + 12px);
   padding-bottom: max(env(safe-area-inset-bottom, 20px), 16px);
-  padding-left: max(env(safe-area-inset-left, 0px), 18px);
-  padding-right: max(env(safe-area-inset-right, 0px), 18px);
+  padding-left: max(env(safe-area-inset-left, 0px), 20px);
+  padding-right: max(env(safe-area-inset-right, 0px), 20px);
 }
 
 /* ==========================================================================
@@ -117,13 +119,13 @@ html, body {
 .brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .brand-icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
   background: var(--button-bg);
   border: 1px solid var(--border-color);
   display: flex;
@@ -133,7 +135,7 @@ html, body {
 }
 
 .brand-title {
-  font-size: 1.25rem;
+  font-size: 1.35rem;
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--text-primary);
@@ -149,8 +151,8 @@ html, body {
   background: var(--button-bg);
   border: 1px solid var(--border-subtle);
   border-radius: 14px;
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -176,13 +178,12 @@ html, body {
   overscroll-behavior: contain;
 }
 
-/* Liquid Glass Cards */
+/* Cards */
 .glass-card {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: 24px;
   padding: 22px;
-  box-shadow: var(--card-shadow);
 }
 
 .glass-card-title {
@@ -218,15 +219,15 @@ html, body {
 }
 
 /* ==========================================================================
-   SETTINGS MODAL & SHEET (NO BLUR BUG IN SAFARI)
+   SETTINGS MODAL & SHEET (NO BLUR OVERLAY BUG)
    ========================================================================== */
 
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.72);
   z-index: 1000;
-  display: none; /* Crucial: never render backdrop-filter when closed */
+  display: none;
   flex-direction: column;
   justify-content: flex-end;
   opacity: 0;
@@ -236,8 +237,6 @@ html, body {
 .modal-backdrop.open {
   display: flex;
   opacity: 1;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
 }
 
 .modal-sheet {
@@ -248,7 +247,7 @@ html, body {
   border-bottom: none;
   padding: 22px 20px max(env(safe-area-inset-bottom, 24px), 24px) 20px;
   max-height: 85vh;
-  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
   transform: translateY(100%);
   transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -274,8 +273,8 @@ html, body {
   background: var(--button-bg);
   border: 1px solid var(--border-subtle);
   border-radius: 50%;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -288,19 +287,19 @@ html, body {
 }
 
 /* ==========================================================================
-   SETTINGS ROWS & TOGGLES (WHOLE ROW CLICKABLE)
+   SETTINGS ROWS & SMOOTH TOGGLE SWITCH
    ========================================================================== */
 
 .setting-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 14px;
+  padding: 16px 16px;
   background: var(--button-bg);
   border: 1px solid var(--border-subtle);
-  border-radius: 18px;
+  border-radius: 20px;
   cursor: pointer;
-  margin-bottom: 18px;
+  margin-bottom: 20px;
   transition: background 0.15s ease, transform 0.15s ease;
 }
 
@@ -318,17 +317,16 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding-top: 4px;
 }
 
-/* iOS Toggle Switch */
+/* iOS Toggle Switch - Ultra Smooth */
 .switch {
   position: relative;
   display: inline-block;
-  width: 52px;
-  height: 32px;
+  width: 51px;
+  height: 31px;
   flex-shrink: 0;
-  pointer-events: none; /* Let parent row handle clicks reliably */
+  pointer-events: none;
 }
 
 .switch input {
@@ -345,66 +343,77 @@ html, body {
   right: 0;
   bottom: 0;
   background-color: rgba(120, 120, 128, 0.32);
-  transition: background-color 0.25s ease;
-  border-radius: 32px;
+  transition: background-color 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  -webkit-transition: background-color 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 31px;
 }
 
 .slider:before {
   position: absolute;
   content: "";
-  height: 26px;
-  width: 26px;
-  left: 3px;
-  bottom: 3px;
+  height: 27px;
+  width: 27px;
+  left: 2px;
+  bottom: 2px;
   background-color: #ffffff;
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   border-radius: 50%;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.22), 0 1px 2px rgba(0, 0, 0, 0.1);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  -webkit-transition: -webkit-transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
 }
 
 input:checked + .slider {
-  background-color: #34c759; /* Apple iOS standard active green */
+  background-color: #34c759;
 }
 
 input:checked + .slider:before {
-  transform: translateX(20px);
+  transform: translate3d(20px, 0, 0);
+  -webkit-transform: translate3d(20px, 0, 0);
 }
 
 /* ==========================================================================
-   THEME OPTIONS GRID (2 THEMES: DARK & LIGHT)
+   SEGMENTED THEME SWITCHER (MOON & SUN)
    ========================================================================== */
 
-.theme-options-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+.theme-segmented-control {
+  display: flex;
+  align-items: center;
+  background: var(--segment-container-bg);
+  border-radius: 18px;
+  padding: 5px;
+  gap: 6px;
+  border: 1px solid var(--border-subtle);
 }
 
-.theme-card-option {
+.theme-segment {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px 12px;
-  border-radius: 18px;
-  background: var(--button-bg);
-  border: 1px solid var(--border-subtle);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.theme-card-option:active {
-  transform: scale(0.96);
-}
-
-.theme-card-option.active {
-  border-color: var(--border-color);
-  background: var(--pill-active-bg);
-  box-shadow: 0 0 0 1px var(--border-color);
-}
-
-.theme-card-name {
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.95rem;
   font-weight: 600;
-  font-size: 1rem;
-  color: var(--text-primary);
-  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.theme-segment:active {
+  transform: scale(0.97);
+}
+
+.theme-segment.active {
+  background: var(--segment-active-bg);
+  color: var(--segment-active-text);
+  box-shadow: var(--segment-active-shadow);
+}
+
+.theme-segment .theme-icon {
+  flex-shrink: 0;
+  stroke: currentColor;
 }

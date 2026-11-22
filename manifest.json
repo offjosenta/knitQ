@@ -1,6 +1,6 @@
 {
-  "name": "Вязальный трекер",
-  "short_name": "Трекер",
+  "name": "KnitQ",
+  "short_name": "KnitQ",
   "description": "Счетчик петель и органайзер проектов по вязанию",
   "start_url": "./index.html",
   "scope": "./",

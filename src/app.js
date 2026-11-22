@@ -27,39 +27,38 @@ export function initApp() {
   const openSettingsBtn = document.getElementById('btn-open-settings');
   const quickSettingsBtn = document.getElementById('btn-quick-settings');
   const closeSettingsBtn = document.getElementById('btn-close-settings');
-  const themeListContainer = document.getElementById('theme-options-list');
   const rowWakeLock = document.getElementById('row-wake-lock');
   const wakeLockToggle = /** @type {HTMLInputElement | null} */ (document.getElementById('toggle-wake-lock'));
+  const themeSegments = document.querySelectorAll('.theme-segment');
 
-  // Render themes (Dark & Light)
-  function renderThemeList() {
-    if (!themeListContainer) return;
+  // Update theme segmented control active state
+  function updateThemeSegmentsUI() {
     const currentTheme = themeManager.getTheme();
-    const themes = themeManager.getAvailableThemes();
-
-    themeListContainer.innerHTML = '';
-    themes.forEach((theme) => {
-      const option = document.createElement('div');
-      option.className = `theme-card-option ${theme.id === currentTheme ? 'active' : ''}`;
-      option.setAttribute('data-theme-id', theme.id);
-      option.innerHTML = `<span class="theme-card-name">${theme.name}</span>`;
-
-      option.addEventListener('click', () => {
-        themeManager.setTheme(theme.id);
-        renderThemeList();
-      });
-
-      themeListContainer.appendChild(option);
+    themeSegments.forEach((segment) => {
+      const themeId = segment.getAttribute('data-theme-id');
+      const isActive = themeId === currentTheme;
+      segment.classList.toggle('active', isActive);
+      segment.setAttribute('aria-pressed', String(isActive));
     });
   }
 
-  renderThemeList();
+  themeSegments.forEach((segment) => {
+    segment.addEventListener('click', () => {
+      const themeId = segment.getAttribute('data-theme-id');
+      if (themeId) {
+        themeManager.setTheme(themeId);
+        updateThemeSegmentsUI();
+      }
+    });
+  });
+
+  updateThemeSegmentsUI();
 
   // Modal open/close handlers
   function openModal() {
     if (!settingsModal) return;
     settingsModal.style.display = 'flex';
-    // Force reflow for CSS transition
+    // Force reflow for smooth CSS transition
     void settingsModal.offsetHeight;
     settingsModal.classList.add('open');
   }
@@ -104,8 +103,9 @@ export function initApp() {
     wakeLockToggle.checked = shouldAutoWakeLock;
   }
 
-  // Clicking anywhere on the row toggles the switch
-  rowWakeLock?.addEventListener('click', async () => {
+  // Clicking anywhere on the row smoothly toggles the switch
+  rowWakeLock?.addEventListener('click', async (e) => {
+    e.preventDefault();
     if (!wakeLockToggle) return;
     const nextState = !wakeLockToggle.checked;
     await setWakeLockState(nextState);

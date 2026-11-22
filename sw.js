@@ -1,4 +1,4 @@
-const CACHE_NAME = 'knit-tracker-v2';
+const CACHE_NAME = 'knitq-v3';
 
 const STATIC_ASSETS = [
   './',
