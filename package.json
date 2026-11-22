@@ -4,6 +4,7 @@
   "type": "module",
   "description": "Счетчик петель и органайзер проектов по вязанию",
   "scripts": {
+    "start": "node scripts/serve.js",
     "test": "node --test test/**/*.test.js",
     "check": "tsc --noEmit"
   },
