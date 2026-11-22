@@ -35,17 +35,6 @@
       </div>
 
       <div class="header-actions">
-        <!-- Status Badges -->
-        <div id="wake-lock-status-pill" class="status-bar-pill" title="Блокировка засыпания экрана">
-          <span id="wake-lock-dot" class="status-dot"></span>
-          <span id="wake-lock-text">Экран: авто</span>
-        </div>
-
-        <div id="offline-status-pill" class="status-bar-pill" style="display: none;" title="Работает автономно без интернета">
-          <span class="status-dot active" style="background-color: #f59e0b; box-shadow: 0 0 8px #f59e0b;"></span>
-          <span>Офлайн</span>
-        </div>
-
         <!-- Settings Button -->
         <button id="btn-open-settings" class="btn-icon" aria-label="Настройки">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -61,11 +50,11 @@
       <section class="glass-card">
         <h2 class="glass-card-title">Каркас приложения готов</h2>
         <p class="glass-card-desc">
-          Полноэкранное автономное PWA-приложение для iPhone 15. Добавляется на экран «Домой», работает офлайн и поддерживает темы в стиле Apple Liquid Glass.
+          Полноэкранное автономное PWA-приложение для iPhone 15. Добавляется на экран «Домой», работает офлайн и поддерживает тёмную и светлую темы.
         </p>
         <div style="margin-top: 16px;">
-          <button id="btn-quick-settings" class="btn-icon" style="width: auto; padding: 10px 18px; border-radius: 20px; font-weight: 600; font-size: 0.9rem; gap: 8px;">
-            <span>Настройки и темы</span>
+          <button id="btn-quick-settings" class="btn-primary-action">
+            Настройки и темы
           </button>
         </div>
       </section>
@@ -84,23 +73,19 @@
           </button>
         </div>
 
-        <div class="setting-row">
-          <div>
-            <div class="setting-label">Не гасить экран при вязании</div>
-            <div class="setting-desc">Screen Wake Lock API предотвращает затухание дисплея</div>
-          </div>
-          <label class="switch">
+        <!-- Toggle Row: whole row is clickable -->
+        <div class="setting-row" id="row-wake-lock">
+          <span class="setting-label">Не гасить экран при вязании</span>
+          <div class="switch">
             <input type="checkbox" id="toggle-wake-lock" checked>
             <span class="slider"></span>
-          </label>
+          </div>
         </div>
 
-        <div class="setting-row" style="flex-direction: column; align-items: flex-start; gap: 12px; border-bottom: none;">
-          <div>
-            <div class="setting-label">Тема оформления</div>
-            <div class="setting-desc">Мгновенное переключение стилей</div>
-          </div>
-          <div id="theme-options-list" class="theme-options-grid" style="width: 100%;"></div>
+        <!-- Theme Row: clean without descriptions -->
+        <div class="setting-section">
+          <span class="setting-label">Тема оформления</span>
+          <div id="theme-options-list" class="theme-options-grid"></div>
         </div>
       </div>
     </div>

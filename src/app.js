@@ -28,13 +28,10 @@ export function initApp() {
   const quickSettingsBtn = document.getElementById('btn-quick-settings');
   const closeSettingsBtn = document.getElementById('btn-close-settings');
   const themeListContainer = document.getElementById('theme-options-list');
+  const rowWakeLock = document.getElementById('row-wake-lock');
   const wakeLockToggle = /** @type {HTMLInputElement | null} */ (document.getElementById('toggle-wake-lock'));
-  const wakeLockStatus = document.getElementById('wake-lock-status-pill');
-  const wakeLockDot = document.getElementById('wake-lock-dot');
-  const wakeLockText = document.getElementById('wake-lock-text');
-  const offlineStatusPill = document.getElementById('offline-status-pill');
 
-  // Render themes
+  // Render themes (Dark & Light)
   function renderThemeList() {
     if (!themeListContainer) return;
     const currentTheme = themeManager.getTheme();
@@ -45,13 +42,7 @@ export function initApp() {
       const option = document.createElement('div');
       option.className = `theme-card-option ${theme.id === currentTheme ? 'active' : ''}`;
       option.setAttribute('data-theme-id', theme.id);
-      option.innerHTML = `
-        <div class="theme-card-info">
-          <span class="theme-card-name">${theme.name}</span>
-          <span class="theme-card-sub">${theme.description}</span>
-        </div>
-        <div class="theme-check-icon"></div>
-      `;
+      option.innerHTML = `<span class="theme-card-name">${theme.name}</span>`;
 
       option.addEventListener('click', () => {
         themeManager.setTheme(theme.id);
@@ -64,81 +55,65 @@ export function initApp() {
 
   renderThemeList();
 
-  // Settings Modal handlers
-  openSettingsBtn?.addEventListener('click', () => {
-    settingsModal?.classList.add('open');
-  });
+  // Modal open/close handlers
+  function openModal() {
+    if (!settingsModal) return;
+    settingsModal.style.display = 'flex';
+    // Force reflow for CSS transition
+    void settingsModal.offsetHeight;
+    settingsModal.classList.add('open');
+  }
 
-  quickSettingsBtn?.addEventListener('click', () => {
-    settingsModal?.classList.add('open');
-  });
+  function closeModal() {
+    if (!settingsModal) return;
+    settingsModal.classList.remove('open');
+    setTimeout(() => {
+      if (!settingsModal.classList.contains('open')) {
+        settingsModal.style.display = 'none';
+      }
+    }, 280);
+  }
 
-  closeSettingsBtn?.addEventListener('click', () => {
-    settingsModal?.classList.remove('open');
-  });
+  openSettingsBtn?.addEventListener('click', openModal);
+  quickSettingsBtn?.addEventListener('click', openModal);
+  closeSettingsBtn?.addEventListener('click', closeModal);
 
   settingsModal?.addEventListener('click', (e) => {
     if (e.target === settingsModal) {
-      settingsModal.classList.remove('open');
+      closeModal();
     }
   });
 
-  // Screen Wake Lock UI Handling
-  /**
-   * @param {boolean} isActive
-   */
-  function updateWakeLockUI(isActive) {
-    if (wakeLockDot) {
-      wakeLockDot.classList.toggle('active', isActive);
-    }
-    if (wakeLockText) {
-      wakeLockText.textContent = isActive ? 'Экран: активен' : 'Экран: авто';
-    }
-    if (wakeLockToggle) {
-      wakeLockToggle.checked = isActive;
-    }
-  }
-
-  // Wake Lock preference in localStorage (default to enabled for knitting)
+  // Wake Lock preference in localStorage
   const WAKE_LOCK_PREF_KEY = 'knit_wake_lock_enabled';
   const shouldAutoWakeLock = localStorage.getItem(WAKE_LOCK_PREF_KEY) !== 'false';
 
-  if (wakeLockToggle) {
-    wakeLockToggle.checked = shouldAutoWakeLock;
-    wakeLockToggle.addEventListener('change', async () => {
-      const enabled = wakeLockToggle.checked;
-      localStorage.setItem(WAKE_LOCK_PREF_KEY, String(enabled));
-      if (enabled) {
-        await wakeLockManager.request();
-      } else {
-        await wakeLockManager.release();
-      }
-      updateWakeLockUI(wakeLockManager.isActive());
-    });
-  }
-
-  if (shouldAutoWakeLock && wakeLockManager.isSupported()) {
-    wakeLockManager.request().then((active) => {
-      updateWakeLockUI(active);
-    });
-  } else {
-    updateWakeLockUI(false);
-  }
-
-  // Network Offline/Online status detection
-  function updateOnlineStatus() {
-    if (offlineStatusPill) {
-      if (navigator.onLine) {
-        offlineStatusPill.style.display = 'none';
-      } else {
-        offlineStatusPill.style.display = 'inline-flex';
-      }
+  async function setWakeLockState(/** @type {boolean} */ enabled) {
+    if (wakeLockToggle) {
+      wakeLockToggle.checked = enabled;
+    }
+    localStorage.setItem(WAKE_LOCK_PREF_KEY, String(enabled));
+    if (enabled) {
+      await wakeLockManager.request();
+    } else {
+      await wakeLockManager.release();
     }
   }
 
-  window.addEventListener('online', updateOnlineStatus);
-  window.addEventListener('offline', updateOnlineStatus);
-  updateOnlineStatus();
+  if (wakeLockToggle) {
+    wakeLockToggle.checked = shouldAutoWakeLock;
+  }
+
+  // Clicking anywhere on the row toggles the switch
+  rowWakeLock?.addEventListener('click', async () => {
+    if (!wakeLockToggle) return;
+    const nextState = !wakeLockToggle.checked;
+    await setWakeLockState(nextState);
+  });
+
+  if (shouldAutoWakeLock && wakeLockManager.isSupported()) {
+    wakeLockManager.request();
+  }
 
   return {
     themeManager,
@@ -148,7 +123,11 @@ export function initApp() {
 
 // Auto-run if in browser
 if (typeof window !== 'undefined') {
-  document.addEventListener('DOMContentLoaded', () => {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      initApp();
+    });
+  } else {
     initApp();
-  });
+  }
 }

@@ -1,25 +1,18 @@
 /**
- * @typedef {'liquid-silver' | 'emerald-glass' | 'light-minimal'} ThemeId
+ * @typedef {'liquid-silver' | 'light-minimal'} ThemeId
  */
 
 /**
- * @type {ReadonlyArray<{ id: ThemeId, name: string, description: string }>}
+ * @type {ReadonlyArray<{ id: ThemeId, name: string }>}
  */
 export const THEMES = Object.freeze([
   {
     id: 'liquid-silver',
-    name: 'Liquid Silver & Titanium',
-    description: 'Жидкий хром на темном фоне Space Gray'
-  },
-  {
-    id: 'emerald-glass',
-    name: 'Emerald & Violet Glass',
-    description: 'Полупрозрачное стекло с изумрудными и фиолетовыми акцентами'
+    name: 'Тёмная'
   },
   {
     id: 'light-minimal',
-    name: 'Light Minimal',
-    description: 'Светлая минималистичная тема'
+    name: 'Светлая'
   }
 ]);
 
@@ -27,7 +20,7 @@ export const DEFAULT_THEME = 'liquid-silver';
 export const STORAGE_KEY = 'knit_theme';
 
 /**
- * @param {object} options
+ * @param {object} [options]
  * @param {Storage | { getItem: (key: string) => string | null, setItem: (key: string, value: string) => void }} [options.storage]
  * @param {{ setAttribute: (name: string, value: string) => void, getAttribute?: (name: string) => string | null }} [options.documentElement]
  */
@@ -89,7 +82,7 @@ export function createThemeManager(options = {}) {
     },
 
     /**
-     * @returns {ReadonlyArray<{ id: ThemeId, name: string, description: string }>}
+     * @returns {ReadonlyArray<{ id: ThemeId, name: string }>}
      */
     getAvailableThemes() {
       return THEMES;

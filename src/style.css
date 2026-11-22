@@ -1,5 +1,5 @@
 /* ==========================================================================
-   CSS CUSTOM PROPERTIES / THEMES
+   CSS CUSTOM PROPERTIES / THEMES (DARK & LIGHT ONLY)
    ========================================================================== */
 
 :root,
@@ -7,72 +7,42 @@
   --color-scheme: dark;
   --bg-primary: #0d0f12;
   --bg-secondary: #161b22;
-  --bg-card: rgba(26, 31, 39, 0.8);
-  --bg-card-hover: rgba(36, 43, 54, 0.9);
-  --border-color: rgba(226, 232, 240, 0.22);
+  --bg-card: rgba(22, 27, 34, 0.85);
+  --bg-card-hover: rgba(30, 36, 44, 0.95);
+  --border-color: rgba(255, 255, 255, 0.12);
   --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-glow: rgba(241, 245, 249, 0.4);
+  --border-glow: rgba(255, 255, 255, 0.35);
   
-  --accent-gradient: linear-gradient(135deg, #f8fafc 0%, #cbd5e1 40%, #94a3b8 100%);
-  --accent-color: #e2e8f0;
-  --accent-glow: rgba(226, 232, 240, 0.25);
-  
+  --accent-color: #f8fafc;
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
   
-  --card-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), 0 0 1px 1px rgba(255, 255, 255, 0.1);
-  --button-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%);
-  --button-border: rgba(226, 232, 240, 0.35);
-  --pill-active-bg: rgba(255, 255, 255, 0.16);
-}
-
-[data-theme="emerald-glass"] {
-  --color-scheme: dark;
-  --bg-primary: #060b0e;
-  --bg-secondary: #0d171d;
-  --bg-card: rgba(13, 26, 31, 0.72);
-  --bg-card-hover: rgba(18, 36, 44, 0.82);
-  --border-color: rgba(52, 211, 153, 0.32);
-  --border-subtle: rgba(167, 139, 250, 0.18);
-  --border-glow: rgba(52, 211, 153, 0.6);
-  
-  --accent-gradient: linear-gradient(135deg, #34d399 0%, #10b981 40%, #8b5cf6 100%);
-  --accent-color: #34d399;
-  --accent-glow: rgba(52, 211, 153, 0.35);
-  
-  --text-primary: #f0fdf4;
-  --text-secondary: #a7f3d0;
-  --text-muted: #6ee7b7;
-  
-  --card-shadow: 0 10px 35px -8px rgba(5, 150, 105, 0.3), 0 0 1px 1px rgba(52, 211, 153, 0.2);
-  --button-bg: linear-gradient(180deg, rgba(52, 211, 153, 0.2) 0%, rgba(139, 92, 246, 0.15) 100%);
-  --button-border: rgba(52, 211, 153, 0.45);
-  --pill-active-bg: rgba(52, 211, 153, 0.25);
+  --card-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  --button-bg: rgba(255, 255, 255, 0.08);
+  --button-border: rgba(255, 255, 255, 0.15);
+  --pill-active-bg: rgba(255, 255, 255, 0.14);
 }
 
 [data-theme="light-minimal"] {
   --color-scheme: light;
   --bg-primary: #f8fafc;
   --bg-secondary: #ffffff;
-  --bg-card: rgba(255, 255, 255, 0.92);
-  --bg-card-hover: rgba(255, 255, 255, 1);
+  --bg-card: #ffffff;
+  --bg-card-hover: #f1f5f9;
   --border-color: rgba(203, 213, 225, 0.85);
   --border-subtle: rgba(226, 232, 240, 0.9);
   --border-glow: rgba(15, 23, 42, 0.15);
   
-  --accent-gradient: linear-gradient(135deg, #0f172a 0%, #334155 100%);
   --accent-color: #0f172a;
-  --accent-glow: rgba(15, 23, 42, 0.08);
-  
   --text-primary: #0f172a;
   --text-secondary: #475569;
   --text-muted: #94a3b8;
   
-  --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.07), 0 0 1px 1px rgba(0, 0, 0, 0.05);
-  --button-bg: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
-  --button-border: rgba(203, 213, 225, 1);
-  --pill-active-bg: rgba(15, 23, 42, 0.1);
+  --card-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.06);
+  --button-bg: #f1f5f9;
+  --button-border: rgba(203, 213, 225, 0.9);
+  --pill-active-bg: rgba(15, 23, 42, 0.08);
 }
 
 /* ==========================================================================
@@ -84,12 +54,22 @@
   margin: 0;
   padding: 0;
   -webkit-tap-highlight-color: transparent;
+  scrollbar-width: none; /* Hide scrollbar Firefox */
+  -ms-overflow-style: none; /* Hide scrollbar IE/Edge */
+}
+
+*::-webkit-scrollbar {
+  display: none !important; /* Hide scrollbar Chrome/Safari/iOS */
+  width: 0 !important;
+  height: 0 !important;
 }
 
 html, body {
   width: 100%;
   height: 100%;
-  overflow-x: hidden;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden; /* Prevent scrolling of entire screen */
   background-color: var(--bg-primary);
   color: var(--text-primary);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", sans-serif;
@@ -104,18 +84,22 @@ html, body {
 }
 
 /* ==========================================================================
-   APP CONTAINER & SAFE AREAS
+   APP CONTAINER & IPHONE 15 SAFE AREAS
    ========================================================================== */
 
 .app-container {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  min-height: 100dvh;
-  padding-top: max(env(safe-area-inset-top), 18px);
-  padding-bottom: max(env(safe-area-inset-bottom), 18px);
-  padding-left: max(env(safe-area-inset-left), 18px);
-  padding-right: max(env(safe-area-inset-right), 18px);
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding-top: calc(env(safe-area-inset-top, 50px) + 8px);
+  padding-bottom: max(env(safe-area-inset-bottom, 20px), 16px);
+  padding-left: max(env(safe-area-inset-left, 0px), 18px);
+  padding-right: max(env(safe-area-inset-right, 0px), 18px);
 }
 
 /* ==========================================================================
@@ -126,7 +110,8 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 4px 16px 4px;
+  padding: 4px 0 16px 0;
+  flex-shrink: 0;
 }
 
 .brand {
@@ -136,24 +121,22 @@ html, body {
 }
 
 .brand-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
   background: var(--button-bg);
   border: 1px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--card-shadow);
+  color: var(--text-primary);
 }
 
 .brand-title {
   font-size: 1.25rem;
   font-weight: 700;
   letter-spacing: -0.02em;
-  background: var(--accent-gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--text-primary);
 }
 
 .header-actions {
@@ -166,52 +149,18 @@ html, body {
   background: var(--button-bg);
   border: 1px solid var(--border-subtle);
   border-radius: 14px;
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--text-primary);
   cursor: pointer;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  transition: transform 0.15s ease, background 0.15s ease;
 }
 
 .btn-icon:active {
-  transform: scale(0.94);
-  border-color: var(--border-glow);
-}
-
-/* ==========================================================================
-   STATUS BADGES (WAKE LOCK & OFFLINE)
-   ========================================================================== */
-
-.status-bar-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 12px;
-  border-radius: 20px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-}
-
-.status-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background-color: #64748b;
-}
-
-.status-dot.active {
-  background-color: #10b981;
-  box-shadow: 0 0 8px #10b981;
+  transform: scale(0.92);
 }
 
 /* ==========================================================================
@@ -223,6 +172,8 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 /* Liquid Glass Cards */
@@ -230,121 +181,63 @@ html, body {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: 24px;
-  padding: 20px;
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  padding: 22px;
   box-shadow: var(--card-shadow);
-  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .glass-card-title {
-  font-size: 1.05rem;
+  font-size: 1.15rem;
   font-weight: 700;
   margin-bottom: 8px;
   color: var(--text-primary);
 }
 
 .glass-card-desc {
-  font-size: 0.88rem;
-  color: var(--text-secondary);
-  line-height: 1.45;
-}
-
-/* ==========================================================================
-   THEME SELECTOR & SETTINGS
-   ========================================================================== */
-
-.theme-options-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 10px;
-  margin-top: 14px;
-}
-
-.theme-card-option {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 16px;
-  border-radius: 18px;
-  background: var(--button-bg);
-  border: 1px solid var(--border-subtle);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.theme-card-option:active {
-  transform: scale(0.98);
-}
-
-.theme-card-option.active {
-  border-color: var(--border-color);
-  background: var(--pill-active-bg);
-  box-shadow: var(--card-shadow);
-}
-
-.theme-card-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.theme-card-name {
-  font-weight: 600;
   font-size: 0.95rem;
-  color: var(--text-primary);
+  color: var(--text-secondary);
+  line-height: 1.5;
 }
 
-.theme-card-sub {
-  font-size: 0.78rem;
-  color: var(--text-muted);
-}
-
-.theme-check-icon {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  border: 2px solid var(--border-subtle);
-  display: flex;
+.btn-primary-action {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  padding: 12px 22px;
+  border-radius: 18px;
+  background: var(--button-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s ease;
 }
 
-.theme-card-option.active .theme-check-icon {
-  border-color: var(--accent-color);
-  background: var(--accent-color);
-}
-
-.theme-card-option.active .theme-check-icon::after {
-  content: "";
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--bg-primary);
+.btn-primary-action:active {
+  transform: scale(0.95);
 }
 
 /* ==========================================================================
-   MODAL / SETTINGS DRAWER
+   SETTINGS MODAL & SHEET (NO BLUR BUG IN SAFARI)
    ========================================================================== */
 
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.6);
   z-index: 1000;
-  display: flex;
+  display: none; /* Crucial: never render backdrop-filter when closed */
   flex-direction: column;
   justify-content: flex-end;
   opacity: 0;
-  pointer-events: none;
   transition: opacity 0.25s ease;
 }
 
 .modal-backdrop.open {
+  display: flex;
   opacity: 1;
-  pointer-events: auto;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 .modal-sheet {
@@ -353,12 +246,11 @@ html, body {
   border-top-right-radius: 28px;
   border: 1px solid var(--border-color);
   border-bottom: none;
-  padding: 20px 20px max(env(safe-area-inset-bottom), 24px) 20px;
+  padding: 22px 20px max(env(safe-area-inset-bottom, 24px), 24px) 20px;
   max-height: 85vh;
-  overflow-y: auto;
   box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.4);
   transform: translateY(100%);
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .modal-backdrop.open .modal-sheet {
@@ -369,20 +261,21 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: 22px;
 }
 
 .modal-title {
-  font-size: 1.2rem;
+  font-size: 1.25rem;
   font-weight: 700;
+  color: var(--text-primary);
 }
 
 .modal-close-btn {
   background: var(--button-bg);
   border: 1px solid var(--border-subtle);
   border-radius: 50%;
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -390,67 +283,128 @@ html, body {
   cursor: pointer;
 }
 
-/* Toggle Switch */
+.modal-close-btn:active {
+  transform: scale(0.92);
+}
+
+/* ==========================================================================
+   SETTINGS ROWS & TOGGLES (WHOLE ROW CLICKABLE)
+   ========================================================================== */
+
 .setting-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border-subtle);
+  padding: 16px 14px;
+  background: var(--button-bg);
+  border: 1px solid var(--border-subtle);
+  border-radius: 18px;
+  cursor: pointer;
+  margin-bottom: 18px;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.setting-row:active {
+  transform: scale(0.98);
 }
 
 .setting-label {
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 600;
+  color: var(--text-primary);
 }
 
-.setting-desc {
-  font-size: 0.8rem;
-  color: var(--text-muted);
+.setting-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 4px;
 }
 
+/* iOS Toggle Switch */
 .switch {
   position: relative;
   display: inline-block;
-  width: 50px;
-  height: 30px;
+  width: 52px;
+  height: 32px;
+  flex-shrink: 0;
+  pointer-events: none; /* Let parent row handle clicks reliably */
 }
 
 .switch input {
   opacity: 0;
   width: 0;
   height: 0;
+  position: absolute;
 }
 
 .slider {
   position: absolute;
-  cursor: pointer;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: var(--border-subtle);
-  transition: .3s cubic-bezier(0.16, 1, 0.3, 1);
-  border-radius: 30px;
+  background-color: rgba(120, 120, 128, 0.32);
+  transition: background-color 0.25s ease;
+  border-radius: 32px;
 }
 
 .slider:before {
   position: absolute;
   content: "";
-  height: 24px;
-  width: 24px;
+  height: 26px;
+  width: 26px;
   left: 3px;
   bottom: 3px;
-  background-color: white;
-  transition: .3s cubic-bezier(0.16, 1, 0.3, 1);
+  background-color: #ffffff;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   border-radius: 50%;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
 }
 
 input:checked + .slider {
-  background-color: #10b981;
+  background-color: #34c759; /* Apple iOS standard active green */
 }
 
 input:checked + .slider:before {
   transform: translateX(20px);
+}
+
+/* ==========================================================================
+   THEME OPTIONS GRID (2 THEMES: DARK & LIGHT)
+   ========================================================================== */
+
+.theme-options-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.theme-card-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 12px;
+  border-radius: 18px;
+  background: var(--button-bg);
+  border: 1px solid var(--border-subtle);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.theme-card-option:active {
+  transform: scale(0.96);
+}
+
+.theme-card-option.active {
+  border-color: var(--border-color);
+  background: var(--pill-active-bg);
+  box-shadow: 0 0 0 1px var(--border-color);
+}
+
+.theme-card-name {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text-primary);
+  text-align: center;
 }

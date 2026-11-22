@@ -42,25 +42,25 @@ test('ThemeManager defaults to liquid-silver when no theme is stored', () => {
   assert.strictEqual(documentElement.getAttribute('data-theme'), 'liquid-silver');
 });
 
-test('ThemeManager changes theme, persists to storage, and updates data-theme attribute', () => {
+test('ThemeManager changes theme between dark and light, persists to storage, and updates data-theme attribute', () => {
   const { themeManager, storage, documentElement } = createMockEnvironment();
-
-  themeManager.setTheme('emerald-glass');
-  assert.strictEqual(themeManager.getTheme(), 'emerald-glass');
-  assert.strictEqual(storage.get('knit_theme'), 'emerald-glass');
-  assert.strictEqual(documentElement.getAttribute('data-theme'), 'emerald-glass');
 
   themeManager.setTheme('light-minimal');
   assert.strictEqual(themeManager.getTheme(), 'light-minimal');
   assert.strictEqual(storage.get('knit_theme'), 'light-minimal');
   assert.strictEqual(documentElement.getAttribute('data-theme'), 'light-minimal');
+
+  themeManager.setTheme('liquid-silver');
+  assert.strictEqual(themeManager.getTheme(), 'liquid-silver');
+  assert.strictEqual(storage.get('knit_theme'), 'liquid-silver');
+  assert.strictEqual(documentElement.getAttribute('data-theme'), 'liquid-silver');
 });
 
 test('ThemeManager restores stored theme on initialization', () => {
-  const { themeManager, documentElement } = createMockEnvironment([['knit_theme', 'emerald-glass']]);
+  const { themeManager, documentElement } = createMockEnvironment([['knit_theme', 'light-minimal']]);
 
-  assert.strictEqual(themeManager.getTheme(), 'emerald-glass');
-  assert.strictEqual(documentElement.getAttribute('data-theme'), 'emerald-glass');
+  assert.strictEqual(themeManager.getTheme(), 'light-minimal');
+  assert.strictEqual(documentElement.getAttribute('data-theme'), 'light-minimal');
 });
 
 test('ThemeManager rejects invalid theme and falls back to default', () => {
