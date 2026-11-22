@@ -1,24 +1,24 @@
 /* ==========================================================================
-   CSS CUSTOM PROPERTIES (APPLE IOS 15 SETTINGS PALETTE)
+   CSS CUSTOM PROPERTIES (APPLE SPACE GRAY & IOS 15 PALETTE)
    ========================================================================== */
 
 :root,
 [data-theme="liquid-silver"] {
   --color-scheme: dark;
-  --bg-primary: #000000;
-  --bg-secondary: #1c1c1e;
-  --bg-card: #1c1c1e;
+  --bg-primary: #12151b; /* Deep Space Gray: main screen contrasts with modal sheet */
+  --bg-secondary: #1c1c1e; /* Modal sheet background */
+  --bg-card: #1c1c1e; /* Grouped card */
   --bg-card-inner: #2c2c2e;
-  --border-color: rgba(255, 255, 255, 0.08);
-  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-color: rgba(255, 255, 255, 0.1);
+  --border-subtle: rgba(255, 255, 255, 0.08);
   --divider-color: rgba(255, 255, 255, 0.12);
   
   --text-primary: #ffffff;
-  --text-secondary: #8e8e93;
+  --text-secondary: #98989f;
   --text-muted: #636366;
   
   --button-bg: #1c1c1e;
-  --button-border: rgba(255, 255, 255, 0.12);
+  --button-border: rgba(255, 255, 255, 0.14);
   
   --toggle-track-bg: #2c2c2e;
   --toggle-knob-bg: #48484a;
@@ -28,7 +28,7 @@
 [data-theme="light-minimal"] {
   --color-scheme: light;
   --bg-primary: #f2f2f7;
-  --bg-secondary: #ffffff;
+  --bg-secondary: #f2f2f7;
   --bg-card: #ffffff;
   --bg-card-inner: #e5e5ea;
   --border-color: rgba(0, 0, 0, 0.08);
@@ -48,7 +48,7 @@
 }
 
 /* ==========================================================================
-   RESET & SYSTEM BASE (ZERO BLUR OVERLAYS, NO SCROLLBARS)
+   RESET & SYSTEM BASE (NO SCROLLBARS, ZERO BLUR FILTER ARTIFACTS)
    ========================================================================== */
 
 * {
@@ -179,8 +179,8 @@ html, body {
 
 .glass-card {
   background: var(--bg-card);
-  border-radius: 14px; /* Native iOS 15 squircle */
-  padding: 20px;
+  border-radius: 22px; /* iOS squircle radius matching Photo 2 */
+  padding: 22px;
   border: 1px solid var(--border-color);
 }
 
@@ -202,7 +202,7 @@ html, body {
   align-items: center;
   justify-content: center;
   padding: 12px 22px;
-  border-radius: 12px;
+  border-radius: 14px;
   background: var(--bg-card-inner);
   border: 1px solid var(--border-color);
   color: var(--text-primary);
@@ -217,13 +217,13 @@ html, body {
 }
 
 /* ==========================================================================
-   SETTINGS MODAL & SHEET (NATIVE IOS 15 GROUPED SHEET)
+   SETTINGS MODAL & SHEET (DISTINCT CONTRASTING EDGES)
    ========================================================================== */
 
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.65);
+  background: rgba(0, 0, 0, 0.75); /* Clean dimming over main screen */
   z-index: 1000;
   display: none;
   flex-direction: column;
@@ -238,11 +238,13 @@ html, body {
 }
 
 .modal-sheet {
-  background: var(--bg-primary); /* Seamless matching background */
-  border-top-left-radius: 20px;
-  border-top-right-radius: 20px;
-  padding: 20px 16px calc(env(safe-area-inset-bottom, 24px) + 20px) 16px;
-  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
+  background: var(--bg-secondary); /* Distinct #1c1c1e in dark mode */
+  border-top-left-radius: 28px;
+  border-top-right-radius: 28px;
+  border-top: 1px solid rgba(255, 255, 255, 0.15); /* Distinct contour */
+  padding: 22px 18px calc(env(safe-area-inset-bottom, 24px) + 24px) 18px;
+  max-height: 85vh;
+  box-shadow: 0 -12px 48px rgba(0, 0, 0, 0.7);
   transform: translateY(100%);
   transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
@@ -257,7 +259,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
   padding: 0 4px;
 }
 
@@ -268,7 +270,7 @@ html, body {
 }
 
 .modal-close-btn {
-  background: var(--bg-card);
+  background: var(--bg-card-inner);
   border: 1px solid var(--border-color);
   border-radius: 50%;
   width: 32px;
@@ -285,12 +287,12 @@ html, body {
 }
 
 /* ==========================================================================
-   IOS 15 GROUPED CARD (MATCHING USER PHOTO 3 REFERENCE)
+   IOS GROUPED CARD (EXACT 22px SQUIRCLE MATCHING PHOTO 2)
    ========================================================================== */
 
 .ios-grouped-section {
   background: var(--bg-card);
-  border-radius: 14px; /* Exact iOS squircle */
+  border-radius: 22px; /* Large squircle matching Photo 2 reference */
   overflow: hidden;
   border: 1px solid var(--border-color);
 }
@@ -299,7 +301,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 13px 16px;
+  padding: 13px 18px;
   min-height: 52px;
   cursor: pointer;
   transition: background 0.15s ease;
@@ -311,19 +313,20 @@ html, body {
 
 .ios-row-label {
   font-size: 1.05rem;
-  font-weight: 400; /* Regular Apple font */
+  font-weight: 400;
   color: var(--text-primary);
   letter-spacing: -0.01em;
 }
 
+/* Symmetrical hairline divider: equal 16px margins on both sides */
 .ios-divider {
   height: 0.5px;
   background: var(--divider-color);
-  margin-left: 16px; /* Native iOS inset divider */
+  margin: 0 18px; /* Symmetrical left and right */
 }
 
 /* ==========================================================================
-   NATIVE IOS SWITCH (GREEN 51x31 SILKY GLIDE)
+   NATIVE IOS SWITCH (51x31 WITH 27px KNOB)
    ========================================================================== */
 
 .switch {
@@ -367,7 +370,7 @@ html, body {
 }
 
 input:checked + .slider {
-  background-color: #34c759; /* Apple iOS settings active green */
+  background-color: #34c759;
 }
 
 input:checked + .slider:before {
@@ -376,21 +379,22 @@ input:checked + .slider:before {
 }
 
 /* ==========================================================================
-   COMPACT ICON-ONLY THEME TOGGLE (MOON & SUN, NO TEXT)
+   THEME TOGGLE SWITCH: EXACT SAME SIZE AND LENGTH AS IOS SWITCH (51x31)
    ========================================================================== */
 
 .theme-icon-toggle {
   position: relative;
-  width: 66px;
-  height: 32px;
-  border-radius: 16px;
+  width: 51px; /* Exact same width as native switch */
+  height: 31px; /* Exact same height as native switch */
+  border-radius: 31px;
   background: var(--toggle-track-bg);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 8px;
+  padding: 0 6px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  flex-shrink: 0;
+  transition: background-color 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .theme-icon-opt {
@@ -406,11 +410,11 @@ input:checked + .slider:before {
   position: absolute;
   top: 2px;
   left: 2px;
-  width: 28px;
-  height: 28px;
+  width: 27px; /* Exact same 27px diameter as switch knob */
+  height: 27px;
   border-radius: 50%;
   background: var(--toggle-knob-bg);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.15);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -421,7 +425,7 @@ input:checked + .slider:before {
   will-change: transform;
 }
 
-/* In Dark Theme: knob is on the left (Moon) */
+/* Dark Theme: knob on left (Moon) */
 [data-theme="liquid-silver"] .theme-toggle-knob {
   transform: translate3d(0, 0, 0);
   -webkit-transform: translate3d(0, 0, 0);
@@ -433,10 +437,10 @@ input:checked + .slider:before {
   display: flex;
 }
 
-/* In Light Theme: knob is on the right (Sun) */
+/* Light Theme: knob on right (Sun) with identical 20px translation */
 [data-theme="light-minimal"] .theme-toggle-knob {
-  transform: translate3d(34px, 0, 0);
-  -webkit-transform: translate3d(34px, 0, 0);
+  transform: translate3d(20px, 0, 0);
+  -webkit-transform: translate3d(20px, 0, 0);
 }
 [data-theme="light-minimal"] .theme-toggle-knob .moon-icon {
   display: none;
