@@ -1,35 +1,35 @@
 /* ==========================================================================
-   CSS CUSTOM PROPERTIES (SPACE GRAY MAIN + PURE BLACK SETTINGS)
+   CSS CUSTOM PROPERTIES (SPACE GRAY MAIN, BLACK SHEET, GRAY CARDS)
    ========================================================================== */
 
 :root,
 [data-theme="liquid-silver"] {
   --color-scheme: dark;
-  --bg-primary: #14171f; /* Space Gray for the main screen */
+  --bg-primary: #14171f; /* Space Gray main screen */
   --bg-secondary: #000000; /* Pure black settings sheet */
-  --bg-card: #000000; /* Pure black card in settings */
+  --bg-card: #1c1c1e; /* Gray card / плашка inside settings (Apple dark gray) */
   --bg-card-main: #1c202a; /* Card on main screen */
-  --bg-card-inner: #1a1e27;
+  --bg-card-inner: #2c2c2e;
   --border-color: rgba(255, 255, 255, 0.12);
   --border-subtle: rgba(255, 255, 255, 0.08);
-  --divider-color: rgba(255, 255, 255, 0.12);
+  --divider-color: rgba(255, 255, 255, 0.1);
   
   --text-primary: #ffffff;
   --text-secondary: #9aa1ad;
-  --text-muted: #646b77;
+  --text-muted: #757b88;
   
   --button-bg: #1c202a;
   --button-border: rgba(255, 255, 255, 0.14);
   
-  --toggle-track-bg: #222630;
-  --toggle-knob-bg: #3d4454;
+  --toggle-track-bg: #2c2c2e;
+  --toggle-knob-bg: #48484a;
   --toggle-knob-text: #ffffff;
 }
 
 [data-theme="light-minimal"] {
   --color-scheme: light;
   --bg-primary: #f2f2f7;
-  --bg-secondary: #ffffff;
+  --bg-secondary: #f2f2f7;
   --bg-card: #ffffff;
   --bg-card-main: #ffffff;
   --bg-card-inner: #e5e5ea;
@@ -50,7 +50,7 @@
 }
 
 /* ==========================================================================
-   RESET & SYSTEM BASE (NO SCROLLBARS, ZERO BLUR FILTER ARTIFACTS)
+   RESET & SYSTEM BASE
    ========================================================================== */
 
 * {
@@ -219,7 +219,7 @@ html, body {
 }
 
 /* ==========================================================================
-   SETTINGS MODAL & SHEET (PURE BLACK ON SPACE GRAY BACKGROUND)
+   SETTINGS MODAL & SHEET (BLACK BACKGROUND + TOP CONTOUR BORDER)
    ========================================================================== */
 
 .modal-backdrop {
@@ -240,10 +240,10 @@ html, body {
 }
 
 .modal-sheet {
-  background: var(--bg-secondary); /* Pure black #000000 in dark mode */
+  background: var(--bg-secondary); /* Pure black #000000 */
   border-top-left-radius: 28px;
   border-top-right-radius: 28px;
-  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  border-top: 1.5px solid rgba(255, 255, 255, 0.22); /* Clear, distinct top contour! */
   padding: 24px 20px calc(env(safe-area-inset-bottom, 24px) + 24px) 20px;
   max-height: 85vh;
   box-shadow: 0 -12px 48px rgba(0, 0, 0, 0.85);
@@ -272,7 +272,7 @@ html, body {
 }
 
 .modal-close-btn {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
   border: 1px solid var(--border-color);
   border-radius: 50%;
   width: 34px;
@@ -289,11 +289,11 @@ html, body {
 }
 
 /* ==========================================================================
-   IOS GROUPED CARD (SPACIOUS 22px SQUIRCLE, PURE BLACK)
+   IOS GROUPED CARD (GRAY SQUIRCLE CARD #1c1c1e ON BLACK SHEET)
    ========================================================================== */
 
 .ios-grouped-section {
-  background: var(--bg-card); /* Pure black #000000 */
+  background: var(--bg-card); /* Gray card #1c1c1e on black sheet */
   border-radius: 22px;
   overflow: hidden;
   border: 1px solid var(--border-color);
@@ -303,7 +303,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px; /* Spacious padding with plenty of breathing room */
+  padding: 16px 20px;
   min-height: 58px;
   cursor: pointer;
   transition: background 0.15s ease;
@@ -320,7 +320,7 @@ html, body {
   letter-spacing: -0.01em;
 }
 
-/* Symmetrical hairline divider: equal 20px margins on both sides */
+/* Symmetrical hairline divider */
 .ios-divider {
   height: 0.5px;
   background: var(--divider-color);
@@ -328,13 +328,13 @@ html, body {
 }
 
 /* ==========================================================================
-   ELONGATED NATIVE IOS SWITCH (58x32 WITH 26px KNOB - PLENTY OF AIR)
+   NATIVE IOS WAKE LOCK SWITCH (54x32)
    ========================================================================== */
 
 .switch {
   position: relative;
   display: inline-block;
-  width: 58px; /* Elongated, spacious */
+  width: 54px;
   height: 32px;
   flex-shrink: 0;
   pointer-events: none;
@@ -350,7 +350,7 @@ html, body {
 .slider {
   position: absolute;
   inset: 0;
-  background-color: rgba(120, 120, 128, 0.32);
+  background-color: rgba(120, 120, 128, 0.35);
   transition: background-color 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   -webkit-transition: background-color 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   border-radius: 32px;
@@ -376,26 +376,27 @@ input:checked + .slider {
 }
 
 input:checked + .slider:before {
-  transform: translate3d(26px, 0, 0);
-  -webkit-transform: translate3d(26px, 0, 0);
+  transform: translate3d(22px, 0, 0);
+  -webkit-transform: translate3d(22px, 0, 0);
 }
 
 /* ==========================================================================
-   ELONGATED THEME TOGGLE SWITCH: EXACT SAME SIZE (58x32) & GENEROUS AIR
+   ELONGATED & LARGER THEME TOGGLE SWITCH (66x34 WITH 28px KNOB)
    ========================================================================== */
 
 .theme-icon-toggle {
   position: relative;
-  width: 58px; /* Exact same elongated width */
-  height: 32px; /* Exact same height */
-  border-radius: 32px;
+  width: 66px; /* Noticeably longer and more spacious! */
+  height: 34px; /* Larger and taller! */
+  border-radius: 34px;
   background: var(--toggle-track-bg);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 7px; /* Plenty of breathing room for icons */
+  padding: 0 8px; /* Plenty of air and room for icons */
   cursor: pointer;
   flex-shrink: 0;
+  border: 1px solid var(--border-subtle);
   transition: background-color 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -410,10 +411,10 @@ input:checked + .slider:before {
 
 .theme-toggle-knob {
   position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 26px;
-  height: 26px;
+  top: 2px;
+  left: 2px;
+  width: 28px; /* Larger 28px knob */
+  height: 28px;
   border-radius: 50%;
   background: var(--toggle-knob-bg);
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35), 0 1px 2px rgba(0, 0, 0, 0.2);
@@ -439,10 +440,10 @@ input:checked + .slider:before {
   display: flex;
 }
 
-/* Light Theme: knob on right (Sun) with matching 26px smooth translation */
+/* Light Theme: knob on right (Sun) with smooth 32px glide */
 [data-theme="light-minimal"] .theme-toggle-knob {
-  transform: translate3d(26px, 0, 0);
-  -webkit-transform: translate3d(26px, 0, 0);
+  transform: translate3d(32px, 0, 0);
+  -webkit-transform: translate3d(32px, 0, 0);
 }
 [data-theme="light-minimal"] .theme-toggle-knob .moon-icon {
   display: none;
