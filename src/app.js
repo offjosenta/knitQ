@@ -29,36 +29,23 @@ export function initApp() {
   const closeSettingsBtn = document.getElementById('btn-close-settings');
   const rowWakeLock = document.getElementById('row-wake-lock');
   const wakeLockToggle = /** @type {HTMLInputElement | null} */ (document.getElementById('toggle-wake-lock'));
-  const themeSegments = document.querySelectorAll('.theme-segment');
+  const rowThemeToggle = document.getElementById('row-theme-toggle');
 
-  // Update theme segmented control active state
-  function updateThemeSegmentsUI() {
+  // Theme Toggle: Moon (Dark) & Sun (Light)
+  function toggleTheme() {
     const currentTheme = themeManager.getTheme();
-    themeSegments.forEach((segment) => {
-      const themeId = segment.getAttribute('data-theme-id');
-      const isActive = themeId === currentTheme;
-      segment.classList.toggle('active', isActive);
-      segment.setAttribute('aria-pressed', String(isActive));
-    });
+    const nextTheme = currentTheme === 'liquid-silver' ? 'light-minimal' : 'liquid-silver';
+    themeManager.setTheme(nextTheme);
   }
 
-  themeSegments.forEach((segment) => {
-    segment.addEventListener('click', () => {
-      const themeId = segment.getAttribute('data-theme-id');
-      if (themeId) {
-        themeManager.setTheme(themeId);
-        updateThemeSegmentsUI();
-      }
-    });
+  rowThemeToggle?.addEventListener('click', () => {
+    toggleTheme();
   });
-
-  updateThemeSegmentsUI();
 
   // Modal open/close handlers
   function openModal() {
     if (!settingsModal) return;
     settingsModal.style.display = 'flex';
-    // Force reflow for smooth CSS transition
     void settingsModal.offsetHeight;
     settingsModal.classList.add('open');
   }
@@ -103,7 +90,7 @@ export function initApp() {
     wakeLockToggle.checked = shouldAutoWakeLock;
   }
 
-  // Clicking anywhere on the row smoothly toggles the switch
+  // Smooth click on wake lock row
   rowWakeLock?.addEventListener('click', async (e) => {
     e.preventDefault();
     if (!wakeLockToggle) return;

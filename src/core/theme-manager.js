@@ -19,6 +19,11 @@ export const THEMES = Object.freeze([
 export const DEFAULT_THEME = 'liquid-silver';
 export const STORAGE_KEY = 'knit_theme';
 
+export const THEME_COLORS = {
+  'liquid-silver': '#000000',
+  'light-minimal': '#f2f2f7'
+};
+
 /**
  * @param {object} [options]
  * @param {Storage | { getItem: (key: string) => string | null, setItem: (key: string, value: string) => void }} [options.storage]
@@ -41,14 +46,24 @@ export function createThemeManager(options = {}) {
         currentTheme = /** @type {ThemeId} */ (stored);
       }
     } catch {
-      // Fallback silently if storage access fails
+      // Fallback silently
     }
   }
 
-  // Apply to document element
-  if (documentElement && typeof documentElement.setAttribute === 'function') {
-    documentElement.setAttribute('data-theme', currentTheme);
-  }
+  const applyTheme = (/** @type {ThemeId} */ themeId) => {
+    if (documentElement && typeof documentElement.setAttribute === 'function') {
+      documentElement.setAttribute('data-theme', themeId);
+    }
+    // Update theme-color meta tag for seamless iOS status bar matching
+    if (typeof document !== 'undefined') {
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+      if (metaThemeColor) {
+        metaThemeColor.setAttribute('content', THEME_COLORS[themeId] || '#000000');
+      }
+    }
+  };
+
+  applyTheme(currentTheme);
 
   return {
     /**
@@ -72,13 +87,11 @@ export function createThemeManager(options = {}) {
         try {
           storage.setItem(STORAGE_KEY, currentTheme);
         } catch {
-          // Ignore storage quota/permission errors
+          // Ignore storage quota errors
         }
       }
 
-      if (documentElement && typeof documentElement.setAttribute === 'function') {
-        documentElement.setAttribute('data-theme', currentTheme);
-      }
+      applyTheme(currentTheme);
     },
 
     /**

@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="KnitQ">
-  <meta name="theme-color" content="#0d0f12">
+  <meta name="theme-color" content="#000000">
   <meta name="description" content="Автономный счетчик петель и органайзер проектов по вязанию для iPhone">
   
   <title>KnitQ</title>
@@ -45,7 +45,7 @@
       </div>
     </header>
 
-    <!-- Main PWA Shell Content -->
+    <!-- Main Content -->
     <main class="main-content" id="app-main">
       <section class="glass-card">
         <h2 class="glass-card-title">Каркас приложения готов</h2>
@@ -60,52 +60,76 @@
       </section>
     </main>
 
-    <!-- Settings Modal Sheet (Pure opaque overlay without WebKit blur bug) -->
+    <!-- Settings Modal Sheet (Native iOS 15 grouped style) -->
     <div id="settings-modal" class="modal-backdrop">
       <div class="modal-sheet">
         <div class="modal-header">
           <h3 class="modal-title">Настройки</h3>
           <button id="btn-close-settings" class="modal-close-btn" aria-label="Закрыть">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
           </button>
         </div>
 
-        <!-- Toggle Row: smoothly animated, full-row touch target -->
-        <div class="setting-row" id="row-wake-lock">
-          <span class="setting-label">Не гасить экран при вязании</span>
-          <div class="switch">
-            <input type="checkbox" id="toggle-wake-lock" checked>
-            <span class="slider"></span>
+        <!-- iOS 15 Grouped Section -->
+        <div class="ios-grouped-section">
+          <!-- Row 1: Wake Lock Toggle -->
+          <div class="ios-row" id="row-wake-lock">
+            <span class="ios-row-label">Не гасить экран при вязании</span>
+            <div class="switch">
+              <input type="checkbox" id="toggle-wake-lock" checked>
+              <span class="slider"></span>
+            </div>
           </div>
-        </div>
 
-        <!-- Theme Segmented Switcher: Moon (Dark) & Sun (Light) -->
-        <div class="setting-section">
-          <span class="setting-label">Тема оформления</span>
-          <div id="theme-segmented-control" class="theme-segmented-control">
-            <button type="button" class="theme-segment active" data-theme-id="liquid-silver">
-              <svg class="theme-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
-              </svg>
-              <span>Тёмная</span>
-            </button>
-            <button type="button" class="theme-segment" data-theme-id="light-minimal">
-              <svg class="theme-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="4"></circle>
-                <path d="M12 2v2"></path>
-                <path d="M12 20v2"></path>
-                <path d="m4.93 4.93 1.41 1.41"></path>
-                <path d="m17.66 17.66 1.41 1.41"></path>
-                <path d="M2 12h2"></path>
-                <path d="M20 12h2"></path>
-                <path d="m6.34 17.66-1.41 1.41"></path>
-                <path d="m19.07 4.93-1.41 1.41"></path>
-              </svg>
-              <span>Светлая</span>
-            </button>
+          <!-- Hairline Divider -->
+          <div class="ios-divider"></div>
+
+          <!-- Row 2: Theme Switcher (Moon & Sun only) -->
+          <div class="ios-row" id="row-theme-toggle">
+            <span class="ios-row-label">Тема оформления</span>
+            <div id="theme-icon-toggle" class="theme-icon-toggle" role="button" aria-label="Переключить тему">
+              <span class="theme-icon-opt moon-opt" aria-hidden="true">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+                </svg>
+              </span>
+              <span class="theme-icon-opt sun-opt" aria-hidden="true">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="4"></circle>
+                  <path d="M12 2v2"></path>
+                  <path d="M12 20v2"></path>
+                  <path d="m4.93 4.93 1.41 1.41"></path>
+                  <path d="m17.66 17.66 1.41 1.41"></path>
+                  <path d="M2 12h2"></path>
+                  <path d="M20 12h2"></path>
+                  <path d="m6.34 17.66-1.41 1.41"></path>
+                  <path d="m19.07 4.93-1.41 1.41"></path>
+                </svg>
+              </span>
+              <div class="theme-toggle-knob">
+                <span class="knob-icon moon-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+                  </svg>
+                </span>
+                <span class="knob-icon sun-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="4"></circle>
+                    <path d="M12 2v2"></path>
+                    <path d="M12 20v2"></path>
+                    <path d="m4.93 4.93 1.41 1.41"></path>
+                    <path d="m17.66 17.66 1.41 1.41"></path>
+                    <path d="M2 12h2"></path>
+                    <path d="M20 12h2"></path>
+                    <path d="m6.34 17.66-1.41 1.41"></path>
+                    <path d="m19.07 4.93-1.41 1.41"></path>
+                  </svg>
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
