@@ -1,4 +1,4 @@
-const CACHE_NAME = 'knitq-v12';
+const CACHE_NAME = 'knitq-v13';
 
 const STATIC_ASSETS = [
   './',
@@ -8,6 +8,9 @@ const STATIC_ASSETS = [
   './src/app.js',
   './src/core/theme-manager.js',
   './src/core/wake-lock-manager.js',
+  './src/core/haptic-manager.js',
+  './src/core/knit-store.js',
+  './src/core/time-format.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/apple-touch-icon.png'

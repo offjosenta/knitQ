@@ -466,3 +466,334 @@ input:checked + .slider:before {
 [data-theme="light-minimal"] .theme-toggle-knob .sun-icon {
   display: flex;
 }
+
+
+/* ==========================================================================
+   ACTIVE KNITTING SCREEN (GIANT TAP ZONE, ROW COUNTER, TIMER & ROW LOG)
+   ========================================================================== */
+
+.active-part-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--bg-card-main);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid var(--border-color);
+  align-self: center;
+  max-width: 100%;
+  flex-shrink: 0;
+}
+
+.active-project-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.active-part-sep {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.active-part-name {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tap-zone-card {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 22px 20px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease, background 0.2s ease;
+}
+
+.tap-zone-card:has(.tap-zone-trigger:active),
+.tap-zone-card.tapped {
+  transform: scale(0.985);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+[data-theme="light-minimal"] .tap-zone-card:has(.tap-zone-trigger:active),
+[data-theme="light-minimal"] .tap-zone-card.tapped {
+  border-color: rgba(0, 0, 0, 0.22);
+}
+
+.tap-zone-trigger {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: none;
+  padding: 22px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.tap-zone-hint-top {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: -0.01em;
+  pointer-events: none;
+}
+
+.row-counter-btn {
+  position: relative;
+  z-index: 2;
+  background: transparent;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 28px;
+  border-radius: 26px;
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.row-counter-btn:active {
+  transform: scale(0.94);
+  background: rgba(128, 128, 128, 0.12);
+}
+
+.row-counter-value {
+  font-size: clamp(5.5rem, 24vw, 8.5rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.row-counter-sub {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--bg-card-inner);
+  border: 1px solid var(--border-subtle);
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.tap-zone-plus-badge {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding: 6px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: rgba(128, 128, 128, 0.08);
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   BOTTOM KNITTING CONTROLS (-1, TIMER, RESET)
+   ========================================================================== */
+
+.knitting-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.control-pill-btn {
+  height: 58px;
+  border-radius: 24px;
+  background: var(--bg-card-main);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.2s ease, border-color 0.2s ease;
+}
+
+.control-pill-btn:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.control-pill-btn:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
+
+.control-minus-btn {
+  width: 72px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.control-timer-btn {
+  flex: 1;
+  gap: 10px;
+  padding: 0 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+.timer-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition: background-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.control-timer-btn.running .timer-status-dot {
+  background: #34c759;
+  box-shadow: 0 0 8px rgba(52, 199, 89, 0.65);
+}
+
+.timer-display {
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.timer-state-icon {
+  display: flex;
+  align-items: center;
+  color: var(--text-secondary);
+}
+
+.control-timer-btn .icon-pause {
+  display: none;
+}
+
+.control-timer-btn.running .icon-play {
+  display: none;
+}
+
+.control-timer-btn.running .icon-pause {
+  display: block;
+}
+
+.control-reset-btn {
+  width: 58px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   ROW LOG MODAL & RESET CONFIRMATION MODAL
+   ========================================================================== */
+
+.row-log-content {
+  overflow-y: auto;
+  max-height: 60vh;
+}
+
+.row-log-empty {
+  background: var(--bg-card);
+  border-radius: 26px;
+  border: 1px solid var(--border-color);
+  padding: 28px 20px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.row-log-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  min-height: 52px;
+}
+
+.row-log-number {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.row-log-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.row-log-time {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.row-log-date {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.reset-confirm-desc {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: 20px;
+  padding: 0 4px;
+}
+
+.reset-confirm-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-secondary-action,
+.btn-destructive-action {
+  flex: 1;
+  height: 52px;
+  border-radius: 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+  transition: transform 0.15s ease;
+}
+
+.btn-secondary-action {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.btn-destructive-action {
+  background: rgba(255, 59, 48, 0.16);
+  border-color: rgba(255, 59, 48, 0.35);
+  color: #ff453a;
+}
+
+.btn-secondary-action:active,
+.btn-destructive-action:active {
+  transform: scale(0.96);
+}

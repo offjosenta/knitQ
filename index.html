@@ -53,20 +53,127 @@
       </div>
     </header>
 
-    <!-- Main Content -->
+    <!-- Main Content: Active Knitting Screen -->
     <main class="main-content" id="app-main">
-      <section class="glass-card">
-        <h2 class="glass-card-title">Каркас приложения готов</h2>
-        <p class="glass-card-desc">
-          Полноэкранное автономное PWA-приложение для iPhone 15. Добавляется на экран «Домой», работает офлайн и поддерживает тёмную и светлую темы.
-        </p>
-        <div style="margin-top: 18px;">
-          <button id="btn-quick-settings" class="btn-primary-action">
-            Настройки и темы
+      <!-- Part / Project Context Pill -->
+      <div class="active-part-header">
+        <span id="active-project-name" class="active-project-name">Шарф «Лицевая гладь»</span>
+        <span class="active-part-sep">·</span>
+        <span id="active-part-name" class="active-part-name">Основное полотно</span>
+      </div>
+
+      <!-- Giant Tap Zone (+1 Row) -->
+      <div class="tap-zone-card glass-card">
+        <button
+          id="tap-zone-plus"
+          type="button"
+          class="tap-zone-trigger"
+          aria-label="Добавить 1 ряд"
+        >
+          <span class="tap-zone-hint-top">Нажмите в любом месте (+1 ряд)</span>
+          <span class="tap-zone-plus-badge" aria-hidden="true">+1</span>
+        </button>
+
+        <button
+          id="btn-row-log"
+          type="button"
+          class="row-counter-btn"
+          aria-label="Открыть журнал рядов"
+        >
+          <span id="row-counter-value" class="row-counter-value">0</span>
+          <span class="row-counter-sub">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            Журнал рядов
+          </span>
+        </button>
+      </div>
+
+      <!-- Bottom Knitting Controls (-1, Timer, Reset) -->
+      <div class="knitting-controls">
+        <button
+          id="btn-row-minus"
+          type="button"
+          class="control-pill-btn control-minus-btn"
+          aria-label="Уменьшить на 1 ряд"
+        >
+          −1
+        </button>
+
+        <button
+          id="btn-timer-toggle"
+          type="button"
+          class="control-pill-btn control-timer-btn"
+          aria-label="Запустить или поставить таймер на паузу"
+        >
+          <span class="timer-status-dot" aria-hidden="true"></span>
+          <span id="timer-display" class="timer-display">00:00:00</span>
+          <span id="timer-state-icon" class="timer-state-icon" aria-hidden="true">
+            <svg class="icon-play" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="6 4 20 12 6 20 6 4"></polygon>
+            </svg>
+            <svg class="icon-pause" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <rect x="6" y="4" width="4" height="16" rx="1"></rect>
+              <rect x="14" y="4" width="4" height="16" rx="1"></rect>
+            </svg>
+          </span>
+        </button>
+
+        <button
+          id="btn-row-reset"
+          type="button"
+          class="control-pill-btn control-reset-btn"
+          aria-label="Сбросить счётчик"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+            <path d="M3 3v5h5"></path>
+          </svg>
+        </button>
+      </div>
+    </main>
+
+    <!-- Row Log Modal Sheet -->
+    <div id="row-log-modal" class="modal-backdrop">
+      <div class="modal-sheet">
+        <div class="modal-header">
+          <h3 class="modal-title">Журнал рядов</h3>
+          <button id="btn-close-row-log" class="modal-close-btn" aria-label="Закрыть">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
           </button>
         </div>
-      </section>
-    </main>
+        <div id="row-log-content" class="row-log-content">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Reset Confirmation Modal Sheet -->
+    <div id="reset-confirm-modal" class="modal-backdrop">
+      <div class="modal-sheet">
+        <div class="modal-header">
+          <h3 class="modal-title">Сбросить счётчик?</h3>
+          <button id="btn-close-reset-confirm" class="modal-close-btn" aria-label="Закрыть">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <p class="reset-confirm-desc">
+          Текущий ряд, таймер и журнал этой части будут обнулены. Это действие нельзя отменить.
+        </p>
+        <div class="reset-confirm-actions">
+          <button id="btn-cancel-reset" type="button" class="btn-secondary-action">Отмена</button>
+          <button id="btn-confirm-reset" type="button" class="btn-destructive-action">Сбросить</button>
+        </div>
+      </div>
+    </div>
 
     <!-- Settings Modal Sheet (Native iOS 15 grouped style) -->
     <div id="settings-modal" class="modal-backdrop">
@@ -95,7 +202,19 @@
           <!-- Hairline Divider -->
           <div class="ios-divider"></div>
 
-          <!-- Row 2: Theme Switcher (Moon & Sun only) -->
+          <!-- Row 2: Haptic Feedback Toggle (disabled by default) -->
+          <div class="ios-row" id="row-haptic">
+            <span class="ios-row-label">Виброотклик при нажатии</span>
+            <div class="switch">
+              <input type="checkbox" id="toggle-haptic">
+              <span class="slider"></span>
+            </div>
+          </div>
+
+          <!-- Hairline Divider -->
+          <div class="ios-divider"></div>
+
+          <!-- Row 3: Theme Switcher (Moon & Sun only) -->
           <div class="ios-row" id="row-theme-toggle">
             <span class="ios-row-label">Тема оформления</span>
             <div id="theme-icon-toggle" class="theme-icon-toggle" role="button" aria-label="Переключить тему">
