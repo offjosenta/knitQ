@@ -1,16 +1,7 @@
 import { createThemeManager } from './core/theme-manager.js';
 import { createWakeLockManager } from './core/wake-lock-manager.js';
-import { createHapticManager } from './core/haptic-manager.js';
 import { createKnitStore } from './core/knit-store.js';
 import { formatDuration, formatRowTimestamp } from './core/time-format.js';
-
-const HAPTIC_PATTERNS = Object.freeze({
-  ROW_INCREMENT: 12,
-  ROW_DECREMENT: 8,
-  TIMER_TOGGLE: 10,
-  RESET: [15, 30, 15],
-  SETTINGS_ENABLE: 12
-});
 
 /**
  * Helper to manage iOS-style modal sheets with smooth open/close transitions.
@@ -48,7 +39,6 @@ function createModalController(modalEl, options = {}) {
 export function initApp() {
   const themeManager = createThemeManager();
   const wakeLockManager = createWakeLockManager();
-  const hapticManager = createHapticManager();
   const store = createKnitStore();
 
   // Register Service Worker for PWA Offline Mode
@@ -71,8 +61,6 @@ export function initApp() {
   const closeSettingsBtn = document.getElementById('btn-close-settings');
   const rowWakeLock = document.getElementById('row-wake-lock');
   const wakeLockToggle = /** @type {HTMLInputElement | null} */ (document.getElementById('toggle-wake-lock'));
-  const rowHaptic = document.getElementById('row-haptic');
-  const hapticToggle = /** @type {HTMLInputElement | null} */ (document.getElementById('toggle-haptic'));
   const rowThemeToggle = document.getElementById('row-theme-toggle');
 
   // Active Knitting Elements
@@ -97,6 +85,18 @@ export function initApp() {
   const btnCancelReset = document.getElementById('btn-cancel-reset');
   const btnConfirmReset = document.getElementById('btn-confirm-reset');
 
+  function updateRowLogScrollMask() {
+    if (!rowLogContentEl) return;
+    const { scrollTop, scrollHeight, clientHeight } = rowLogContentEl;
+    const canScroll = scrollHeight > clientHeight + 2;
+    const atTop = scrollTop <= 2;
+    const atBottom = scrollTop + clientHeight >= scrollHeight - 2;
+    rowLogContentEl.classList.toggle('fade-top', canScroll && !atTop);
+    rowLogContentEl.classList.toggle('fade-bottom', canScroll && !atBottom);
+  }
+
+  rowLogContentEl?.addEventListener('scroll', updateRowLogScrollMask, { passive: true });
+
   // Render Row Log inside modal
   function renderRowLog() {
     if (!rowLogContentEl) return;
@@ -104,6 +104,7 @@ export function initApp() {
 
     if (rowLog.length === 0) {
       rowLogContentEl.innerHTML = '<div class="row-log-empty">Пока нет отмеченных рядов. Нажмите на экран, чтобы начать отсчёт.</div>';
+      rowLogContentEl.classList.remove('fade-top', 'fade-bottom');
       return;
     }
 
@@ -144,6 +145,8 @@ export function initApp() {
     });
 
     rowLogContentEl.replaceChildren(listContainer);
+    rowLogContentEl.scrollTop = 0;
+    requestAnimationFrame(updateRowLogScrollMask);
   }
 
   // Modal Controllers
@@ -168,7 +171,6 @@ export function initApp() {
   btnCancelReset?.addEventListener('click', resetConfirmModal.close);
   btnConfirmReset?.addEventListener('click', () => {
     store.resetPart();
-    hapticManager.trigger(HAPTIC_PATTERNS.RESET);
     resetConfirmModal.close();
   });
 
@@ -208,23 +210,6 @@ export function initApp() {
     wakeLockManager.request();
   }
 
-  // Haptic preference (off by default)
-  if (hapticToggle) {
-    hapticToggle.checked = hapticManager.isEnabled();
-  }
-
-  rowHaptic?.addEventListener('click', (e) => {
-    e.preventDefault();
-    const nextState = !hapticManager.isEnabled();
-    hapticManager.setEnabled(nextState);
-    if (hapticToggle) {
-      hapticToggle.checked = nextState;
-    }
-    if (nextState) {
-      hapticManager.trigger(HAPTIC_PATTERNS.SETTINGS_ENABLE);
-    }
-  });
-
   // Render active knitting UI
   function renderTimer() {
     if (timerDisplayEl) {
@@ -261,7 +246,6 @@ export function initApp() {
   const tapZoneCard = tapZonePlus?.closest('.tap-zone-card');
   function handleTapIncrement() {
     store.incrementRow();
-    hapticManager.trigger(HAPTIC_PATTERNS.ROW_INCREMENT);
     if (tapZoneCard) {
       tapZoneCard.classList.add('tapped');
       setTimeout(() => tapZoneCard.classList.remove('tapped'), 130);
@@ -273,13 +257,11 @@ export function initApp() {
   // -1 Button
   btnRowMinus?.addEventListener('click', () => {
     store.decrementRow();
-    hapticManager.trigger(HAPTIC_PATTERNS.ROW_DECREMENT);
   });
 
   // Timer Play/Pause Button
   btnTimerToggle?.addEventListener('click', () => {
     store.toggleTimer();
-    hapticManager.trigger(HAPTIC_PATTERNS.TIMER_TOGGLE);
   });
 
   // Live timer tick
@@ -295,7 +277,6 @@ export function initApp() {
   return {
     themeManager,
     wakeLockManager,
-    hapticManager,
     store
   };
 }

@@ -715,6 +715,21 @@ input:checked + .slider:before {
   max-height: 60vh;
 }
 
+.row-log-content.fade-bottom {
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 calc(100% - 36px), transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 calc(100% - 36px), transparent 100%);
+}
+
+.row-log-content.fade-top {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 36px, #000 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 36px, #000 100%);
+}
+
+.row-log-content.fade-top.fade-bottom {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 36px, #000 calc(100% - 36px), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 36px, #000 calc(100% - 36px), transparent 100%);
+}
+
 .row-log-empty {
   background: var(--bg-card);
   border-radius: 26px;
