@@ -725,7 +725,7 @@ input:checked + .slider:before {
   max-height: 60vh;
 }
 
-.row-log-scroll.fade-bottom {
+.scroll-fade.fade-bottom {
   -webkit-mask-image: linear-gradient(
     to bottom,
     #000 0%,
@@ -742,7 +742,7 @@ input:checked + .slider:before {
   );
 }
 
-.row-log-scroll.fade-top {
+.scroll-fade.fade-top {
   -webkit-mask-image: linear-gradient(
     to bottom,
     transparent 0%,
@@ -759,7 +759,7 @@ input:checked + .slider:before {
   );
 }
 
-.row-log-scroll.fade-top.fade-bottom {
+.scroll-fade.fade-top.fade-bottom {
   -webkit-mask-image: linear-gradient(
     to bottom,
     transparent 0%,

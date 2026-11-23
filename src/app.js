@@ -96,6 +96,8 @@ export function initApp() {
   const rowHintsBarEl = document.getElementById('row-hints-bar');
   const btnOpenPartSettings = document.getElementById('btn-open-part-settings');
   const partSettingsModalEl = document.getElementById('part-settings-modal');
+  const partSettingsScrollEl = /** @type {HTMLElement | null} */ (partSettingsModalEl?.querySelector('.part-settings-scroll') ?? null);
+  attachScrollFade(partSettingsScrollEl);
   const btnClosePartSettings = document.getElementById('btn-close-part-settings');
   const inputStitchInterval = /** @type {HTMLInputElement | null} */ (document.getElementById('input-stitch-interval'));
   const inputTargetStitches = /** @type {HTMLInputElement | null} */ (document.getElementById('input-target-stitches'));
@@ -128,13 +130,21 @@ export function initApp() {
   const rowMarkerModalBodyEl = document.getElementById('row-marker-modal-body');
 
   /** @param {HTMLElement} scrollEl */
-  function updateRowLogScrollMask(scrollEl) {
+  function updateScrollFadeMask(scrollEl) {
     const { scrollTop, scrollHeight, clientHeight } = scrollEl;
     const canScroll = scrollHeight > clientHeight + 2;
     const atTop = scrollTop <= 2;
     const atBottom = scrollTop + clientHeight >= scrollHeight - 2;
     scrollEl.classList.toggle('fade-top', canScroll && !atTop);
     scrollEl.classList.toggle('fade-bottom', canScroll && !atBottom);
+  }
+
+  /** @param {HTMLElement | null} scrollEl */
+  function attachScrollFade(scrollEl) {
+    if (!scrollEl) return;
+    scrollEl.classList.add('scroll-fade');
+    scrollEl.addEventListener('scroll', () => updateScrollFadeMask(scrollEl), { passive: true });
+    requestAnimationFrame(() => updateScrollFadeMask(scrollEl));
   }
 
   // Render Row Log inside modal
@@ -152,7 +162,7 @@ export function initApp() {
 
     const scrollEl = document.createElement('div');
     scrollEl.className = 'row-log-scroll';
-    scrollEl.addEventListener('scroll', () => updateRowLogScrollMask(scrollEl), { passive: true });
+    attachScrollFade(scrollEl);
 
     // Show newest rows first so the knitter can immediately verify the latest click
     const entries = [...rowLog].reverse();
@@ -190,7 +200,7 @@ export function initApp() {
     cardEl.appendChild(scrollEl);
     rowLogContentEl.replaceChildren(cardEl);
     scrollEl.scrollTop = 0;
-    requestAnimationFrame(() => updateRowLogScrollMask(scrollEl));
+    requestAnimationFrame(() => updateScrollFadeMask(scrollEl));
   }
 
   /** @type {import('./core/checkpoint-engine.js').RowMarker[]} */
@@ -309,6 +319,10 @@ export function initApp() {
           )
         );
       }
+    }
+
+    if (partSettingsScrollEl) {
+      requestAnimationFrame(() => updateScrollFadeMask(partSettingsScrollEl));
     }
   }
 
