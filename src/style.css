@@ -5,10 +5,10 @@
 :root,
 [data-theme="liquid-silver"] {
   --color-scheme: dark;
-  --bg-primary: #14171f; /* Space Gray main screen */
-  --bg-secondary: #000000; /* Pure black settings sheet */
-  --bg-card: #1c1c1e; /* Gray card / плашка inside settings (Apple dark gray) */
-  --bg-card-main: #1c202a; /* Card on main screen */
+  --bg-primary: #000000; /* Pure OLED black main screen */
+  --bg-secondary: #000000; /* Pure OLED black settings sheet */
+  --bg-card: #1c1c1e; /* Apple dark gray card inside settings */
+  --bg-card-main: rgba(28, 28, 30, 0.88); /* Frosted card on main screen */
   --bg-card-inner: #2c2c2e;
   --border-color: rgba(255, 255, 255, 0.12);
   --border-subtle: rgba(255, 255, 255, 0.08);
@@ -18,12 +18,16 @@
   --text-secondary: #9aa1ad;
   --text-muted: #757b88;
   
-  --button-bg: #1c202a;
+  --button-bg: #1c1c1e;
   --button-border: rgba(255, 255, 255, 0.14);
   
   --toggle-track-bg: #2c2c2e;
   --toggle-knob-bg: #48484a;
   --toggle-knob-text: #ffffff;
+
+  --backdrop-bg: rgba(0, 0, 0, 0.55);
+  --sheet-border-top: rgba(255, 255, 255, 0.24);
+  --sheet-shadow: 0 -12px 48px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 [data-theme="light-minimal"] {
@@ -47,6 +51,10 @@
   --toggle-track-bg: #e3e3e8;
   --toggle-knob-bg: #ffffff;
   --toggle-knob-text: #f59e0b;
+
+  --backdrop-bg: rgba(15, 23, 42, 0.18);
+  --sheet-border-top: rgba(0, 0, 0, 0.08);
+  --sheet-shadow: 0 -8px 32px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 /* ==========================================================================
@@ -100,7 +108,7 @@ html, body {
   max-height: 100dvh;
   overflow: hidden;
   box-sizing: border-box;
-  padding-top: calc(env(safe-area-inset-top, 54px) + 8px);
+  padding-top: calc(env(safe-area-inset-top, 54px) + 20px);
   padding-bottom: max(env(safe-area-inset-bottom, 20px), 16px);
   padding-left: max(env(safe-area-inset-left, 0px), 18px);
   padding-right: max(env(safe-area-inset-right, 0px), 18px);
@@ -181,9 +189,12 @@ html, body {
 
 .glass-card {
   background: var(--bg-card-main);
-  border-radius: 22px;
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border-radius: 24px;
   padding: 22px;
   border: 1px solid var(--border-color);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .glass-card-title {
@@ -225,7 +236,9 @@ html, body {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.75);
+  background: var(--backdrop-bg);
+  backdrop-filter: blur(18px) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
   z-index: 1000;
   display: none;
   flex-direction: column;
@@ -240,13 +253,15 @@ html, body {
 }
 
 .modal-sheet {
-  background: var(--bg-secondary); /* Pure black #000000 */
+  background: var(--bg-secondary);
+  backdrop-filter: blur(32px) saturate(180%);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
   border-top-left-radius: 28px;
   border-top-right-radius: 28px;
-  border-top: 1.5px solid rgba(255, 255, 255, 0.22); /* Clear, distinct top contour! */
+  border-top: 1.5px solid var(--sheet-border-top); /* Clear, distinct top contour! */
   padding: 24px 20px calc(env(safe-area-inset-bottom, 24px) + 24px) 20px;
   max-height: 85vh;
-  box-shadow: 0 -12px 48px rgba(0, 0, 0, 0.85);
+  box-shadow: var(--sheet-shadow);
   transform: translateY(100%);
   transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
@@ -289,12 +304,12 @@ html, body {
 }
 
 /* ==========================================================================
-   IOS GROUPED CARD (GRAY SQUIRCLE CARD #1c1c1e ON BLACK SHEET)
+   IOS GROUPED CARD (APPLE LIQUID GLASS SQUIRCLE)
    ========================================================================== */
 
 .ios-grouped-section {
-  background: var(--bg-card); /* Gray card #1c1c1e on black sheet */
-  border-radius: 22px;
+  background: var(--bg-card);
+  border-radius: 26px;
   overflow: hidden;
   border: 1px solid var(--border-color);
 }
@@ -303,8 +318,8 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
-  min-height: 58px;
+  padding: 15px 18px;
+  min-height: 56px;
   cursor: pointer;
   transition: background 0.15s ease;
 }
@@ -314,7 +329,7 @@ html, body {
 }
 
 .ios-row-label {
-  font-size: 1.05rem;
+  font-size: 1.02rem;
   font-weight: 400;
   color: var(--text-primary);
   letter-spacing: -0.01em;
@@ -324,18 +339,18 @@ html, body {
 .ios-divider {
   height: 0.5px;
   background: var(--divider-color);
-  margin: 0 20px;
+  margin: 0 18px;
 }
 
 /* ==========================================================================
-   NATIVE IOS WAKE LOCK SWITCH (54x32)
+   APPLE IOS LIQUID GLASS ELONGATED WAKE LOCK SWITCH (64x28 WITH PILL KNOB)
    ========================================================================== */
 
 .switch {
   position: relative;
   display: inline-block;
-  width: 54px;
-  height: 32px;
+  width: 64px;
+  height: 28px;
   flex-shrink: 0;
   pointer-events: none;
 }
@@ -350,22 +365,22 @@ html, body {
 .slider {
   position: absolute;
   inset: 0;
-  background-color: rgba(120, 120, 128, 0.35);
+  background-color: rgba(120, 120, 128, 0.36);
   transition: background-color 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   -webkit-transition: background-color 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-  border-radius: 32px;
+  border-radius: 999px;
 }
 
 .slider:before {
   position: absolute;
   content: "";
-  height: 26px;
-  width: 26px;
-  left: 3px;
-  bottom: 3px;
+  height: 24px;
+  width: 38px;
+  left: 2px;
+  bottom: 2px;
   background-color: #ffffff;
-  border-radius: 50%;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.28), 0 1px 2px rgba(0, 0, 0, 0.15);
+  border-radius: 999px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25), 0 1px 2px rgba(0, 0, 0, 0.14);
   transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   -webkit-transition: -webkit-transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform;
@@ -381,19 +396,19 @@ input:checked + .slider:before {
 }
 
 /* ==========================================================================
-   ELONGATED & LARGER THEME TOGGLE SWITCH (66x34 WITH 28px KNOB)
+   APPLE IOS LIQUID GLASS THEME TOGGLE SWITCH (MATCHING 64x28 PILL)
    ========================================================================== */
 
 .theme-icon-toggle {
   position: relative;
-  width: 66px; /* Noticeably longer and more spacious! */
-  height: 34px; /* Larger and taller! */
-  border-radius: 34px;
+  width: 64px;
+  height: 28px;
+  border-radius: 999px;
   background: var(--toggle-track-bg);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 8px; /* Plenty of air and room for icons */
+  padding: 0 9px;
   cursor: pointer;
   flex-shrink: 0;
   border: 1px solid var(--border-subtle);
@@ -411,13 +426,13 @@ input:checked + .slider:before {
 
 .theme-toggle-knob {
   position: absolute;
-  top: 2px;
+  top: 1.5px;
   left: 2px;
-  width: 28px; /* Larger 28px knob */
-  height: 28px;
-  border-radius: 50%;
+  width: 32px;
+  height: 23px;
+  border-radius: 999px;
   background: var(--toggle-knob-bg);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35), 0 1px 2px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.18);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -440,10 +455,10 @@ input:checked + .slider:before {
   display: flex;
 }
 
-/* Light Theme: knob on right (Sun) with smooth 32px glide */
+/* Light Theme: knob on right (Sun) with smooth 26px glide */
 [data-theme="light-minimal"] .theme-toggle-knob {
-  transform: translate3d(32px, 0, 0);
-  -webkit-transform: translate3d(32px, 0, 0);
+  transform: translate3d(26px, 0, 0);
+  -webkit-transform: translate3d(26px, 0, 0);
 }
 [data-theme="light-minimal"] .theme-toggle-knob .moon-icon {
   display: none;

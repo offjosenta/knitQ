@@ -1,6 +1,7 @@
 # AGENTS.md
 
 Knit Tracker (KnitQ) — an offline-first PWA row/stitch counter and knitting project organizer for mobile.
+All UI must strictly follow the **Apple iOS 27 Liquid Glass** design standard (see `docs/adr/0002-apple-liquid-glass-ui-and-local-backup.md`).
 
 ## Project docs
 
