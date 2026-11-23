@@ -925,12 +925,28 @@ button.active-part-header:active {
   flex-direction: column;
 }
 
+.modal-sheet-scrollable .modal-header {
+  flex-shrink: 0;
+}
+
 .part-settings-scroll {
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding-bottom: 8px;
+  gap: 12px;
+  padding-bottom: 16px;
+}
+
+.part-settings-scroll > * {
+  flex-shrink: 0;
+}
+
+.part-settings-scroll .ios-row {
+  gap: 12px;
+  cursor: default;
 }
 
 .ios-section-title {
