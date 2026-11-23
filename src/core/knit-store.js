@@ -3,12 +3,19 @@ export const KNIT_STORAGE_KEY = 'knitq_store_v1';
 /**
  * @typedef {{ rowNumber: number, timestamp: string }} RowLogEntry
  * @typedef {{ elapsedMs: number, runningSince: number | null }} PartTimerState
+ * @typedef {import('./checkpoint-engine.js').RowRule} RowRule
+ * @typedef {import('./checkpoint-engine.js').RowMarker} RowMarker
  * @typedef {{
  *   id: string,
  *   name: string,
  *   currentRow: number,
  *   rowLog: RowLogEntry[],
- *   timer: PartTimerState
+ *   timer: PartTimerState,
+ *   stitchCheckInterval: number | null,
+ *   targetStitchCount: number | null,
+ *   actualStitchCount: number | null,
+ *   rowRules: RowRule[],
+ *   rowMarkers: RowMarker[]
  * }} Part
  * @typedef {{
  *   id: string,
@@ -45,7 +52,12 @@ function createDefaultState() {
             timer: {
               elapsedMs: 0,
               runningSince: null
-            }
+            },
+            stitchCheckInterval: 10,
+            targetStitchCount: null,
+            actualStitchCount: null,
+            rowRules: [],
+            rowMarkers: []
           }
         ]
       }
@@ -80,6 +92,34 @@ function isValidStoreState(candidate) {
 }
 
 /**
+ * Normalizes loaded state so legacy parts receive default check/rule/marker fields.
+ * @param {StoreState} loaded
+ * @returns {StoreState}
+ */
+function normalizeStoreState(loaded) {
+  for (const project of loaded.projects) {
+    for (const part of project.parts) {
+      if (part.stitchCheckInterval === undefined) {
+        part.stitchCheckInterval = 10;
+      }
+      if (part.targetStitchCount === undefined) {
+        part.targetStitchCount = null;
+      }
+      if (part.actualStitchCount === undefined) {
+        part.actualStitchCount = null;
+      }
+      if (!Array.isArray(part.rowRules)) {
+        part.rowRules = [];
+      }
+      if (!Array.isArray(part.rowMarkers)) {
+        part.rowMarkers = [];
+      }
+    }
+  }
+  return loaded;
+}
+
+/**
  * @param {object} [options]
  * @param {{ getItem: (key: string) => string | null, setItem: (key: string, value: string) => void } | null} [options.storage]
  * @param {() => number} [options.now]
@@ -99,7 +139,7 @@ export function createKnitStore(options = {}) {
       if (raw) {
         const parsed = JSON.parse(raw);
         if (isValidStoreState(parsed)) {
-          state = parsed;
+          state = normalizeStoreState(parsed);
         }
       }
     } catch {
@@ -236,6 +276,109 @@ export function createKnitStore(options = {}) {
 
     getElapsedMs() {
       return getPartElapsedMs(getActivePart());
+    },
+
+    /**
+     * Updates stitch check interval and/or target stitch count for the active part.
+     * @param {{ stitchCheckInterval?: number | null, targetStitchCount?: number | null }} settings
+     */
+    updatePartCheckSettings(settings) {
+      const part = getActivePart();
+      if (settings.stitchCheckInterval !== undefined) {
+        part.stitchCheckInterval =
+          typeof settings.stitchCheckInterval === 'number' && settings.stitchCheckInterval > 0
+            ? Math.floor(settings.stitchCheckInterval)
+            : null;
+      }
+      if (settings.targetStitchCount !== undefined) {
+        part.targetStitchCount =
+          typeof settings.targetStitchCount === 'number' && settings.targetStitchCount >= 0
+            ? Math.floor(settings.targetStitchCount)
+            : null;
+      }
+      commit();
+    },
+
+    /**
+     * Records the actual stitch count on the needles after a stitch check.
+     * @param {number | null} count
+     */
+    setActualStitchCount(count) {
+      const part = getActivePart();
+      part.actualStitchCount =
+        typeof count === 'number' && count >= 0
+          ? Math.floor(count)
+          : null;
+      commit();
+    },
+
+    /**
+     * Adds a rhythmic row rule to the active part.
+     * @param {{ label: string, everyNRows: number, startRow?: number, repeatCount?: number | null }} input
+     * @returns {RowRule}
+     */
+    addRowRule(input) {
+      const part = getActivePart();
+      /** @type {RowRule} */
+      const rule = {
+        id: `rule-${now()}-${Math.random().toString(36).slice(2, 7)}`,
+        label: String(input.label || '').trim() || 'Действие по правилу',
+        everyNRows: Math.max(1, Math.floor(Number(input.everyNRows) || 1)),
+        startRow: Math.max(1, Math.floor(Number(input.startRow) || 1)),
+        repeatCount:
+          typeof input.repeatCount === 'number' && input.repeatCount > 0
+            ? Math.floor(input.repeatCount)
+            : null
+      };
+      part.rowRules.push(rule);
+      commit();
+      return rule;
+    },
+
+    /**
+     * Removes a rhythmic row rule by id from the active part.
+     * @param {string} ruleId
+     */
+    removeRowRule(ruleId) {
+      const part = getActivePart();
+      const next = part.rowRules.filter((r) => r.id !== ruleId);
+      if (next.length !== part.rowRules.length) {
+        part.rowRules = next;
+        commit();
+      }
+    },
+
+    /**
+     * Attaches a text marker to a specific row number on the active part.
+     * @param {number} rowNumber
+     * @param {string} text
+     * @returns {RowMarker}
+     */
+    addRowMarker(rowNumber, text) {
+      const part = getActivePart();
+      /** @type {RowMarker} */
+      const marker = {
+        id: `marker-${now()}-${Math.random().toString(36).slice(2, 7)}`,
+        rowNumber: Math.max(1, Math.floor(Number(rowNumber) || 1)),
+        text: String(text || '').trim() || 'Важный ряд'
+      };
+      part.rowMarkers.push(marker);
+      part.rowMarkers.sort((a, b) => a.rowNumber - b.rowNumber);
+      commit();
+      return marker;
+    },
+
+    /**
+     * Removes a row marker by id from the active part.
+     * @param {string} markerId
+     */
+    removeRowMarker(markerId) {
+      const part = getActivePart();
+      const next = part.rowMarkers.filter((m) => m.id !== markerId);
+      if (next.length !== part.rowMarkers.length) {
+        part.rowMarkers = next;
+        commit();
+      }
     },
 
     /**

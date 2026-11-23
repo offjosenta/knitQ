@@ -56,11 +56,25 @@
     <!-- Main Content: Active Knitting Screen -->
     <main class="main-content" id="app-main">
       <!-- Part / Project Context Pill -->
-      <div class="active-part-header">
+      <button id="btn-open-part-settings" type="button" class="active-part-header" aria-label="Настройки детали: контроль петель, правила и маркеры">
         <span id="active-project-name" class="active-project-name">Шарф «Лицевая гладь»</span>
         <span class="active-part-sep">·</span>
         <span id="active-part-name" class="active-part-name">Основное полотно</span>
-      </div>
+        <svg class="active-part-gear" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="4" y1="21" x2="4" y2="14"></line>
+          <line x1="4" y1="10" x2="4" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12" y2="3"></line>
+          <line x1="20" y1="21" x2="20" y2="16"></line>
+          <line x1="20" y1="12" x2="20" y2="3"></line>
+          <line x1="1" y1="14" x2="7" y2="14"></line>
+          <line x1="9" y1="8" x2="15" y2="8"></line>
+          <line x1="17" y1="16" x2="23" y2="16"></line>
+        </svg>
+      </button>
+
+      <!-- Active Row Rules & Markers Hint Bar -->
+      <div id="row-hints-bar" class="row-hints-bar" hidden></div>
 
       <!-- Giant Tap Zone (+1 Row) -->
       <div class="tap-zone-card glass-card">
@@ -171,6 +185,168 @@
         <div class="reset-confirm-actions">
           <button id="btn-cancel-reset" type="button" class="btn-secondary-action">Отмена</button>
           <button id="btn-confirm-reset" type="button" class="btn-destructive-action">Сбросить</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Part Settings Modal Sheet (Stitch Check, Row Rules, Row Markers) -->
+    <div id="part-settings-modal" class="modal-backdrop">
+      <div class="modal-sheet modal-sheet-scrollable">
+        <div class="modal-header">
+          <h3 class="modal-title">Настройки детали</h3>
+          <button id="btn-close-part-settings" class="modal-close-btn" aria-label="Закрыть">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <div class="part-settings-scroll">
+          <!-- Section 1: Stitch Check -->
+          <div class="ios-section-title">Контрольная проверка петель</div>
+          <div class="ios-grouped-section">
+            <div class="ios-row ios-row-stack">
+              <span class="ios-row-label">Шаг проверки (ряды)</span>
+              <div class="preset-chips-row">
+                <button type="button" class="preset-chip" data-interval="10">10</button>
+                <button type="button" class="preset-chip" data-interval="15">15</button>
+                <button type="button" class="preset-chip" data-interval="0">Выкл</button>
+                <input
+                  id="input-stitch-interval"
+                  type="number"
+                  min="0"
+                  inputmode="numeric"
+                  class="glass-input glass-input-compact"
+                  placeholder="Шаг"
+                  aria-label="Свой шаг проверки петель"
+                >
+              </div>
+            </div>
+            <div class="ios-divider"></div>
+            <div class="ios-row">
+              <label for="input-target-stitches" class="ios-row-label">Целевое число петель</label>
+              <input
+                id="input-target-stitches"
+                type="number"
+                min="1"
+                inputmode="numeric"
+                class="glass-input glass-input-compact"
+                placeholder="Напр. 80"
+              >
+            </div>
+            <div id="actual-stitch-status-row" class="ios-row-sub-info" hidden></div>
+          </div>
+
+          <!-- Section 2: Row Rules -->
+          <div class="ios-section-title">Правила ряда (реглан, косы, убавки)</div>
+          <div class="ios-grouped-section">
+            <div id="row-rules-list" class="settings-item-list"></div>
+            <div class="ios-divider"></div>
+            <form id="form-add-rule" class="inline-add-form">
+              <input
+                id="input-rule-label"
+                type="text"
+                class="glass-input"
+                placeholder="Подсказка (напр. Прибавки реглана)"
+                required
+              >
+              <div class="inline-form-grid">
+                <label class="inline-field">
+                  <span>Каждые N р.</span>
+                  <input id="input-rule-every" type="number" min="1" value="2" inputmode="numeric" class="glass-input" required>
+                </label>
+                <label class="inline-field">
+                  <span>С ряда</span>
+                  <input id="input-rule-start" type="number" min="1" value="1" inputmode="numeric" class="glass-input" required>
+                </label>
+                <label class="inline-field">
+                  <span>Повторов</span>
+                  <input id="input-rule-repeat" type="number" min="1" inputmode="numeric" class="glass-input" placeholder="∞">
+                </label>
+              </div>
+              <button type="submit" class="btn-glass-add">+ Добавить правило</button>
+            </form>
+          </div>
+
+          <!-- Section 3: Row Markers -->
+          <div class="ios-section-title">Маркеры рядов</div>
+          <div class="ios-grouped-section">
+            <div id="row-markers-list" class="settings-item-list"></div>
+            <div class="ios-divider"></div>
+            <form id="form-add-marker" class="inline-add-form">
+              <div class="inline-marker-row">
+                <input
+                  id="input-marker-row"
+                  type="number"
+                  min="1"
+                  inputmode="numeric"
+                  class="glass-input glass-input-row-num"
+                  placeholder="Ряд"
+                  required
+                >
+                <input
+                  id="input-marker-text"
+                  type="text"
+                  class="glass-input"
+                  placeholder="Заметка (напр. Разделить рукава)"
+                  required
+                >
+              </div>
+              <button type="submit" class="btn-glass-add">+ Добавить маркер</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stitch Check Modal Sheet -->
+    <div id="stitch-check-modal" class="modal-backdrop">
+      <div class="modal-sheet">
+        <div class="modal-header">
+          <h3 class="modal-title">Контрольная проверка</h3>
+          <button id="btn-close-stitch-check" class="modal-close-btn" aria-label="Закрыть">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <p id="stitch-check-desc" class="reset-confirm-desc">
+          Пора пересчитать петли на спицах! Должно быть: 0 петель.
+        </p>
+        <div class="stitch-check-edit-row">
+          <label for="input-stitch-check-actual" class="ios-row-label">Фактически на спицах:</label>
+          <input
+            id="input-stitch-check-actual"
+            type="number"
+            min="0"
+            inputmode="numeric"
+            class="glass-input glass-input-compact"
+          >
+        </div>
+        <div class="reset-confirm-actions">
+          <button id="btn-stitch-check-save" type="button" class="btn-secondary-action">Обновить</button>
+          <button id="btn-stitch-check-confirm" type="button" class="btn-primary-action">Всё сходится</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row Marker Alert Modal Sheet -->
+    <div id="row-marker-modal" class="modal-backdrop">
+      <div class="modal-sheet">
+        <div class="modal-header">
+          <h3 id="row-marker-modal-title" class="modal-title">Маркер ряда</h3>
+          <button id="btn-close-row-marker" class="modal-close-btn" aria-label="Закрыть">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div id="row-marker-modal-body" class="row-marker-modal-body"></div>
+        <div class="reset-confirm-actions">
+          <button id="btn-ack-row-marker" type="button" class="btn-primary-action">Понятно</button>
         </div>
       </div>
     </div>

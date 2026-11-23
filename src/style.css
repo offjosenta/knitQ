@@ -862,3 +862,292 @@ input:checked + .slider:before {
 .btn-destructive-action:active {
   transform: scale(0.96);
 }
+
+/* ==========================================================================
+   PART SETTINGS, CHECKPOINTS, ROW RULES & MARKERS (APPLE LIQUID GLASS)
+   ========================================================================== */
+
+button.active-part-header {
+  cursor: pointer;
+  color: inherit;
+  font-family: inherit;
+  transition: transform 0.15s ease, border-color 0.2s ease;
+}
+
+button.active-part-header:active {
+  transform: scale(0.97);
+}
+
+.active-part-gear {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  margin-left: 2px;
+}
+
+.row-hints-bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.row-hint-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  background: var(--bg-card-main);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+}
+
+.row-hint-pill.action {
+  color: var(--text-primary);
+  border-color: rgba(52, 199, 89, 0.45);
+  background: rgba(52, 199, 89, 0.14);
+}
+
+.row-hint-pill.marker {
+  color: var(--text-primary);
+  border-color: rgba(255, 159, 10, 0.48);
+  background: rgba(255, 159, 10, 0.15);
+}
+
+.modal-sheet-scrollable {
+  max-height: 85dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.part-settings-scroll {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 8px;
+}
+
+.ios-section-title {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  padding: 4px 6px 0;
+}
+
+.ios-row-stack {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.ios-row-sub-info {
+  padding: 8px 16px 12px;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.preset-chips-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.preset-chip {
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card-inner);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.preset-chip.active {
+  background: rgba(52, 199, 89, 0.18);
+  border-color: rgba(52, 199, 89, 0.5);
+  color: #34c759;
+}
+
+.glass-input {
+  width: 100%;
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card-inner);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.92rem;
+  outline: none;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.glass-input:focus {
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+[data-theme="light-minimal"] .glass-input:focus {
+  border-color: rgba(0, 0, 0, 0.3);
+}
+
+.glass-input-compact {
+  width: 96px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.glass-input-row-num {
+  width: 84px;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.settings-item-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 11px 16px;
+}
+
+.settings-list-item + .settings-list-item {
+  border-top: 0.5px solid var(--divider-color);
+}
+
+.settings-list-item-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.settings-list-item-title {
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.settings-list-item-sub {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.btn-remove-item {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card-inner);
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.inline-add-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 16px;
+}
+
+.inline-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.inline-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.inline-marker-row {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-glass-add {
+  height: 40px;
+  border-radius: 14px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card-inner);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-glass-add:active {
+  transform: scale(0.98);
+}
+
+.stitch-check-edit-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  margin-bottom: 18px;
+}
+
+.btn-primary-action {
+  flex: 1;
+  height: 52px;
+  border-radius: 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid rgba(52, 199, 89, 0.45);
+  background: rgba(52, 199, 89, 0.18);
+  color: #34c759;
+  transition: transform 0.15s ease;
+}
+
+.btn-primary-action:active {
+  transform: scale(0.96);
+}
+
+.row-marker-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.row-marker-alert-card {
+  padding: 14px 16px;
+  border-radius: 24px;
+  background: rgba(255, 159, 10, 0.14);
+  border: 1px solid rgba(255, 159, 10, 0.35);
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 500;
+}

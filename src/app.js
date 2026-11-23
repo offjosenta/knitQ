@@ -1,12 +1,17 @@
 import { createThemeManager } from './core/theme-manager.js';
 import { createWakeLockManager } from './core/wake-lock-manager.js';
 import { createKnitStore } from './core/knit-store.js';
+import {
+  shouldTriggerStitchCheck,
+  evaluateRowRules,
+  getRowMarkersForRow
+} from './core/checkpoint-engine.js';
 import { formatDuration, formatRowTimestamp } from './core/time-format.js';
 
 /**
  * Helper to manage iOS-style modal sheets with smooth open/close transitions.
  * @param {HTMLElement | null} modalEl
- * @param {{ onOpen?: () => void }} [options]
+ * @param {{ onOpen?: () => void, onClose?: () => void }} [options]
  */
 function createModalController(modalEl, options = {}) {
   const open = () => {
@@ -19,7 +24,9 @@ function createModalController(modalEl, options = {}) {
 
   const close = () => {
     if (!modalEl) return;
+    if (!modalEl.classList.contains('open')) return;
     modalEl.classList.remove('open');
+    options.onClose?.();
     setTimeout(() => {
       if (!modalEl.classList.contains('open')) {
         modalEl.style.display = 'none';
@@ -84,6 +91,41 @@ export function initApp() {
   const btnCloseResetConfirm = document.getElementById('btn-close-reset-confirm');
   const btnCancelReset = document.getElementById('btn-cancel-reset');
   const btnConfirmReset = document.getElementById('btn-confirm-reset');
+
+  // Part Settings, Checkpoints, Rules & Markers Elements
+  const rowHintsBarEl = document.getElementById('row-hints-bar');
+  const btnOpenPartSettings = document.getElementById('btn-open-part-settings');
+  const partSettingsModalEl = document.getElementById('part-settings-modal');
+  const btnClosePartSettings = document.getElementById('btn-close-part-settings');
+  const inputStitchInterval = /** @type {HTMLInputElement | null} */ (document.getElementById('input-stitch-interval'));
+  const inputTargetStitches = /** @type {HTMLInputElement | null} */ (document.getElementById('input-target-stitches'));
+  const actualStitchStatusRow = document.getElementById('actual-stitch-status-row');
+  const intervalPresetChips = Array.from(document.querySelectorAll('.preset-chip[data-interval]'));
+  const rowRulesListEl = document.getElementById('row-rules-list');
+  const formAddRule = /** @type {HTMLFormElement | null} */ (document.getElementById('form-add-rule'));
+  const inputRuleLabel = /** @type {HTMLInputElement | null} */ (document.getElementById('input-rule-label'));
+  const inputRuleEvery = /** @type {HTMLInputElement | null} */ (document.getElementById('input-rule-every'));
+  const inputRuleStart = /** @type {HTMLInputElement | null} */ (document.getElementById('input-rule-start'));
+  const inputRuleRepeat = /** @type {HTMLInputElement | null} */ (document.getElementById('input-rule-repeat'));
+  const rowMarkersListEl = document.getElementById('row-markers-list');
+  const formAddMarker = /** @type {HTMLFormElement | null} */ (document.getElementById('form-add-marker'));
+  const inputMarkerRow = /** @type {HTMLInputElement | null} */ (document.getElementById('input-marker-row'));
+  const inputMarkerText = /** @type {HTMLInputElement | null} */ (document.getElementById('input-marker-text'));
+
+  // Stitch Check Modal Elements
+  const stitchCheckModalEl = document.getElementById('stitch-check-modal');
+  const btnCloseStitchCheck = document.getElementById('btn-close-stitch-check');
+  const stitchCheckDescEl = document.getElementById('stitch-check-desc');
+  const inputStitchCheckActual = /** @type {HTMLInputElement | null} */ (document.getElementById('input-stitch-check-actual'));
+  const btnStitchCheckConfirm = document.getElementById('btn-stitch-check-confirm');
+  const btnStitchCheckSave = document.getElementById('btn-stitch-check-save');
+
+  // Row Marker Alert Modal Elements
+  const rowMarkerModalEl = document.getElementById('row-marker-modal');
+  const btnCloseRowMarker = document.getElementById('btn-close-row-marker');
+  const btnAckRowMarker = document.getElementById('btn-ack-row-marker');
+  const rowMarkerModalTitleEl = document.getElementById('row-marker-modal-title');
+  const rowMarkerModalBodyEl = document.getElementById('row-marker-modal-body');
 
   /** @param {HTMLElement} scrollEl */
   function updateRowLogScrollMask(scrollEl) {
@@ -151,10 +193,220 @@ export function initApp() {
     requestAnimationFrame(() => updateRowLogScrollMask(scrollEl));
   }
 
+  /** @type {import('./core/checkpoint-engine.js').RowMarker[]} */
+  let pendingMarkersAfterCheck = [];
+
+  function flushPendingMarkersAfterCheck() {
+    if (pendingMarkersAfterCheck.length > 0) {
+      const markersToShow = [...pendingMarkersAfterCheck];
+      const rowNum = store.getActivePart().currentRow;
+      pendingMarkersAfterCheck = [];
+      setTimeout(() => openRowMarkerModal(rowNum, markersToShow), 200);
+    }
+  }
+
   // Modal Controllers
   const settingsModal = createModalController(settingsModalEl);
   const rowLogModal = createModalController(rowLogModalEl, { onOpen: renderRowLog });
   const resetConfirmModal = createModalController(resetConfirmModalEl);
+  const partSettingsModal = createModalController(partSettingsModalEl, { onOpen: renderPartSettings });
+  const stitchCheckModal = createModalController(stitchCheckModalEl, { onClose: flushPendingMarkersAfterCheck });
+  const rowMarkerModal = createModalController(rowMarkerModalEl);
+
+  /**
+   * @param {{ title: string, subtitle?: string, ariaLabel: string, onRemove: () => void }} opts
+   */
+  function createSettingsListItem(opts) {
+    const item = document.createElement('div');
+    item.className = 'settings-list-item';
+
+    const main = document.createElement('div');
+    main.className = 'settings-list-item-main';
+
+    const titleEl = document.createElement('span');
+    titleEl.className = 'settings-list-item-title';
+    titleEl.textContent = opts.title;
+    main.appendChild(titleEl);
+
+    if (opts.subtitle) {
+      const subEl = document.createElement('span');
+      subEl.className = 'settings-list-item-sub';
+      subEl.textContent = opts.subtitle;
+      main.appendChild(subEl);
+    }
+
+    const delBtn = document.createElement('button');
+    delBtn.type = 'button';
+    delBtn.className = 'btn-remove-item';
+    delBtn.setAttribute('aria-label', opts.ariaLabel);
+    delBtn.textContent = '×';
+    delBtn.addEventListener('click', opts.onRemove);
+
+    item.append(main, delBtn);
+    return item;
+  }
+
+  function renderPartSettings() {
+    const part = store.getActivePart();
+    const interval = part.stitchCheckInterval ?? 0;
+
+    if (inputStitchInterval) {
+      inputStitchInterval.value = interval > 0 ? String(interval) : '';
+    }
+    intervalPresetChips.forEach((chip) => {
+      const chipVal = Number(chip.getAttribute('data-interval'));
+      chip.classList.toggle('active', chipVal === interval);
+    });
+
+    if (inputTargetStitches) {
+      inputTargetStitches.value = part.targetStitchCount !== null ? String(part.targetStitchCount) : '';
+    }
+
+    if (actualStitchStatusRow) {
+      if (part.actualStitchCount !== null) {
+        actualStitchStatusRow.hidden = false;
+        actualStitchStatusRow.textContent = `Последний пересчёт на спицах: ${part.actualStitchCount} п.`;
+      } else {
+        actualStitchStatusRow.hidden = true;
+      }
+    }
+
+    if (rowRulesListEl) {
+      if (part.rowRules.length === 0) {
+        rowRulesListEl.innerHTML = '<div class="ios-row-sub-info">Правила ряда пока не заданы.</div>';
+      } else {
+        rowRulesListEl.replaceChildren(
+          ...part.rowRules.map((rule) => {
+            const repeatText = rule.repeatCount ? `, ${rule.repeatCount} раз(а)` : '';
+            return createSettingsListItem({
+              title: rule.label,
+              subtitle: `Каждые ${rule.everyNRows} р. с ${rule.startRow || 1}-го ряда${repeatText}`,
+              ariaLabel: 'Удалить правило',
+              onRemove: () => {
+                store.removeRowRule(rule.id);
+                renderPartSettings();
+              }
+            });
+          })
+        );
+      }
+    }
+
+    if (rowMarkersListEl) {
+      if (part.rowMarkers.length === 0) {
+        rowMarkersListEl.innerHTML = '<div class="ios-row-sub-info">Маркеры рядов пока не заданы.</div>';
+      } else {
+        rowMarkersListEl.replaceChildren(
+          ...part.rowMarkers.map((marker) =>
+            createSettingsListItem({
+              title: `Ряд ${marker.rowNumber}: ${marker.text}`,
+              ariaLabel: 'Удалить маркер',
+              onRemove: () => {
+                store.removeRowMarker(marker.id);
+                renderPartSettings();
+              }
+            })
+          )
+        );
+      }
+    }
+  }
+
+  /**
+   * @param {number} rowNumber
+   * @param {import('./core/checkpoint-engine.js').RowMarker[]} markers
+   */
+  function openRowMarkerModal(rowNumber, markers) {
+    if (rowMarkerModalTitleEl) {
+      rowMarkerModalTitleEl.textContent = `Маркер ряда ${rowNumber}`;
+    }
+    if (rowMarkerModalBodyEl) {
+      rowMarkerModalBodyEl.replaceChildren(
+        ...markers.map((marker) => {
+          const card = document.createElement('div');
+          card.className = 'row-marker-alert-card';
+          card.textContent = marker.text;
+          return card;
+        })
+      );
+    }
+    rowMarkerModal.open();
+  }
+
+  btnOpenPartSettings?.addEventListener('click', partSettingsModal.open);
+  btnClosePartSettings?.addEventListener('click', partSettingsModal.close);
+
+  intervalPresetChips.forEach((chip) => {
+    chip.addEventListener('click', () => {
+      const val = Number(chip.getAttribute('data-interval'));
+      store.updatePartCheckSettings({ stitchCheckInterval: val > 0 ? val : null });
+      renderPartSettings();
+    });
+  });
+
+  inputStitchInterval?.addEventListener('change', () => {
+    const val = Number(inputStitchInterval.value);
+    store.updatePartCheckSettings({ stitchCheckInterval: val > 0 ? val : null });
+    renderPartSettings();
+  });
+
+  inputTargetStitches?.addEventListener('change', () => {
+    const raw = inputTargetStitches.value.trim();
+    const val = raw === '' ? null : Number(raw);
+    store.updatePartCheckSettings({
+      targetStitchCount: val !== null && !Number.isNaN(val) && val >= 0 ? val : null
+    });
+    renderPartSettings();
+  });
+
+  formAddRule?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const label = inputRuleLabel?.value.trim() || '';
+    if (!label) return;
+    const everyNRows = Number(inputRuleEvery?.value) || 2;
+    const startRow = Number(inputRuleStart?.value) || 1;
+    const repeatRaw = inputRuleRepeat?.value.trim() || '';
+    const repeatCount = repeatRaw ? Number(repeatRaw) : null;
+
+    store.addRowRule({ label, everyNRows, startRow, repeatCount });
+    if (inputRuleLabel) inputRuleLabel.value = '';
+    if (inputRuleRepeat) inputRuleRepeat.value = '';
+    renderPartSettings();
+  });
+
+  formAddMarker?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const rowNum = Number(inputMarkerRow?.value);
+    const text = inputMarkerText?.value.trim() || '';
+    if (!rowNum || rowNum < 1 || !text) return;
+
+    store.addRowMarker(rowNum, text);
+    if (inputMarkerRow) inputMarkerRow.value = '';
+    if (inputMarkerText) inputMarkerText.value = '';
+    renderPartSettings();
+  });
+
+  btnCloseStitchCheck?.addEventListener('click', stitchCheckModal.close);
+  btnStitchCheckConfirm?.addEventListener('click', () => {
+    const target = store.getActivePart().targetStitchCount;
+    if (target !== null) {
+      store.setActualStitchCount(target);
+    }
+    stitchCheckModal.close();
+  });
+  btnStitchCheckSave?.addEventListener('click', () => {
+    const raw = inputStitchCheckActual?.value.trim() ?? '';
+    if (raw !== '') {
+      const val = Number(raw);
+      if (!Number.isNaN(val) && val >= 0) {
+        store.setActualStitchCount(val);
+      }
+    }
+    stitchCheckModal.close();
+  });
+
+  btnCloseRowMarker?.addEventListener('click', rowMarkerModal.close);
+  btnAckRowMarker?.addEventListener('click', rowMarkerModal.close);
 
   openSettingsBtn?.addEventListener('click', settingsModal.open);
   closeSettingsBtn?.addEventListener('click', settingsModal.close);
@@ -241,6 +493,39 @@ export function initApp() {
     if (btnRowReset) {
       btnRowReset.disabled = part.currentRow === 0 && store.getElapsedMs() === 0;
     }
+
+    if (rowHintsBarEl) {
+      const evaluatedRules = evaluateRowRules(part.currentRow, part.rowRules);
+      const activeMarkers = getRowMarkersForRow(part.currentRow, part.rowMarkers);
+      /** @type {HTMLElement[]} */
+      const pills = [];
+
+      for (const ruleHint of evaluatedRules) {
+        const pill = document.createElement('span');
+        pill.className = `row-hint-pill ${ruleHint.isAction ? 'action' : ''}`;
+        const progress = ruleHint.isAction && ruleHint.totalRepeats
+          ? ` (${ruleHint.occurrence}/${ruleHint.totalRepeats})`
+          : '';
+        pill.textContent = `${ruleHint.text}${progress}`;
+        pills.push(pill);
+      }
+
+      for (const marker of activeMarkers) {
+        const pill = document.createElement('span');
+        pill.className = 'row-hint-pill marker';
+        pill.textContent = `Ряд ${marker.rowNumber}: ${marker.text}`;
+        pills.push(pill);
+      }
+
+      if (pills.length > 0) {
+        rowHintsBarEl.hidden = false;
+        rowHintsBarEl.replaceChildren(...pills);
+      } else {
+        rowHintsBarEl.hidden = true;
+        rowHintsBarEl.replaceChildren();
+      }
+    }
+
     renderTimer();
   }
 
@@ -251,6 +536,29 @@ export function initApp() {
     if (tapZoneCard) {
       tapZoneCard.classList.add('tapped');
       setTimeout(() => tapZoneCard.classList.remove('tapped'), 130);
+    }
+
+    const part = store.getActivePart();
+    const needsStitchCheck =
+      part.targetStitchCount !== null
+      && part.targetStitchCount > 0
+      && shouldTriggerStitchCheck(part.currentRow, part.stitchCheckInterval);
+    const activeMarkers = getRowMarkersForRow(part.currentRow, part.rowMarkers);
+
+    if (needsStitchCheck) {
+      pendingMarkersAfterCheck = activeMarkers;
+      if (stitchCheckDescEl) {
+        stitchCheckDescEl.textContent = `Ряд ${part.currentRow}: пора пересчитать петли на спицах! Должно быть: ${part.targetStitchCount} петель.`;
+      }
+      if (inputStitchCheckActual) {
+        inputStitchCheckActual.value = String(part.targetStitchCount);
+      }
+      if (btnStitchCheckConfirm) {
+        btnStitchCheckConfirm.textContent = `Всё сходится (${part.targetStitchCount})`;
+      }
+      stitchCheckModal.open();
+    } else if (activeMarkers.length > 0) {
+      openRowMarkerModal(part.currentRow, activeMarkers);
     }
   }
 

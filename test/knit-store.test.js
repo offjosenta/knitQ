@@ -139,3 +139,95 @@ test('timer supports manual start/pause/toggle and auto-resumes on incrementRow'
   store.toggleTimer();
   assert.equal(store.isTimerRunning(), true);
 });
+
+test('KnitStore manages stitch check settings, actual stitch count, and migrates legacy stored parts', () => {
+  const legacyState = {
+    activeProjectId: 'p1',
+    projects: [
+      {
+        id: 'p1',
+        name: 'Старый проект',
+        activePartId: 'part-old',
+        parts: [
+          {
+            id: 'part-old',
+            name: 'Резинка',
+            currentRow: 5,
+            rowLog: [],
+            timer: { elapsedMs: 0, runningSince: null }
+          }
+        ]
+      }
+    ]
+  };
+  const storage = createMemoryStorage({
+    knitq_store_v1: JSON.stringify(legacyState)
+  });
+  const store = createKnitStore({ storage });
+
+  // Defaults for migrated part
+  let part = store.getActivePart();
+  assert.equal(part.stitchCheckInterval, 10);
+  assert.equal(part.targetStitchCount, null);
+  assert.equal(part.actualStitchCount, null);
+  assert.deepEqual(part.rowRules, []);
+  assert.deepEqual(part.rowMarkers, []);
+
+  // Update check settings
+  store.updatePartCheckSettings({ stitchCheckInterval: 15, targetStitchCount: 84 });
+  part = store.getActivePart();
+  assert.equal(part.stitchCheckInterval, 15);
+  assert.equal(part.targetStitchCount, 84);
+
+  // Set actual stitch count (e.g. user corrected count in check modal)
+  store.setActualStitchCount(82);
+  assert.equal(store.getActivePart().actualStitchCount, 82);
+
+  // Persists across reload
+  const restored = createKnitStore({ storage });
+  assert.equal(restored.getActivePart().stitchCheckInterval, 15);
+  assert.equal(restored.getActivePart().targetStitchCount, 84);
+  assert.equal(restored.getActivePart().actualStitchCount, 82);
+});
+
+test('KnitStore adds and removes row rules on active part and persists them', () => {
+  const storage = createMemoryStorage();
+  const store = createKnitStore({ storage });
+
+  const rule = store.addRowRule({
+    label: 'Сделайте прибавки реглана',
+    everyNRows: 2,
+    startRow: 1,
+    repeatCount: 16
+  });
+
+  assert.ok(rule.id);
+  assert.equal(store.getActivePart().rowRules.length, 1);
+  assert.equal(store.getActivePart().rowRules[0].label, 'Сделайте прибавки реглана');
+  assert.equal(store.getActivePart().rowRules[0].everyNRows, 2);
+  assert.equal(store.getActivePart().rowRules[0].repeatCount, 16);
+
+  const restored = createKnitStore({ storage });
+  assert.equal(restored.getActivePart().rowRules.length, 1);
+
+  restored.removeRowRule(rule.id);
+  assert.equal(restored.getActivePart().rowRules.length, 0);
+});
+
+test('KnitStore adds and removes row markers on active part and persists them', () => {
+  const storage = createMemoryStorage();
+  const store = createKnitStore({ storage });
+
+  const marker = store.addRowMarker(42, 'Разделить рукава');
+  assert.ok(marker.id);
+  assert.equal(marker.rowNumber, 42);
+  assert.equal(marker.text, 'Разделить рукава');
+  assert.equal(store.getActivePart().rowMarkers.length, 1);
+
+  const restored = createKnitStore({ storage });
+  assert.equal(restored.getActivePart().rowMarkers.length, 1);
+  assert.equal(restored.getActivePart().rowMarkers[0].text, 'Разделить рукава');
+
+  restored.removeRowMarker(marker.id);
+  assert.equal(restored.getActivePart().rowMarkers.length, 0);
+});
