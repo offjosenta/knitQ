@@ -10,6 +10,10 @@ All UI must strictly follow the **Apple iOS 27 Liquid Glass** design standard (s
 - Domain glossary: `GLOSSARY.md`
 - Architecture decisions: `docs/adr/`
 
+## Git commits
+
+All git commit messages must be written in Russian and prefixed with the two-digit ticket number being worked on (e.g. `01: описание изменений`, `02: описание изменений`).
+
 ## Agent skills
 
 ### Issue tracker
