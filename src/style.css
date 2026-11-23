@@ -711,23 +711,73 @@ input:checked + .slider:before {
    ========================================================================== */
 
 .row-log-content {
+  max-height: 60vh;
+}
+
+.row-log-card {
+  display: flex;
+  flex-direction: column;
+  max-height: 60vh;
+}
+
+.row-log-scroll {
   overflow-y: auto;
   max-height: 60vh;
 }
 
-.row-log-content.fade-bottom {
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 calc(100% - 36px), transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 0%, #000 calc(100% - 36px), transparent 100%);
+.row-log-scroll.fade-bottom {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    #000 calc(100% - 48px),
+    rgba(0, 0, 0, 0.55) calc(100% - 20px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    #000 calc(100% - 48px),
+    rgba(0, 0, 0, 0.55) calc(100% - 20px),
+    transparent 100%
+  );
 }
 
-.row-log-content.fade-top {
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 36px, #000 100%);
-  mask-image: linear-gradient(to bottom, transparent 0%, #000 36px, #000 100%);
+.row-log-scroll.fade-top {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.55) 20px,
+    #000 48px,
+    #000 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.55) 20px,
+    #000 48px,
+    #000 100%
+  );
 }
 
-.row-log-content.fade-top.fade-bottom {
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 36px, #000 calc(100% - 36px), transparent 100%);
-  mask-image: linear-gradient(to bottom, transparent 0%, #000 36px, #000 calc(100% - 36px), transparent 100%);
+.row-log-scroll.fade-top.fade-bottom {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.55) 20px,
+    #000 48px,
+    #000 calc(100% - 48px),
+    rgba(0, 0, 0, 0.55) calc(100% - 20px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.55) 20px,
+    #000 48px,
+    #000 calc(100% - 48px),
+    rgba(0, 0, 0, 0.55) calc(100% - 20px),
+    transparent 100%
+  );
 }
 
 .row-log-empty {

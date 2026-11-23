@@ -85,17 +85,15 @@ export function initApp() {
   const btnCancelReset = document.getElementById('btn-cancel-reset');
   const btnConfirmReset = document.getElementById('btn-confirm-reset');
 
-  function updateRowLogScrollMask() {
-    if (!rowLogContentEl) return;
-    const { scrollTop, scrollHeight, clientHeight } = rowLogContentEl;
+  /** @param {HTMLElement} scrollEl */
+  function updateRowLogScrollMask(scrollEl) {
+    const { scrollTop, scrollHeight, clientHeight } = scrollEl;
     const canScroll = scrollHeight > clientHeight + 2;
     const atTop = scrollTop <= 2;
     const atBottom = scrollTop + clientHeight >= scrollHeight - 2;
-    rowLogContentEl.classList.toggle('fade-top', canScroll && !atTop);
-    rowLogContentEl.classList.toggle('fade-bottom', canScroll && !atBottom);
+    scrollEl.classList.toggle('fade-top', canScroll && !atTop);
+    scrollEl.classList.toggle('fade-bottom', canScroll && !atBottom);
   }
-
-  rowLogContentEl?.addEventListener('scroll', updateRowLogScrollMask, { passive: true });
 
   // Render Row Log inside modal
   function renderRowLog() {
@@ -104,12 +102,15 @@ export function initApp() {
 
     if (rowLog.length === 0) {
       rowLogContentEl.innerHTML = '<div class="row-log-empty">Пока нет отмеченных рядов. Нажмите на экран, чтобы начать отсчёт.</div>';
-      rowLogContentEl.classList.remove('fade-top', 'fade-bottom');
       return;
     }
 
-    const listContainer = document.createElement('div');
-    listContainer.className = 'ios-grouped-section';
+    const cardEl = document.createElement('div');
+    cardEl.className = 'ios-grouped-section row-log-card';
+
+    const scrollEl = document.createElement('div');
+    scrollEl.className = 'row-log-scroll';
+    scrollEl.addEventListener('scroll', () => updateRowLogScrollMask(scrollEl), { passive: true });
 
     // Show newest rows first so the knitter can immediately verify the latest click
     const entries = [...rowLog].reverse();
@@ -117,7 +118,7 @@ export function initApp() {
       if (index > 0) {
         const divider = document.createElement('div');
         divider.className = 'ios-divider';
-        listContainer.appendChild(divider);
+        scrollEl.appendChild(divider);
       }
 
       const rowEl = document.createElement('div');
@@ -141,12 +142,13 @@ export function initApp() {
 
       metaEl.append(timeEl, dateEl);
       rowEl.append(numberEl, metaEl);
-      listContainer.appendChild(rowEl);
+      scrollEl.appendChild(rowEl);
     });
 
-    rowLogContentEl.replaceChildren(listContainer);
-    rowLogContentEl.scrollTop = 0;
-    requestAnimationFrame(updateRowLogScrollMask);
+    cardEl.appendChild(scrollEl);
+    rowLogContentEl.replaceChildren(cardEl);
+    scrollEl.scrollTop = 0;
+    requestAnimationFrame(() => updateRowLogScrollMask(scrollEl));
   }
 
   // Modal Controllers
