@@ -1227,6 +1227,10 @@ button.active-part-header:active {
   color: #34c759;
 }
 
+.is-confirmed > svg {
+  display: none;
+}
+
 .row-counter-center {
   position: relative;
   z-index: 2;
