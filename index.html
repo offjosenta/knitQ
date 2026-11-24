@@ -43,6 +43,15 @@
       </div>
 
       <div class="header-actions">
+        <!-- Project Passport Button -->
+        <button id="btn-open-passport" class="btn-icon" aria-label="Паспорт проекта">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path>
+            <path d="M8 7h8"></path>
+            <path d="M8 11h5"></path>
+          </svg>
+        </button>
+
         <!-- Settings Button -->
         <button id="btn-open-settings" class="btn-icon" aria-label="Настройки">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -100,7 +109,7 @@
               <circle cx="12" cy="12" r="10"></circle>
               <polyline points="12 6 12 12 16 14"></polyline>
             </svg>
-            Журнал рядов
+            <span id="row-counter-sub-label">Журнал рядов</span>
           </span>
         </button>
       </div>
@@ -347,6 +356,174 @@
         <div id="row-marker-modal-body" class="row-marker-modal-body"></div>
         <div class="reset-confirm-actions">
           <button id="btn-ack-row-marker" type="button" class="btn-primary-action">Понятно</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Project Passport & Gauge Calculator Modal Sheet -->
+    <div id="passport-modal" class="modal-backdrop">
+      <div class="modal-sheet modal-sheet-scrollable">
+        <div class="modal-header">
+          <h3 class="modal-title">Паспорт проекта</h3>
+          <button id="btn-close-passport" class="modal-close-btn" aria-label="Закрыть">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <div class="part-settings-scroll passport-scroll scroll-fade">
+          <!-- Basic 3 Fields (Progressive Disclosure) -->
+          <div class="ios-section-title">Основное</div>
+          <div class="ios-grouped-section">
+            <div class="ios-row">
+              <label for="input-project-name" class="ios-row-label">Название</label>
+              <input id="input-project-name" type="text" class="glass-input glass-input-wide" placeholder="Название проекта">
+            </div>
+            <div class="ios-divider"></div>
+            <div class="ios-row">
+              <label for="input-needle-size" class="ios-row-label">Номер спиц</label>
+              <input id="input-needle-size" type="text" class="glass-input glass-input-compact" placeholder="4.0 мм">
+            </div>
+            <div class="ios-divider"></div>
+            <div class="ios-row">
+              <label for="input-part-target-rows" class="ios-row-label">Цель по рядам</label>
+              <input id="input-part-target-rows" type="number" min="1" inputmode="numeric" class="glass-input glass-input-compact" placeholder="∞">
+            </div>
+          </div>
+
+          <!-- Parts Switcher (visible when project has multiple parts) -->
+          <div id="passport-parts-section" hidden>
+            <div class="ios-section-title">Детали проекта</div>
+            <div id="passport-parts-chips" class="passport-parts-chips"></div>
+          </div>
+
+          <!-- Progressive Disclosure Toggle -->
+          <button id="btn-toggle-passport-advanced" type="button" class="btn-glass-disclosure" aria-expanded="false">
+            <span>+ Дополнительные параметры</span>
+            <svg class="disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+
+          <!-- Collapsible Advanced Sections -->
+          <div id="passport-advanced-panel" class="passport-advanced-panel">
+            <div class="passport-advanced-inner">
+              <!-- Paired Part Cloning -->
+              <div class="ios-section-title">Парная деталь</div>
+              <div class="ios-grouped-section">
+                <div class="inline-add-form">
+                  <p class="passport-hint-text">Мгновенно создаёт симметричную копию активной детали со всеми целями, правилами и маркерами.</p>
+                  <button id="btn-clone-paired-part" type="button" class="btn-glass-add">Связать парную деталь</button>
+                </div>
+              </div>
+
+              <!-- Yarn & Skeins -->
+              <div class="ios-section-title">Пряжа и мотки</div>
+              <div class="ios-grouped-section">
+                <div id="yarn-list" class="settings-item-list"></div>
+                <div class="ios-divider"></div>
+                <form id="form-add-yarn" class="inline-add-form">
+                  <input id="input-yarn-name" type="text" class="glass-input" placeholder="Название пряжи" required>
+                  <input id="input-yarn-composition" type="text" class="glass-input" placeholder="Состав (напр. 100% меринос)">
+                  <div class="inline-form-grid">
+                    <label class="inline-field">
+                      <span>Нитей</span>
+                      <input id="input-yarn-strands" type="number" min="1" value="1" inputmode="numeric" class="glass-input" required>
+                    </label>
+                    <label class="inline-field">
+                      <span>Использ.</span>
+                      <input id="input-yarn-used" type="number" min="0" step="0.5" value="0" inputmode="decimal" class="glass-input" required>
+                    </label>
+                    <label class="inline-field">
+                      <span>Всего</span>
+                      <input id="input-yarn-total" type="number" min="0" step="0.5" value="1" inputmode="decimal" class="glass-input" required>
+                    </label>
+                  </div>
+                  <button type="submit" class="btn-glass-add">+ Добавить пряжу</button>
+                </form>
+              </div>
+
+              <!-- Gauge & Wet Blocking (ВТО) Calculator -->
+              <div class="ios-section-title">Калькулятор образца ВТО</div>
+              <div class="ios-grouped-section">
+                <div class="inline-add-form">
+                  <div class="gauge-grid-2">
+                    <label class="inline-field">
+                      <span>Петель в образце</span>
+                      <input id="input-gauge-stitches" type="number" min="1" inputmode="numeric" class="glass-input" placeholder="22">
+                    </label>
+                    <label class="inline-field">
+                      <span>Рядов в образце</span>
+                      <input id="input-gauge-rows" type="number" min="1" inputmode="numeric" class="glass-input" placeholder="30">
+                    </label>
+                  </div>
+                  <div class="gauge-grid-2">
+                    <label class="inline-field">
+                      <span>Ширина до ВТО (см)</span>
+                      <input id="input-gauge-pre-w" type="number" min="0.1" step="0.1" inputmode="decimal" class="glass-input" placeholder="10">
+                    </label>
+                    <label class="inline-field">
+                      <span>Высота до ВТО (см)</span>
+                      <input id="input-gauge-pre-h" type="number" min="0.1" step="0.1" inputmode="decimal" class="glass-input" placeholder="10">
+                    </label>
+                  </div>
+                  <div class="gauge-grid-2">
+                    <label class="inline-field">
+                      <span>Ширина после ВТО (см)</span>
+                      <input id="input-gauge-post-w" type="number" min="0.1" step="0.1" inputmode="decimal" class="glass-input" placeholder="9.5">
+                    </label>
+                    <label class="inline-field">
+                      <span>Высота после ВТО (см)</span>
+                      <input id="input-gauge-post-h" type="number" min="0.1" step="0.1" inputmode="decimal" class="glass-input" placeholder="10.5">
+                    </label>
+                  </div>
+
+                  <div id="gauge-metrics-summary" class="gauge-summary-card">
+                    Введите замеры образца для расчёта плотности и усадки ВТО.
+                  </div>
+
+                  <div class="gauge-grid-2">
+                    <label class="inline-field">
+                      <span>Желаемая ширина (см)</span>
+                      <input id="input-gauge-target-w" type="number" min="0.1" step="0.5" inputmode="decimal" class="glass-input" placeholder="52">
+                    </label>
+                    <label class="inline-field">
+                      <span>Желаемая длина (см)</span>
+                      <input id="input-gauge-target-h" type="number" min="0.1" step="0.5" inputmode="decimal" class="glass-input" placeholder="60">
+                    </label>
+                  </div>
+
+                  <div id="gauge-target-result" class="gauge-result-pill" hidden></div>
+                  <button id="btn-apply-gauge-targets" type="button" class="btn-glass-add" hidden>Применить к активной детали</button>
+                </div>
+              </div>
+
+              <!-- Finished Photo -->
+              <div class="ios-section-title">Фото готовой работы</div>
+              <div class="ios-grouped-section">
+                <div class="inline-add-form">
+                  <div id="project-photo-preview-wrap" class="project-photo-wrap" hidden>
+                    <img id="project-photo-preview" class="project-photo-preview" alt="Фото проекта">
+                    <button id="btn-remove-project-photo" type="button" class="btn-glass-add btn-photo-remove">Удалить фото</button>
+                  </div>
+                  <label for="input-project-photo" class="btn-glass-add btn-file-label">
+                    Выбрать фото
+                    <input id="input-project-photo" type="file" accept="image/*" hidden>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Notes -->
+              <div class="ios-section-title">Заметки</div>
+              <div class="ios-grouped-section">
+                <div class="inline-add-form">
+                  <textarea id="input-project-notes" class="glass-input glass-textarea" rows="3" placeholder="Заметки по узору, спицам или расходу..."></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

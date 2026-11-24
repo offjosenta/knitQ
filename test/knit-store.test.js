@@ -231,3 +231,80 @@ test('KnitStore adds and removes row markers on active part and persists them', 
   restored.removeRowMarker(marker.id);
   assert.equal(restored.getActivePart().rowMarkers.length, 0);
 });
+
+test('KnitStore updates project passport, targetRows, yarns, notes, photo, and persists', () => {
+  const storage = createMemoryStorage();
+  const store = createKnitStore({ storage });
+
+  store.updateProjectPassport({
+    name: 'Свитер «Север»',
+    needleSize: '4.5 мм',
+    notes: 'Вязать свободно по кругу'
+  });
+  store.updatePartTargetRows(120);
+
+  const yarn = store.addYarnEntry({
+    name: 'Drops Merino Extra Fine',
+    composition: '100% меринос',
+    strands: 2,
+    skeinsUsed: 3,
+    skeinsTotal: 8
+  });
+  assert.ok(yarn.id);
+  store.updateYarnEntry(yarn.id, { skeinsUsed: 4 });
+
+  const project = store.getActiveProject();
+  assert.equal(project.name, 'Свитер «Север»');
+  assert.equal(project.needleSize, '4.5 мм');
+  assert.equal(project.notes, 'Вязать свободно по кругу');
+  assert.equal(project.yarns.length, 1);
+  assert.equal(project.yarns[0].strands, 2);
+  assert.equal(project.yarns[0].skeinsUsed, 4);
+  assert.equal(project.yarns[0].skeinsTotal, 8);
+  assert.equal(store.getActivePart().targetRows, 120);
+
+  const restored = createKnitStore({ storage });
+  assert.equal(restored.getActiveProject().name, 'Свитер «Север»');
+  assert.equal(restored.getActiveProject().yarns[0].skeinsUsed, 4);
+  assert.equal(restored.getActivePart().targetRows, 120);
+
+  restored.removeYarnEntry(yarn.id);
+  assert.equal(restored.getActiveProject().yarns.length, 0);
+});
+
+test('KnitStore clones a paired part preserving targets, rules, and markers while resetting progress', () => {
+  const storage = createMemoryStorage();
+  const store = createKnitStore({ storage });
+
+  store.updatePartTargetRows(60);
+  store.updatePartCheckSettings({ stitchCheckInterval: 12, targetStitchCount: 48 });
+  store.addRowRule({ label: 'Прибавка', everyNRows: 4, startRow: 2, repeatCount: 6 });
+  store.addRowMarker(30, 'Пройма');
+  store.incrementRow();
+  store.incrementRow();
+  store.setActualStitchCount(48);
+
+  const original = store.getActivePart();
+  const paired = store.clonePairedPart(original.id);
+
+  assert.notEqual(paired.id, original.id);
+  assert.equal(paired.currentRow, 0);
+  assert.deepEqual(paired.rowLog, []);
+  assert.equal(paired.timer.elapsedMs, 0);
+  assert.equal(paired.timer.runningSince, null);
+  assert.equal(paired.actualStitchCount, null);
+  assert.equal(paired.targetRows, 60);
+  assert.equal(paired.stitchCheckInterval, 12);
+  assert.equal(paired.targetStitchCount, 48);
+  assert.equal(paired.rowRules.length, 1);
+  assert.equal(paired.rowRules[0].label, 'Прибавка');
+  assert.equal(paired.rowMarkers.length, 1);
+  assert.equal(paired.rowMarkers[0].text, 'Пройма');
+  assert.equal(store.getActivePart().id, paired.id);
+  assert.equal(store.getActiveProject().parts.length, 2);
+
+  // Switch back to original part
+  store.setActivePart(original.id);
+  assert.equal(store.getActivePart().id, original.id);
+  assert.equal(store.getActivePart().currentRow, 2);
+});

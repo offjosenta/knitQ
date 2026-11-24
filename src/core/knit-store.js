@@ -8,7 +8,26 @@ export const KNIT_STORAGE_KEY = 'knitq_store_v1';
  * @typedef {{
  *   id: string,
  *   name: string,
+ *   composition: string,
+ *   strands: number,
+ *   skeinsUsed: number,
+ *   skeinsTotal: number
+ * }} YarnEntry
+ * @typedef {{
+ *   stitchesCount: number | null,
+ *   rowsCount: number | null,
+ *   widthPreWashCm: number | null,
+ *   heightPreWashCm: number | null,
+ *   widthPostWashCm: number | null,
+ *   heightPostWashCm: number | null,
+ *   targetWidthCm: number | null,
+ *   targetHeightCm: number | null
+ * }} ProjectGauge
+ * @typedef {{
+ *   id: string,
+ *   name: string,
  *   currentRow: number,
+ *   targetRows: number | null,
  *   rowLog: RowLogEntry[],
  *   timer: PartTimerState,
  *   stitchCheckInterval: number | null,
@@ -20,6 +39,11 @@ export const KNIT_STORAGE_KEY = 'knitq_store_v1';
  * @typedef {{
  *   id: string,
  *   name: string,
+ *   needleSize: string,
+ *   yarns: YarnEntry[],
+ *   notes: string,
+ *   photoDataUrl: string | null,
+ *   gauge: ProjectGauge,
  *   parts: Part[],
  *   activePartId: string
  * }} Project
@@ -28,6 +52,22 @@ export const KNIT_STORAGE_KEY = 'knitq_store_v1';
  *   activeProjectId: string
  * }} StoreState
  */
+
+/**
+ * @returns {ProjectGauge}
+ */
+function createDefaultGauge() {
+  return {
+    stitchesCount: null,
+    rowsCount: null,
+    widthPreWashCm: null,
+    heightPreWashCm: null,
+    widthPostWashCm: null,
+    heightPostWashCm: null,
+    targetWidthCm: null,
+    targetHeightCm: null
+  };
+}
 
 /**
  * @returns {StoreState}
@@ -42,12 +82,18 @@ function createDefaultState() {
       {
         id: projectId,
         name: 'Шарф «Лицевая гладь»',
+        needleSize: '',
+        yarns: [],
+        notes: '',
+        photoDataUrl: null,
+        gauge: createDefaultGauge(),
         activePartId: partId,
         parts: [
           {
             id: partId,
             name: 'Основное полотно',
             currentRow: 0,
+            targetRows: null,
             rowLog: [],
             timer: {
               elapsedMs: 0,
@@ -98,7 +144,28 @@ function isValidStoreState(candidate) {
  */
 function normalizeStoreState(loaded) {
   for (const project of loaded.projects) {
+    if (typeof project.needleSize !== 'string') {
+      project.needleSize = '';
+    }
+    if (!Array.isArray(project.yarns)) {
+      project.yarns = [];
+    }
+    if (typeof project.notes !== 'string') {
+      project.notes = '';
+    }
+    if (project.photoDataUrl === undefined) {
+      project.photoDataUrl = null;
+    }
+    if (!project.gauge || typeof project.gauge !== 'object') {
+      project.gauge = createDefaultGauge();
+    } else {
+      project.gauge = { ...createDefaultGauge(), ...project.gauge };
+    }
+
     for (const part of project.parts) {
+      if (part.targetRows === undefined) {
+        part.targetRows = null;
+      }
       if (part.stitchCheckInterval === undefined) {
         part.stitchCheckInterval = 10;
       }
@@ -185,6 +252,15 @@ export function createKnitStore(options = {}) {
     persist();
     notify();
   };
+
+  /**
+   * Generates a unique entity ID with the given prefix.
+   * @param {string} prefix
+   * @param {number} [timestampMs]
+   * @returns {string}
+   */
+  const createId = (prefix, timestampMs = now()) =>
+    `${prefix}-${timestampMs}-${Math.random().toString(36).slice(2, 7)}`;
 
   /**
    * @param {Part} part
@@ -321,7 +397,7 @@ export function createKnitStore(options = {}) {
       const part = getActivePart();
       /** @type {RowRule} */
       const rule = {
-        id: `rule-${now()}-${Math.random().toString(36).slice(2, 7)}`,
+        id: createId('rule'),
         label: String(input.label || '').trim() || 'Действие по правилу',
         everyNRows: Math.max(1, Math.floor(Number(input.everyNRows) || 1)),
         startRow: Math.max(1, Math.floor(Number(input.startRow) || 1)),
@@ -358,7 +434,7 @@ export function createKnitStore(options = {}) {
       const part = getActivePart();
       /** @type {RowMarker} */
       const marker = {
-        id: `marker-${now()}-${Math.random().toString(36).slice(2, 7)}`,
+        id: createId('marker'),
         rowNumber: Math.max(1, Math.floor(Number(rowNumber) || 1)),
         text: String(text || '').trim() || 'Важный ряд'
       };
@@ -377,6 +453,191 @@ export function createKnitStore(options = {}) {
       const next = part.rowMarkers.filter((m) => m.id !== markerId);
       if (next.length !== part.rowMarkers.length) {
         part.rowMarkers = next;
+        commit();
+      }
+    },
+
+    /**
+     * Updates project passport fields (name, needleSize, notes, photoDataUrl, gauge).
+     * @param {{
+     *   name?: string,
+     *   needleSize?: string,
+     *   notes?: string,
+     *   photoDataUrl?: string | null,
+     *   gauge?: Partial<ProjectGauge>
+     * }} updates
+     */
+    updateProjectPassport(updates) {
+      const project = getActiveProject();
+      if (typeof updates.name === 'string') {
+        const trimmed = updates.name.trim();
+        if (trimmed) {
+          project.name = trimmed;
+        }
+      }
+      if (typeof updates.needleSize === 'string') {
+        project.needleSize = updates.needleSize.trim();
+      }
+      if (typeof updates.notes === 'string') {
+        project.notes = updates.notes;
+      }
+      if (updates.photoDataUrl !== undefined) {
+        project.photoDataUrl = updates.photoDataUrl;
+      }
+      if (updates.gauge && typeof updates.gauge === 'object') {
+        project.gauge = { ...project.gauge, ...updates.gauge };
+      }
+      commit();
+    },
+
+    /**
+     * Updates the target row count for the active part.
+     * @param {number | null} targetRows
+     */
+    updatePartTargetRows(targetRows) {
+      const part = getActivePart();
+      part.targetRows =
+        typeof targetRows === 'number' && Number.isFinite(targetRows) && targetRows > 0
+          ? Math.floor(targetRows)
+          : null;
+      commit();
+    },
+
+    /**
+     * Adds a yarn entry to the active project.
+     * @param {{
+     *   name: string,
+     *   composition?: string,
+     *   strands?: number,
+     *   skeinsUsed?: number,
+     *   skeinsTotal?: number
+     * }} input
+     * @returns {YarnEntry}
+     */
+    addYarnEntry(input) {
+      const project = getActiveProject();
+      const skeinsTotal = Math.max(0, Number(input.skeinsTotal) || 0);
+      const rawUsed = Math.max(0, Number(input.skeinsUsed) || 0);
+      /** @type {YarnEntry} */
+      const entry = {
+        id: createId('yarn'),
+        name: String(input.name || '').trim() || 'Пряжа',
+        composition: String(input.composition || '').trim(),
+        strands: Math.max(1, Math.floor(Number(input.strands) || 1)),
+        skeinsUsed: skeinsTotal > 0 ? Math.min(skeinsTotal, rawUsed) : rawUsed,
+        skeinsTotal
+      };
+      project.yarns.push(entry);
+      commit();
+      return entry;
+    },
+
+    /**
+     * Updates an existing yarn entry by id on the active project.
+     * @param {string} yarnId
+     * @param {Partial<Omit<YarnEntry, 'id'>>} updates
+     */
+    updateYarnEntry(yarnId, updates) {
+      const project = getActiveProject();
+      const yarn = project.yarns.find((y) => y.id === yarnId);
+      if (!yarn) return;
+      if (typeof updates.name === 'string') {
+        const trimmed = updates.name.trim();
+        if (trimmed) yarn.name = trimmed;
+      }
+      if (typeof updates.composition === 'string') {
+        yarn.composition = updates.composition.trim();
+      }
+      if (typeof updates.strands === 'number' && Number.isFinite(updates.strands)) {
+        yarn.strands = Math.max(1, Math.floor(updates.strands));
+      }
+      if (typeof updates.skeinsTotal === 'number' && Number.isFinite(updates.skeinsTotal)) {
+        yarn.skeinsTotal = Math.max(0, updates.skeinsTotal);
+      }
+      if (typeof updates.skeinsUsed === 'number' && Number.isFinite(updates.skeinsUsed)) {
+        const clamped = Math.max(0, updates.skeinsUsed);
+        yarn.skeinsUsed = yarn.skeinsTotal > 0 ? Math.min(yarn.skeinsTotal, clamped) : clamped;
+      }
+      commit();
+    },
+
+    /**
+     * Removes a yarn entry by id from the active project.
+     * @param {string} yarnId
+     */
+    removeYarnEntry(yarnId) {
+      const project = getActiveProject();
+      const next = project.yarns.filter((y) => y.id !== yarnId);
+      if (next.length !== project.yarns.length) {
+        project.yarns = next;
+        commit();
+      }
+    },
+
+    /**
+     * Clones a part into a symmetric paired part (e.g., second sleeve or sock),
+     * preserving targets, stitch checks, row rules, and markers while resetting progress.
+     * @param {string} [sourcePartId]
+     * @returns {Part}
+     */
+    clonePairedPart(sourcePartId) {
+      const project = getActiveProject();
+      const source =
+        (sourcePartId ? project.parts.find((p) => p.id === sourcePartId) : null)
+        || getActivePart();
+
+      const suffixMatch = source.name.match(/^(.*\s+)(\d+)$/);
+      const pairedMatch = source.name.match(/^(.*)\s+\(парная(?:\s+(\d+))?\)$/);
+      let pairedName;
+      if (suffixMatch) {
+        pairedName = `${suffixMatch[1]}${Number(suffixMatch[2]) + 1}`;
+      } else if (pairedMatch) {
+        const nextNum = pairedMatch[2] ? Number(pairedMatch[2]) + 1 : 2;
+        pairedName = `${pairedMatch[1]} (парная ${nextNum})`;
+      } else {
+        pairedName = `${source.name} (парная)`;
+      }
+
+      const timestamp = now();
+      /** @type {Part} */
+      const cloned = {
+        id: createId('part', timestamp),
+        name: pairedName,
+        currentRow: 0,
+        targetRows: source.targetRows,
+        rowLog: [],
+        timer: {
+          elapsedMs: 0,
+          runningSince: null
+        },
+        stitchCheckInterval: source.stitchCheckInterval,
+        targetStitchCount: source.targetStitchCount,
+        actualStitchCount: null,
+        rowRules: source.rowRules.map((rule) => ({
+          ...rule,
+          id: createId('rule', timestamp)
+        })),
+        rowMarkers: source.rowMarkers.map((marker) => ({
+          ...marker,
+          id: createId('marker', timestamp)
+        }))
+      };
+
+      project.parts.push(cloned);
+      project.activePartId = cloned.id;
+      commit();
+      return cloned;
+    },
+
+    /**
+     * Switches the active part within the active project.
+     * @param {string} partId
+     */
+    setActivePart(partId) {
+      const project = getActiveProject();
+      const target = project.parts.find((p) => p.id === partId);
+      if (target && project.activePartId !== target.id) {
+        project.activePartId = target.id;
         commit();
       }
     },

@@ -6,6 +6,10 @@ import {
   evaluateRowRules,
   getRowMarkersForRow
 } from './core/checkpoint-engine.js';
+import {
+  calculateGaugeMetrics,
+  calculateTargetCounts
+} from './core/gauge-calculator.js';
 import { formatDuration, formatRowTimestamp } from './core/time-format.js';
 
 /**
@@ -75,6 +79,7 @@ export function initApp() {
   const activePartNameEl = document.getElementById('active-part-name');
   const tapZonePlus = document.getElementById('tap-zone-plus');
   const rowCounterValueEl = document.getElementById('row-counter-value');
+  const rowCounterSubLabelEl = document.getElementById('row-counter-sub-label');
   const btnRowLog = document.getElementById('btn-row-log');
   const btnRowMinus = /** @type {HTMLButtonElement | null} */ (document.getElementById('btn-row-minus'));
   const btnTimerToggle = document.getElementById('btn-timer-toggle');
@@ -128,6 +133,44 @@ export function initApp() {
   const btnAckRowMarker = document.getElementById('btn-ack-row-marker');
   const rowMarkerModalTitleEl = document.getElementById('row-marker-modal-title');
   const rowMarkerModalBodyEl = document.getElementById('row-marker-modal-body');
+
+  // Project Passport & Gauge Calculator Modal Elements
+  const btnOpenPassport = document.getElementById('btn-open-passport');
+  const passportModalEl = document.getElementById('passport-modal');
+  const passportScrollEl = /** @type {HTMLElement | null} */ (passportModalEl?.querySelector('.passport-scroll') ?? null);
+  attachScrollFade(passportScrollEl);
+  const btnClosePassport = document.getElementById('btn-close-passport');
+  const inputProjectName = /** @type {HTMLInputElement | null} */ (document.getElementById('input-project-name'));
+  const inputNeedleSize = /** @type {HTMLInputElement | null} */ (document.getElementById('input-needle-size'));
+  const inputPartTargetRows = /** @type {HTMLInputElement | null} */ (document.getElementById('input-part-target-rows'));
+  const passportPartsSection = document.getElementById('passport-parts-section');
+  const passportPartsChips = document.getElementById('passport-parts-chips');
+  const btnTogglePassportAdvanced = document.getElementById('btn-toggle-passport-advanced');
+  const passportAdvancedPanel = document.getElementById('passport-advanced-panel');
+  const btnClonePairedPart = document.getElementById('btn-clone-paired-part');
+  const yarnListEl = document.getElementById('yarn-list');
+  const formAddYarn = /** @type {HTMLFormElement | null} */ (document.getElementById('form-add-yarn'));
+  const inputYarnName = /** @type {HTMLInputElement | null} */ (document.getElementById('input-yarn-name'));
+  const inputYarnComposition = /** @type {HTMLInputElement | null} */ (document.getElementById('input-yarn-composition'));
+  const inputYarnStrands = /** @type {HTMLInputElement | null} */ (document.getElementById('input-yarn-strands'));
+  const inputYarnUsed = /** @type {HTMLInputElement | null} */ (document.getElementById('input-yarn-used'));
+  const inputYarnTotal = /** @type {HTMLInputElement | null} */ (document.getElementById('input-yarn-total'));
+  const inputGaugeStitches = /** @type {HTMLInputElement | null} */ (document.getElementById('input-gauge-stitches'));
+  const inputGaugeRows = /** @type {HTMLInputElement | null} */ (document.getElementById('input-gauge-rows'));
+  const inputGaugePreW = /** @type {HTMLInputElement | null} */ (document.getElementById('input-gauge-pre-w'));
+  const inputGaugePreH = /** @type {HTMLInputElement | null} */ (document.getElementById('input-gauge-pre-h'));
+  const inputGaugePostW = /** @type {HTMLInputElement | null} */ (document.getElementById('input-gauge-post-w'));
+  const inputGaugePostH = /** @type {HTMLInputElement | null} */ (document.getElementById('input-gauge-post-h'));
+  const inputGaugeTargetW = /** @type {HTMLInputElement | null} */ (document.getElementById('input-gauge-target-w'));
+  const inputGaugeTargetH = /** @type {HTMLInputElement | null} */ (document.getElementById('input-gauge-target-h'));
+  const gaugeMetricsSummaryEl = document.getElementById('gauge-metrics-summary');
+  const gaugeTargetResultEl = document.getElementById('gauge-target-result');
+  const btnApplyGaugeTargets = document.getElementById('btn-apply-gauge-targets');
+  const inputProjectPhoto = /** @type {HTMLInputElement | null} */ (document.getElementById('input-project-photo'));
+  const projectPhotoPreviewWrap = document.getElementById('project-photo-preview-wrap');
+  const projectPhotoPreview = /** @type {HTMLImageElement | null} */ (document.getElementById('project-photo-preview'));
+  const btnRemoveProjectPhoto = document.getElementById('btn-remove-project-photo');
+  const inputProjectNotes = /** @type {HTMLTextAreaElement | null} */ (document.getElementById('input-project-notes'));
 
   /** @param {HTMLElement} scrollEl */
   function updateScrollFadeMask(scrollEl) {
@@ -422,6 +465,342 @@ export function initApp() {
   btnCloseRowMarker?.addEventListener('click', rowMarkerModal.close);
   btnAckRowMarker?.addEventListener('click', rowMarkerModal.close);
 
+  /**
+   * Parses an optional positive number from an HTML input element.
+   * @param {HTMLInputElement | null} inputEl
+   * @returns {number | null}
+   */
+  function parseOptionalPositive(inputEl) {
+    const raw = inputEl?.value.trim() ?? '';
+    if (!raw) return null;
+    const num = Number(raw);
+    return Number.isFinite(num) && num > 0 ? num : null;
+  }
+
+  /**
+   * Formats shrinkage/stretch percentage change into human-readable Russian text.
+   * @param {string} axisLabel
+   * @param {number | null} pct
+   * @returns {string}
+   */
+  function formatChangePct(axisLabel, pct) {
+    if (pct === null) return `${axisLabel}: —`;
+    if (Math.abs(pct) < 0.05) return `${axisLabel}: без изменений (0%)`;
+    const rounded = Math.abs(pct).toFixed(1);
+    return pct < 0
+      ? `${axisLabel}: усадка ${rounded}%`
+      : `${axisLabel}: растяжение +${rounded}%`;
+  }
+
+  function renderGaugeResults() {
+    const gaugeInput = {
+      stitchesCount: parseOptionalPositive(inputGaugeStitches),
+      rowsCount: parseOptionalPositive(inputGaugeRows),
+      widthPreWashCm: parseOptionalPositive(inputGaugePreW),
+      heightPreWashCm: parseOptionalPositive(inputGaugePreH),
+      widthPostWashCm: parseOptionalPositive(inputGaugePostW),
+      heightPostWashCm: parseOptionalPositive(inputGaugePostH)
+    };
+    const metrics = calculateGaugeMetrics(gaugeInput);
+    const targetWidthCm = parseOptionalPositive(inputGaugeTargetW);
+    const targetHeightCm = parseOptionalPositive(inputGaugeTargetH);
+    const counts = calculateTargetCounts({
+      targetWidthCm,
+      targetHeightCm,
+      stitchesPerCm: metrics.stitchesPerCm,
+      rowsPerCm: metrics.rowsPerCm
+    });
+
+    if (gaugeMetricsSummaryEl) {
+      if (
+        metrics.stitchesPerCm === null
+        && metrics.rowsPerCm === null
+        && metrics.widthChangePct === null
+        && metrics.heightChangePct === null
+      ) {
+        gaugeMetricsSummaryEl.textContent = 'Введите замеры образца для расчёта плотности и усадки ВТО.';
+      } else {
+        const densitySt = metrics.stitchesPerCm !== null ? `${metrics.stitchesPerCm.toFixed(2)} п/см` : '—';
+        const densityRw = metrics.rowsPerCm !== null ? `${metrics.rowsPerCm.toFixed(2)} р/см` : '—';
+        gaugeMetricsSummaryEl.innerHTML =
+          `<span>Плотность: <strong>${densitySt}</strong> · <strong>${densityRw}</strong></span>` +
+          `<span>${formatChangePct('Ширина', metrics.widthChangePct)} · ${formatChangePct('Высота', metrics.heightChangePct)}</span>`;
+      }
+    }
+
+    if (gaugeTargetResultEl && btnApplyGaugeTargets) {
+      if (counts.castOnStitches !== null || counts.targetRows !== null) {
+        const parts = [];
+        if (counts.castOnStitches !== null) parts.push(`Набрать: ${counts.castOnStitches} п.`);
+        if (counts.targetRows !== null) parts.push(`Связать: ${counts.targetRows} р.`);
+        gaugeTargetResultEl.textContent = parts.join(' · ');
+        gaugeTargetResultEl.hidden = false;
+        btnApplyGaugeTargets.hidden = false;
+      } else {
+        gaugeTargetResultEl.hidden = true;
+        btnApplyGaugeTargets.hidden = true;
+      }
+    }
+
+    return { gaugeInput, targetWidthCm, targetHeightCm, counts };
+  }
+
+  function renderPassportModal() {
+    const project = store.getActiveProject();
+    const activePart = store.getActivePart();
+
+    if (inputProjectName) inputProjectName.value = project.name;
+    if (inputNeedleSize) inputNeedleSize.value = project.needleSize || '';
+    if (inputPartTargetRows) {
+      inputPartTargetRows.value = activePart.targetRows !== null ? String(activePart.targetRows) : '';
+    }
+
+    // Parts switcher
+    if (passportPartsSection && passportPartsChips) {
+      if (project.parts.length > 1) {
+        passportPartsSection.hidden = false;
+        passportPartsChips.replaceChildren();
+        for (const p of project.parts) {
+          const chip = document.createElement('button');
+          chip.type = 'button';
+          chip.className = `preset-chip ${p.id === activePart.id ? 'active' : ''}`;
+          chip.textContent = p.name;
+          chip.addEventListener('click', () => {
+            store.setActivePart(p.id);
+            renderPassportModal();
+          });
+          passportPartsChips.appendChild(chip);
+        }
+      } else {
+        passportPartsSection.hidden = true;
+        passportPartsChips.replaceChildren();
+      }
+    }
+
+    // Yarns list
+    if (yarnListEl) {
+      yarnListEl.replaceChildren();
+      if (project.yarns.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'ios-row-sub-info';
+        empty.textContent = 'Пряжа пока не добавлена.';
+        yarnListEl.appendChild(empty);
+      } else {
+        for (const yarn of project.yarns) {
+          const item = document.createElement('div');
+          item.className = 'settings-list-item';
+
+          const main = document.createElement('div');
+          main.className = 'settings-list-item-main';
+          const title = document.createElement('span');
+          title.className = 'settings-list-item-title';
+          title.textContent = yarn.name;
+          const sub = document.createElement('span');
+          sub.className = 'settings-list-item-sub';
+          const compText = yarn.composition ? `${yarn.composition} · ` : '';
+          sub.textContent = `${compText}${yarn.strands} нит. · ${yarn.skeinsUsed} / ${yarn.skeinsTotal} мот.`;
+          main.append(title, sub);
+
+          const controls = document.createElement('div');
+          controls.className = 'yarn-item-controls';
+
+          const btnMinus = document.createElement('button');
+          btnMinus.type = 'button';
+          btnMinus.className = 'btn-skein-step';
+          btnMinus.textContent = '−';
+          btnMinus.setAttribute('aria-label', 'Уменьшить расход мотков');
+          btnMinus.addEventListener('click', () => {
+            store.updateYarnEntry(yarn.id, { skeinsUsed: Math.max(0, yarn.skeinsUsed - 0.5) });
+            renderPassportModal();
+          });
+
+          const btnPlus = document.createElement('button');
+          btnPlus.type = 'button';
+          btnPlus.className = 'btn-skein-step';
+          btnPlus.textContent = '+';
+          btnPlus.setAttribute('aria-label', 'Увеличить расход мотков');
+          btnPlus.addEventListener('click', () => {
+            store.updateYarnEntry(yarn.id, { skeinsUsed: yarn.skeinsUsed + 0.5 });
+            renderPassportModal();
+          });
+
+          const removeBtn = document.createElement('button');
+          removeBtn.type = 'button';
+          removeBtn.className = 'btn-remove-item';
+          removeBtn.textContent = '×';
+          removeBtn.setAttribute('aria-label', `Удалить пряжу ${yarn.name}`);
+          removeBtn.addEventListener('click', () => {
+            store.removeYarnEntry(yarn.id);
+            renderPassportModal();
+          });
+
+          controls.append(btnMinus, btnPlus, removeBtn);
+          item.append(main, controls);
+          yarnListEl.appendChild(item);
+        }
+      }
+    }
+
+    // Gauge inputs
+    const g = project.gauge;
+    if (inputGaugeStitches) inputGaugeStitches.value = g.stitchesCount !== null ? String(g.stitchesCount) : '';
+    if (inputGaugeRows) inputGaugeRows.value = g.rowsCount !== null ? String(g.rowsCount) : '';
+    if (inputGaugePreW) inputGaugePreW.value = g.widthPreWashCm !== null ? String(g.widthPreWashCm) : '';
+    if (inputGaugePreH) inputGaugePreH.value = g.heightPreWashCm !== null ? String(g.heightPreWashCm) : '';
+    if (inputGaugePostW) inputGaugePostW.value = g.widthPostWashCm !== null ? String(g.widthPostWashCm) : '';
+    if (inputGaugePostH) inputGaugePostH.value = g.heightPostWashCm !== null ? String(g.heightPostWashCm) : '';
+    if (inputGaugeTargetW) inputGaugeTargetW.value = g.targetWidthCm !== null ? String(g.targetWidthCm) : '';
+    if (inputGaugeTargetH) inputGaugeTargetH.value = g.targetHeightCm !== null ? String(g.targetHeightCm) : '';
+    renderGaugeResults();
+
+    // Photo preview
+    if (projectPhotoPreviewWrap && projectPhotoPreview) {
+      if (project.photoDataUrl) {
+        projectPhotoPreview.src = project.photoDataUrl;
+        projectPhotoPreviewWrap.hidden = false;
+      } else {
+        projectPhotoPreview.removeAttribute('src');
+        projectPhotoPreviewWrap.hidden = true;
+      }
+    }
+
+    // Notes
+    if (inputProjectNotes) {
+      inputProjectNotes.value = project.notes || '';
+    }
+
+    if (passportScrollEl) {
+      requestAnimationFrame(() => updateScrollFadeMask(passportScrollEl));
+    }
+  }
+
+  const passportModal = createModalController(passportModalEl, {
+    onOpen: renderPassportModal
+  });
+
+  btnOpenPassport?.addEventListener('click', passportModal.open);
+  btnClosePassport?.addEventListener('click', passportModal.close);
+
+  inputProjectName?.addEventListener('change', () => {
+    store.updateProjectPassport({ name: inputProjectName.value });
+  });
+
+  inputNeedleSize?.addEventListener('change', () => {
+    store.updateProjectPassport({ needleSize: inputNeedleSize.value });
+  });
+
+  inputPartTargetRows?.addEventListener('change', () => {
+    store.updatePartTargetRows(parseOptionalPositive(inputPartTargetRows));
+  });
+
+  btnTogglePassportAdvanced?.addEventListener('click', () => {
+    const isOpen = passportAdvancedPanel?.classList.toggle('open') ?? false;
+    btnTogglePassportAdvanced.setAttribute('aria-expanded', String(isOpen));
+    const labelSpan = btnTogglePassportAdvanced.querySelector('span');
+    if (labelSpan) {
+      labelSpan.textContent = isOpen ? '− Скрыть дополнительные параметры' : '+ Дополнительные параметры';
+    }
+    if (passportScrollEl) {
+      setTimeout(() => updateScrollFadeMask(passportScrollEl), 340);
+    }
+  });
+
+  btnClonePairedPart?.addEventListener('click', () => {
+    store.clonePairedPart();
+    renderPassportModal();
+  });
+
+  formAddYarn?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = inputYarnName?.value.trim() || '';
+    if (!name) return;
+    store.addYarnEntry({
+      name,
+      composition: inputYarnComposition?.value.trim() || '',
+      strands: Number(inputYarnStrands?.value) || 1,
+      skeinsUsed: Number(inputYarnUsed?.value) || 0,
+      skeinsTotal: Number(inputYarnTotal?.value) || 0
+    });
+    if (inputYarnName) inputYarnName.value = '';
+    if (inputYarnComposition) inputYarnComposition.value = '';
+    if (inputYarnStrands) inputYarnStrands.value = '1';
+    if (inputYarnUsed) inputYarnUsed.value = '0';
+    if (inputYarnTotal) inputYarnTotal.value = '1';
+    renderPassportModal();
+  });
+
+  const gaugeInputs = [
+    inputGaugeStitches,
+    inputGaugeRows,
+    inputGaugePreW,
+    inputGaugePreH,
+    inputGaugePostW,
+    inputGaugePostH,
+    inputGaugeTargetW,
+    inputGaugeTargetH
+  ];
+  gaugeInputs.forEach((inputEl) => {
+    inputEl?.addEventListener('input', () => {
+      const { gaugeInput, targetWidthCm, targetHeightCm } = renderGaugeResults();
+      store.updateProjectPassport({
+        gauge: { ...gaugeInput, targetWidthCm, targetHeightCm }
+      });
+    });
+  });
+
+  btnApplyGaugeTargets?.addEventListener('click', () => {
+    const { counts } = renderGaugeResults();
+    if (counts.castOnStitches !== null) {
+      store.updatePartCheckSettings({ targetStitchCount: counts.castOnStitches });
+    }
+    if (counts.targetRows !== null) {
+      store.updatePartTargetRows(counts.targetRows);
+    }
+    renderPassportModal();
+  });
+
+  inputProjectPhoto?.addEventListener('change', () => {
+    const file = inputProjectPhoto.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result !== 'string') return;
+      const rawDataUrl = reader.result;
+      const img = new Image();
+      img.onload = () => {
+        const maxDim = 800;
+        const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(img.width * scale));
+        canvas.height = Math.max(1, Math.round(img.height * scale));
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          store.updateProjectPassport({ photoDataUrl: canvas.toDataURL('image/jpeg', 0.78) });
+        } else {
+          store.updateProjectPassport({ photoDataUrl: rawDataUrl });
+        }
+        renderPassportModal();
+      };
+      img.onerror = () => {
+        store.updateProjectPassport({ photoDataUrl: rawDataUrl });
+        renderPassportModal();
+      };
+      img.src = rawDataUrl;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  btnRemoveProjectPhoto?.addEventListener('click', () => {
+    store.updateProjectPassport({ photoDataUrl: null });
+    if (inputProjectPhoto) inputProjectPhoto.value = '';
+    renderPassportModal();
+  });
+
+  inputProjectNotes?.addEventListener('change', () => {
+    store.updateProjectPassport({ notes: inputProjectNotes.value });
+  });
+
   openSettingsBtn?.addEventListener('click', settingsModal.open);
   closeSettingsBtn?.addEventListener('click', settingsModal.close);
 
@@ -500,6 +879,11 @@ export function initApp() {
     }
     if (rowCounterValueEl) {
       rowCounterValueEl.textContent = String(part.currentRow);
+    }
+    if (rowCounterSubLabelEl) {
+      rowCounterSubLabelEl.textContent = part.targetRows !== null
+        ? `Цель: ${part.targetRows} р. · Журнал`
+        : 'Журнал рядов';
     }
     if (btnRowMinus) {
       btnRowMinus.disabled = part.currentRow <= 0;
