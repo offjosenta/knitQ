@@ -2,6 +2,7 @@ export const KNIT_STORAGE_KEY = 'knitq_store_v1';
 
 /**
  * @typedef {{ rowNumber: number, timestamp: string }} RowLogEntry
+ * @typedef {{ startMs: number, endMs: number }} TimeSession
  * @typedef {{ elapsedMs: number, runningSince: number | null }} PartTimerState
  * @typedef {import('./checkpoint-engine.js').RowRule} RowRule
  * @typedef {import('./checkpoint-engine.js').RowMarker} RowMarker
@@ -30,6 +31,7 @@ export const KNIT_STORAGE_KEY = 'knitq_store_v1';
  *   targetRows: number | null,
  *   rowLog: RowLogEntry[],
  *   timer: PartTimerState,
+ *   sessions: TimeSession[],
  *   stitchCheckInterval: number | null,
  *   targetStitchCount: number | null,
  *   actualStitchCount: number | null,
@@ -39,6 +41,11 @@ export const KNIT_STORAGE_KEY = 'knitq_store_v1';
  * @typedef {{
  *   id: string,
  *   name: string,
+ *   status: 'active' | 'completed',
+ *   folder: string,
+ *   tags: string[],
+ *   createdAt: string,
+ *   completedAt: string | null,
  *   toolType: 'needles' | 'hook',
  *   needleSize: string,
  *   knittingMethod: string,
@@ -72,12 +79,57 @@ function createDefaultGauge() {
   };
 }
 
+const DEMO_HAT_SVG =
+  "data:image/svg+xml;utf8," +
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160">' +
+      '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">' +
+      '<stop offset="0%" stop-color="#3a404d"/><stop offset="100%" stop-color="#1c1f26"/>' +
+      '</linearGradient></defs>' +
+      '<rect width="160" height="160" rx="24" fill="url(#g)"/>' +
+      '<circle cx="80" cy="40" r="14" fill="#d1d5db" opacity="0.9"/>' +
+      '<path d="M36 105 C36 62, 124 62, 124 105 Z" fill="#9ca3af"/>' +
+      '<rect x="30" y="98" width="100" height="24" rx="10" fill="#e5e7eb"/>' +
+      '<line x1="50" y1="98" x2="50" y2="122" stroke="#6b7280" stroke-width="2"/>' +
+      '<line x1="70" y1="98" x2="70" y2="122" stroke="#6b7280" stroke-width="2"/>' +
+      '<line x1="90" y1="98" x2="90" y2="122" stroke="#6b7280" stroke-width="2"/>' +
+      '<line x1="110" y1="98" x2="110" y2="122" stroke="#6b7280" stroke-width="2"/>' +
+      '</svg>'
+  );
+
+/**
+ * @param {string} id
+ * @param {string} name
+ * @param {number | null} [targetRows]
+ * @returns {Part}
+ */
+function createBlankPart(id, name, targetRows = null) {
+  return {
+    id,
+    name,
+    currentRow: 0,
+    targetRows,
+    rowLog: [],
+    timer: {
+      elapsedMs: 0,
+      runningSince: null
+    },
+    sessions: [],
+    stitchCheckInterval: 10,
+    targetStitchCount: null,
+    actualStitchCount: null,
+    rowRules: [],
+    rowMarkers: []
+  };
+}
+
 /**
  * @returns {StoreState}
  */
 function createDefaultState() {
   const partId = 'part-1';
   const projectId = 'project-1';
+  const demoCompletedId = 'project-demo-hat';
 
   return {
     activeProjectId: projectId,
@@ -85,8 +137,13 @@ function createDefaultState() {
       {
         id: projectId,
         name: 'Шарф «Лицевая гладь»',
+        status: 'active',
+        folder: 'Шарфы',
+        tags: ['базовый'],
+        createdAt: '2026-01-10T10:00:00.000Z',
+        completedAt: null,
         toolType: 'needles',
-        needleSize: '',
+        needleSize: '4.5 мм',
         knittingMethod: 'flat',
         stitchPattern: 'Лицевая гладь',
         yarns: [],
@@ -94,22 +151,33 @@ function createDefaultState() {
         photoDataUrl: null,
         gauge: createDefaultGauge(),
         activePartId: partId,
+        parts: [createBlankPart(partId, 'Основное полотно')]
+      },
+      {
+        id: demoCompletedId,
+        name: 'Шапка «Резинка 2×2»',
+        status: 'completed',
+        folder: 'Шапки',
+        tags: ['зима', 'меринос'],
+        createdAt: '2025-12-01T10:00:00.000Z',
+        completedAt: '2025-12-10T18:30:00.000Z',
+        toolType: 'needles',
+        needleSize: '4 мм',
+        knittingMethod: 'circular',
+        stitchPattern: 'Резинка 2×2',
+        yarns: [],
+        notes: 'Мягкая тёплая шапка с отворотом.',
+        photoDataUrl: DEMO_HAT_SVG,
+        gauge: createDefaultGauge(),
+        activePartId: 'part-demo-1',
         parts: [
           {
-            id: partId,
-            name: 'Основное полотно',
-            currentRow: 0,
-            targetRows: null,
-            rowLog: [],
+            ...createBlankPart('part-demo-1', 'Отворот и основа', 84),
+            currentRow: 84,
             timer: {
-              elapsedMs: 0,
+              elapsedMs: 5_400_000,
               runningSince: null
-            },
-            stitchCheckInterval: 10,
-            targetStitchCount: null,
-            actualStitchCount: null,
-            rowRules: [],
-            rowMarkers: []
+            }
           }
         ]
       }
@@ -121,7 +189,7 @@ function createDefaultState() {
  * @param {unknown} candidate
  * @returns {candidate is StoreState}
  */
-function isValidStoreState(candidate) {
+export function isValidStoreState(candidate) {
   if (!candidate || typeof candidate !== 'object') return false;
   const obj = /** @type {{ projects?: unknown }} */ (candidate);
   if (!Array.isArray(obj.projects) || obj.projects.length === 0) return false;
@@ -134,10 +202,12 @@ function isValidStoreState(candidate) {
         part
         && typeof part === 'object'
         && typeof part.currentRow === 'number'
+        && Number.isFinite(part.currentRow)
         && Array.isArray(part.rowLog)
         && part.timer
         && typeof part.timer.elapsedMs === 'number'
-        && (part.timer.runningSince === null || typeof part.timer.runningSince === 'number')
+        && Number.isFinite(part.timer.elapsedMs)
+        && (part.timer.runningSince === null || (typeof part.timer.runningSince === 'number' && Number.isFinite(part.timer.runningSince)))
       );
     });
   });
@@ -148,8 +218,29 @@ function isValidStoreState(candidate) {
  * @param {StoreState} loaded
  * @returns {StoreState}
  */
-function normalizeStoreState(loaded) {
+export function normalizeStoreState(loaded) {
+  if (typeof loaded.activeProjectId !== 'string' || !loaded.projects.some((p) => p.id === loaded.activeProjectId)) {
+    loaded.activeProjectId = loaded.projects[0].id;
+  }
+
   for (const project of loaded.projects) {
+    if (project.status !== 'active' && project.status !== 'completed') {
+      project.status = 'active';
+    }
+    if (typeof project.folder !== 'string') {
+      project.folder = '';
+    }
+    if (!Array.isArray(project.tags)) {
+      project.tags = [];
+    } else {
+      project.tags = project.tags.map((t) => String(t).trim()).filter(Boolean);
+    }
+    if (typeof project.createdAt !== 'string') {
+      project.createdAt = new Date().toISOString();
+    }
+    if (project.completedAt === undefined) {
+      project.completedAt = null;
+    }
     if (project.toolType !== 'needles' && project.toolType !== 'hook') {
       project.toolType = 'needles';
     }
@@ -180,6 +271,9 @@ function normalizeStoreState(loaded) {
     for (const part of project.parts) {
       if (part.targetRows === undefined) {
         part.targetRows = null;
+      }
+      if (!Array.isArray(part.sessions)) {
+        part.sessions = [];
       }
       if (part.stitchCheckInterval === undefined) {
         part.stitchCheckInterval = 10;
@@ -327,6 +421,7 @@ export function createKnitStore(options = {}) {
       const part = getActivePart();
       part.currentRow = 0;
       part.rowLog = [];
+      part.sessions = [];
       part.timer = {
         elapsedMs: 0,
         runningSince: null
@@ -351,6 +446,13 @@ export function createKnitStore(options = {}) {
       const part = getActivePart();
       if (part.timer.runningSince === null) {
         return;
+      }
+      const currentNow = now();
+      if (currentNow > part.timer.runningSince) {
+        part.sessions.push({
+          startMs: part.timer.runningSince,
+          endMs: currentNow
+        });
       }
       part.timer.elapsedMs = getPartElapsedMs(part);
       part.timer.runningSince = null;
@@ -473,9 +575,12 @@ export function createKnitStore(options = {}) {
     },
 
     /**
-     * Updates project passport fields (name, toolType, needleSize, knittingMethod, stitchPattern, notes, photoDataUrl, gauge).
+     * Updates project passport fields (name, folder, tags, status, toolType, needleSize, knittingMethod, stitchPattern, notes, photoDataUrl, gauge).
      * @param {{
      *   name?: string,
+     *   folder?: string,
+     *   tags?: string[],
+     *   status?: 'active' | 'completed',
      *   toolType?: 'needles' | 'hook',
      *   needleSize?: string,
      *   knittingMethod?: string,
@@ -492,6 +597,16 @@ export function createKnitStore(options = {}) {
         if (trimmed) {
           project.name = trimmed;
         }
+      }
+      if (typeof updates.folder === 'string') {
+        project.folder = updates.folder.trim();
+      }
+      if (Array.isArray(updates.tags)) {
+        project.tags = updates.tags.map((t) => String(t).trim()).filter(Boolean);
+      }
+      if (updates.status === 'active' || updates.status === 'completed') {
+        project.status = updates.status;
+        project.completedAt = updates.status === 'completed' ? new Date(now()).toISOString() : null;
       }
       if (updates.toolType === 'needles' || updates.toolType === 'hook') {
         project.toolType = updates.toolType;
@@ -637,6 +752,7 @@ export function createKnitStore(options = {}) {
           elapsedMs: 0,
           runningSince: null
         },
+        sessions: [],
         stitchCheckInterval: source.stitchCheckInterval,
         targetStitchCount: source.targetStitchCount,
         actualStitchCount: null,
@@ -688,6 +804,7 @@ export function createKnitStore(options = {}) {
           elapsedMs: 0,
           runningSince: null
         },
+        sessions: [],
         stitchCheckInterval: 10,
         targetStitchCount: null,
         actualStitchCount: null,
@@ -730,6 +847,179 @@ export function createKnitStore(options = {}) {
         }
         commit();
       }
+    },
+
+    /**
+     * Creates a new project from a quick template ('simple' | 'paired' | 'complex') and activates it.
+     * @param {{
+     *   name: string,
+     *   template?: 'simple' | 'paired' | 'complex',
+     *   folder?: string,
+     *   tags?: string[],
+     *   toolType?: 'needles' | 'hook',
+     *   needleSize?: string
+     * }} input
+     * @returns {Project}
+     */
+    createProject(input) {
+      const timestamp = now();
+      const projectId = createId('project', timestamp);
+      const template = input.template || 'simple';
+      const folder = String(input.folder || '').trim();
+      const partNames =
+        template === 'paired'
+          ? (folder === 'Носки' ? ['Носок 1', 'Носок 2'] : ['Деталь 1', 'Деталь 2'])
+          : template === 'complex'
+            ? ['Отворот / Резинка', 'Основное полотно', 'Завершение']
+            : ['Основное полотно'];
+
+      const parts = partNames.map((partName, idx) =>
+        createBlankPart(createId(`part-${idx + 1}`, timestamp), partName)
+      );
+
+      /** @type {Project} */
+      const project = {
+        id: projectId,
+        name: String(input.name || '').trim() || 'Новый проект',
+        status: 'active',
+        folder,
+        tags: Array.isArray(input.tags) ? input.tags.map((t) => String(t).trim()).filter(Boolean) : [],
+        createdAt: new Date(timestamp).toISOString(),
+        completedAt: null,
+        toolType: input.toolType === 'hook' ? 'hook' : 'needles',
+        needleSize: String(input.needleSize || '').trim(),
+        knittingMethod: 'flat',
+        stitchPattern: '',
+        yarns: [],
+        notes: '',
+        photoDataUrl: null,
+        gauge: createDefaultGauge(),
+        activePartId: parts[0].id,
+        parts
+      };
+
+      state.projects.unshift(project);
+      state.activeProjectId = project.id;
+      commit();
+      return project;
+    },
+
+    /**
+     * Switches the active project by id.
+     * @param {string} projectId
+     */
+    setActiveProject(projectId) {
+      const target = state.projects.find((p) => p.id === projectId);
+      if (target && state.activeProjectId !== target.id) {
+        state.activeProjectId = target.id;
+        commit();
+      }
+    },
+
+    /**
+     * Updates a project's status ('active' | 'completed') by id.
+     * @param {string} projectId
+     * @param {'active' | 'completed'} status
+     */
+    setProjectStatus(projectId, status) {
+      const target = state.projects.find((p) => p.id === projectId);
+      if (!target || (status !== 'active' && status !== 'completed')) return;
+      target.status = status;
+      target.completedAt = status === 'completed' ? new Date(now()).toISOString() : null;
+      if (status === 'completed' && state.activeProjectId === projectId) {
+        const nextActive = state.projects.find((p) => p.status === 'active');
+        if (nextActive) {
+          state.activeProjectId = nextActive.id;
+        }
+      }
+      commit();
+    },
+
+    /**
+     * Returns total elapsed milliseconds across all parts of a project.
+     * @param {string} [projectId]
+     * @returns {number}
+     */
+    getProjectTotalElapsedMs(projectId) {
+      const project = projectId
+        ? state.projects.find((p) => p.id === projectId)
+        : getActiveProject();
+      if (!project) return 0;
+      return project.parts.reduce((sum, part) => sum + getPartElapsedMs(part), 0);
+    },
+
+    /**
+     * Aggregates daily rows/time, monthly time, and all-time totals across all projects.
+     * @param {number} [referenceMs]
+     * @returns {{
+     *   todayRows: number,
+     *   todayTimeMs: number,
+     *   monthTimeMs: number,
+     *   totalTimeMs: number,
+     *   completedProjectsCount: number
+     * }}
+     */
+    getActivityStats(referenceMs = now()) {
+      const refDate = new Date(referenceMs);
+      const todayStart = new Date(refDate.getFullYear(), refDate.getMonth(), refDate.getDate()).getTime();
+      const todayEnd = new Date(refDate.getFullYear(), refDate.getMonth(), refDate.getDate() + 1).getTime();
+      const monthStart = new Date(refDate.getFullYear(), refDate.getMonth(), 1).getTime();
+      const monthEnd = new Date(refDate.getFullYear(), refDate.getMonth() + 1, 1).getTime();
+
+      const overlapMs = (/** @type {number} */ start, /** @type {number} */ end, /** @type {number} */ winStart, /** @type {number} */ winEnd) =>
+        Math.max(0, Math.min(end, winEnd) - Math.max(start, winStart));
+
+      let todayRows = 0;
+      let todayTimeMs = 0;
+      let monthTimeMs = 0;
+      let totalTimeMs = 0;
+      let completedProjectsCount = 0;
+
+      for (const project of state.projects) {
+        if (project.status === 'completed') {
+          completedProjectsCount += 1;
+        }
+        for (const part of project.parts) {
+          totalTimeMs += getPartElapsedMs(part);
+
+          for (const entry of part.rowLog) {
+            const ts = Date.parse(entry.timestamp);
+            if (!Number.isNaN(ts) && ts >= todayStart && ts < todayEnd) {
+              todayRows += 1;
+            }
+          }
+
+          for (const session of part.sessions) {
+            todayTimeMs += overlapMs(session.startMs, session.endMs, todayStart, todayEnd);
+            monthTimeMs += overlapMs(session.startMs, session.endMs, monthStart, monthEnd);
+          }
+
+          if (part.timer.runningSince !== null) {
+            todayTimeMs += overlapMs(part.timer.runningSince, referenceMs, todayStart, todayEnd);
+            monthTimeMs += overlapMs(part.timer.runningSince, referenceMs, monthStart, monthEnd);
+          }
+        }
+      }
+
+      return {
+        todayRows,
+        todayTimeMs,
+        monthTimeMs,
+        totalTimeMs,
+        completedProjectsCount
+      };
+    },
+
+    /**
+     * Replaces and normalizes the entire store state (used for backup restore).
+     * @param {unknown} candidate
+     * @returns {boolean}
+     */
+    replaceState(candidate) {
+      if (!isValidStoreState(candidate)) return false;
+      state = normalizeStoreState(structuredClone(candidate));
+      commit();
+      return true;
     },
 
     /**

@@ -341,3 +341,81 @@ test('KnitStore adds, renames, removes parts and updates toolType, knittingMetho
   store.removePart(firstId);
   assert.equal(store.getActiveProject().parts.length, 1);
 });
+
+test('KnitStore creates projects from simple, paired, and complex templates with folders and tags', () => {
+  const storage = createMemoryStorage();
+  let currentTime = new Date(2026, 10, 24, 10, 0, 0).getTime();
+  const store = createKnitStore({ storage, now: () => currentTime });
+
+  const simple = store.createProject({
+    name: 'Снуд',
+    template: 'simple',
+    folder: 'Шарфы',
+    tags: ['зима', 'толстая пряжа'],
+    toolType: 'needles',
+    needleSize: '6 мм'
+  });
+  assert.equal(simple.parts.length, 1);
+  assert.equal(simple.folder, 'Шарфы');
+  assert.deepEqual(simple.tags, ['зима', 'толстая пряжа']);
+  assert.equal(simple.status, 'active');
+  assert.equal(store.getActiveProject().id, simple.id);
+
+  const paired = store.createProject({
+    name: 'Носки с косами',
+    template: 'paired',
+    folder: 'Носки'
+  });
+  assert.equal(paired.parts.length, 2);
+  assert.equal(store.getActiveProject().id, paired.id);
+
+  const complex = store.createProject({
+    name: 'Джемпер реглан',
+    template: 'complex',
+    folder: 'Свитера'
+  });
+  assert.equal(complex.parts.length, 3);
+
+  store.setProjectStatus(simple.id, 'completed');
+  const updatedSimple = store.getState().projects.find((p) => p.id === simple.id);
+  assert.equal(updatedSimple?.status, 'completed');
+  assert.ok(updatedSimple?.completedAt);
+
+  store.setActiveProject(paired.id);
+  assert.equal(store.getActiveProject().id, paired.id);
+});
+
+test('KnitStore aggregates daily rows and time across morning and evening sessions, plus monthly and all-time stats', () => {
+  const storage = createMemoryStorage();
+  // Local time: 2026-11-24 09:00:00
+  let currentTime = new Date(2026, 10, 24, 9, 0, 0).getTime();
+  const store = createKnitStore({ storage, now: () => currentTime });
+
+  // Previous day session on 2026-11-23 (1 hour, 2 rows)
+  currentTime = new Date(2026, 10, 23, 18, 0, 0).getTime();
+  store.incrementRow();
+  currentTime += 30 * 60_000;
+  store.incrementRow();
+  currentTime += 30 * 60_000;
+  store.pauseTimer(); // 60 min on Nov 23
+
+  // Morning session on 2026-11-24 (20 min, 2 rows)
+  currentTime = new Date(2026, 10, 24, 8, 30, 0).getTime();
+  store.incrementRow();
+  currentTime += 10 * 60_000;
+  store.incrementRow();
+  currentTime += 10 * 60_000;
+  store.pauseTimer(); // 20 min on Nov 24 morning
+
+  // Evening session on 2026-11-24 (25 min active + running, 1 row)
+  currentTime = new Date(2026, 10, 24, 20, 0, 0).getTime();
+  store.incrementRow();
+  currentTime += 25 * 60_000;
+
+  const stats = store.getActivityStats();
+  assert.equal(stats.todayRows, 3);
+  assert.equal(stats.todayTimeMs, 45 * 60_000);
+  assert.equal(stats.monthTimeMs, 105 * 60_000);
+  assert.equal(stats.totalTimeMs >= 105 * 60_000, true);
+  assert.equal(stats.completedProjectsCount >= 1, true);
+});

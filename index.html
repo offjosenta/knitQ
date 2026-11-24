@@ -21,30 +21,37 @@
   <div class="app-container">
     <!-- Top Bar -->
     <header class="top-bar">
-      <div class="brand">
-        <div class="brand-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round">
-            <!-- Full-length crossed knitting needles behind the yarn ball -->
-            <line x1="4" y1="4" x2="20" y2="20"></line>
-            <circle cx="3.5" cy="3.5" r="1.2" fill="currentColor" stroke="none"></circle>
-            <line x1="20" y1="4" x2="4" y2="20"></line>
-            <circle cx="20.5" cy="3.5" r="1.2" fill="currentColor" stroke="none"></circle>
-            <!-- Yarn ball masking the needle intersection -->
-            <circle cx="12" cy="12.5" r="6" fill="var(--bg-card-main)" stroke="currentColor" stroke-width="1.65"></circle>
-            <!-- Clean parallel yarn-wrap arcs -->
-            <path d="M7.3 9.8c2.6-.7 5.8.4 8.2 2.7"></path>
-            <path d="M6.4 12.6c3-.8 6.4.4 8.9 2.9"></path>
-            <path d="M8.8 16.5c1.8-1.6 4.2-2.2 6.8-1.6"></path>
-            <!-- Trailing yarn tail -->
-            <path d="M16.2 16.8c1.4 1.2 2.8 1.2 4 .2"></path>
+      <div class="brand-wrap">
+        <button id="btn-back-dashboard" class="btn-icon btn-back-home" aria-label="На главный экран" hidden>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
           </svg>
+        </button>
+        <div class="brand">
+          <div class="brand-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round">
+              <!-- Full-length crossed knitting needles behind the yarn ball -->
+              <line x1="4" y1="4" x2="20" y2="20"></line>
+              <circle cx="3.5" cy="3.5" r="1.2" fill="currentColor" stroke="none"></circle>
+              <line x1="20" y1="4" x2="4" y2="20"></line>
+              <circle cx="20.5" cy="3.5" r="1.2" fill="currentColor" stroke="none"></circle>
+              <!-- Yarn ball masking the needle intersection -->
+              <circle cx="12" cy="12.5" r="6" fill="var(--bg-card-main)" stroke="currentColor" stroke-width="1.65"></circle>
+              <!-- Clean parallel yarn-wrap arcs -->
+              <path d="M7.3 9.8c2.6-.7 5.8.4 8.2 2.7"></path>
+              <path d="M6.4 12.6c3-.8 6.4.4 8.9 2.9"></path>
+              <path d="M8.8 16.5c1.8-1.6 4.2-2.2 6.8-1.6"></path>
+              <!-- Trailing yarn tail -->
+              <path d="M16.2 16.8c1.4 1.2 2.8 1.2 4 .2"></path>
+            </svg>
+          </div>
+          <h1 class="brand-title">KnitQ</h1>
         </div>
-        <h1 class="brand-title">KnitQ</h1>
       </div>
 
       <div class="header-actions">
-        <!-- Gauge & Wet-Blocking Calculator Button -->
-        <button id="btn-open-gauge" class="btn-icon" aria-label="Калькулятор образца ВТО">
+        <!-- Gauge & Wet-Blocking Calculator Button (shown on active counter screen) -->
+        <button id="btn-open-gauge" class="btn-icon" aria-label="Калькулятор образца ВТО" hidden>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="4" y="2" width="16" height="20" rx="3"></rect>
             <line x1="8" y1="6" x2="16" y2="6"></line>
@@ -59,8 +66,8 @@
           </svg>
         </button>
 
-        <!-- Project Parameters Button -->
-        <button id="btn-open-passport" class="btn-icon" aria-label="Параметры проекта">
+        <!-- Project Parameters Button (shown on active counter screen) -->
+        <button id="btn-open-passport" class="btn-icon" aria-label="Параметры проекта" hidden>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path>
             <path d="M8 7h8"></path>
@@ -69,7 +76,7 @@
         </button>
 
         <!-- Global Settings Button (hidden on active counter screen; shown on home screen) -->
-        <button id="btn-open-settings" class="btn-icon" aria-label="Настройки" hidden>
+        <button id="btn-open-settings" class="btn-icon" aria-label="Настройки">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
             <circle cx="12" cy="12" r="3"></circle>
@@ -78,8 +85,85 @@
       </div>
     </header>
 
+    <!-- Main Content: Home Dashboard Screen -->
+    <section class="dashboard-view" id="dashboard-view">
+      <div class="dashboard-scroll scroll-fade" id="dashboard-scroll">
+        <!-- Active Project Hero Card -->
+        <div class="glass-card active-hero-card" id="active-hero-card">
+          <div class="hero-top-row">
+            <span class="hero-badge" id="hero-folder-badge">Сейчас в работе</span>
+            <span class="hero-time-pill" id="hero-active-time">00:00:00</span>
+          </div>
+          <h2 class="hero-project-title" id="hero-project-title">Шарф «Лицевая гладь»</h2>
+          <p class="hero-project-meta" id="hero-project-meta">Основное полотно · Ряд 0</p>
+          <button type="button" id="btn-continue-knitting" class="btn-continue-knitting">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <polygon points="6 4 20 12 6 20 6 4"></polygon>
+            </svg>
+            <span>Продолжить вязать</span>
+          </button>
+        </div>
+
+        <!-- Activity Stats Widget -->
+        <div class="stats-bento-grid" id="activity-stats-widget">
+          <div class="glass-card stat-card stat-card-wide">
+            <span class="stat-label">Сегодня</span>
+            <div class="stat-today-values">
+              <div class="stat-metric">
+                <strong class="stat-value" id="stat-today-rows">0</strong>
+                <span class="stat-unit">рядов</span>
+              </div>
+              <div class="stat-divider-v"></div>
+              <div class="stat-metric">
+                <strong class="stat-value" id="stat-today-time">0 мин</strong>
+                <span class="stat-unit">за спицами</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass-card stat-card">
+            <span class="stat-label">За месяц</span>
+            <strong class="stat-value" id="stat-month-time">0 ч</strong>
+            <span class="stat-unit">вязания</span>
+          </div>
+
+          <div class="glass-card stat-card">
+            <span class="stat-label">За всё время</span>
+            <div class="stat-alltime-row">
+              <strong class="stat-value" id="stat-total-time">0 ч</strong>
+              <span class="stat-pill-done" id="stat-completed-count">1 готово</span>
+            </div>
+            <span class="stat-unit">всего</span>
+          </div>
+        </div>
+
+        <!-- Projects Catalog -->
+        <div class="catalog-section">
+          <div class="catalog-header">
+            <h2 class="catalog-title">Проекты</h2>
+            <button type="button" id="btn-new-project" class="btn-new-project">+ Новое изделие</button>
+          </div>
+
+          <!-- Status Segmented Control -->
+          <div class="segmented-control" role="tablist" aria-label="Статус проектов">
+            <button type="button" class="segmented-tab active" data-catalog-status="active" role="tab" aria-selected="true">В процессе</button>
+            <button type="button" class="segmented-tab" data-catalog-status="completed" role="tab" aria-selected="false">Готовые</button>
+          </div>
+
+          <!-- Folder Filter Chips -->
+          <div class="filter-chips-scroll" id="catalog-folder-chips"></div>
+
+          <!-- Tag Filter Chips -->
+          <div class="filter-chips-scroll filter-tags-row" id="catalog-tag-chips" hidden></div>
+
+          <!-- Project Cards List -->
+          <div class="projects-catalog-list" id="projects-catalog-list"></div>
+        </div>
+      </div>
+    </section>
+
     <!-- Main Content: Active Knitting Screen -->
-    <main class="main-content" id="app-main">
+    <main class="main-content" id="app-main" hidden>
       <!-- Part / Project Context Pill -->
       <div class="active-part-header">
         <span id="active-project-name" class="active-project-name">Шарф «Лицевая гладь»</span>
@@ -305,6 +389,30 @@
             <div class="ios-row">
               <label for="input-project-name" class="ios-row-label">Название</label>
               <input id="input-project-name" type="text" class="glass-input glass-input-wide" placeholder="Название проекта">
+            </div>
+            <div class="ios-divider"></div>
+            <div class="ios-row ios-row-stack">
+              <span class="ios-row-label">Статус проекта</span>
+              <div class="preset-chips-row">
+                <button type="button" class="preset-chip" data-passport-status="active">В процессе</button>
+                <button type="button" class="preset-chip" data-passport-status="completed">Готово</button>
+              </div>
+            </div>
+            <div class="ios-divider"></div>
+            <div class="ios-row ios-row-stack">
+              <span class="ios-row-label">Папка</span>
+              <div class="preset-chips-row preset-chips-wrap">
+                <button type="button" class="preset-chip" data-passport-folder="Шапки">Шапки</button>
+                <button type="button" class="preset-chip" data-passport-folder="Шарфы">Шарфы</button>
+                <button type="button" class="preset-chip" data-passport-folder="Носки">Носки</button>
+                <button type="button" class="preset-chip" data-passport-folder="Свитера">Свитера</button>
+                <button type="button" class="preset-chip" data-passport-folder="">Без папки</button>
+              </div>
+            </div>
+            <div class="ios-divider"></div>
+            <div class="ios-row">
+              <label for="input-passport-tags" class="ios-row-label">Теги</label>
+              <input id="input-passport-tags" type="text" class="glass-input glass-input-wide" placeholder="зима, меринос">
             </div>
             <div class="ios-divider"></div>
             <div class="ios-row ios-row-stack">
@@ -708,6 +816,88 @@
             </div>
           </div>
         </div>
+
+        <div class="ios-section-title">Резервное копирование</div>
+        <div class="ios-grouped-section">
+          <button type="button" class="ios-row ios-row-action" id="btn-export-backup">
+            <span class="ios-row-label">Экспорт в файл (.json)</span>
+            <span class="ios-row-action-badge">Сохранить</span>
+          </button>
+          <div class="ios-divider"></div>
+          <label class="ios-row ios-row-action" for="input-import-backup" id="btn-import-backup">
+            <span class="ios-row-label">Восстановить из файла (.json)</span>
+            <span class="ios-row-action-badge">Выбрать</span>
+            <input type="file" id="input-import-backup" accept=".json,application/json" hidden>
+          </label>
+        </div>
+        <p id="backup-status-msg" class="backup-status-msg" hidden></p>
+      </div>
+    </div>
+
+    <!-- New Project Modal Sheet -->
+    <div id="new-project-modal" class="modal-backdrop">
+      <div class="modal-sheet modal-sheet-scrollable">
+        <div class="modal-header">
+          <h3 class="modal-title">Новое изделие</h3>
+          <button id="btn-close-new-project" class="modal-close-btn" aria-label="Закрыть">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <form id="form-new-project" class="new-project-form">
+          <div class="ios-section-title">Быстрый шаблон</div>
+          <div class="template-cards-grid" id="new-project-templates">
+            <button type="button" class="template-card active" data-template="simple">
+              <strong>Простое</strong>
+              <span>1 деталь · шарф, шапка</span>
+            </button>
+            <button type="button" class="template-card" data-template="paired">
+              <strong>Парное</strong>
+              <span>2 детали · носки, рукава</span>
+            </button>
+            <button type="button" class="template-card" data-template="complex">
+              <strong>Сложное</strong>
+              <span>3 детали · свитер, реглан</span>
+            </button>
+          </div>
+
+          <div class="ios-grouped-section">
+            <div class="ios-row">
+              <label for="input-new-project-name" class="ios-row-label">Название</label>
+              <input id="input-new-project-name" type="text" class="glass-input glass-input-wide" placeholder="Например: Шапка бини" required>
+            </div>
+            <div class="ios-divider"></div>
+            <div class="ios-row ios-row-stack">
+              <span class="ios-row-label">Папка</span>
+              <div class="preset-chips-row preset-chips-wrap" id="new-project-folder-chips">
+                <button type="button" class="preset-chip active" data-new-folder="Шапки">Шапки</button>
+                <button type="button" class="preset-chip" data-new-folder="Шарфы">Шарфы</button>
+                <button type="button" class="preset-chip" data-new-folder="Носки">Носки</button>
+                <button type="button" class="preset-chip" data-new-folder="Свитера">Свитера</button>
+                <button type="button" class="preset-chip" data-new-folder="">Без папки</button>
+              </div>
+            </div>
+            <div class="ios-divider"></div>
+            <div class="ios-row">
+              <label for="input-new-project-tags" class="ios-row-label">Теги</label>
+              <input id="input-new-project-tags" type="text" class="glass-input glass-input-wide" placeholder="меринос, подарок">
+            </div>
+            <div class="ios-divider"></div>
+            <div class="ios-row ios-row-stack">
+              <span class="ios-row-label">Инструмент и размер</span>
+              <div class="preset-chips-row">
+                <button type="button" class="preset-chip active" data-new-tool="needles">Спицы</button>
+                <button type="button" class="preset-chip" data-new-tool="hook">Крючок</button>
+                <input id="input-new-project-needle" type="text" class="glass-input glass-input-compact" placeholder="4.0 мм">
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-continue-knitting">Создать и начать вязать</button>
+        </form>
       </div>
     </div>
   </div>
