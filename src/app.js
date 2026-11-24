@@ -78,6 +78,7 @@ export function initApp() {
   const activeProjectNameEl = document.getElementById('active-project-name');
   const activePartNameEl = document.getElementById('active-part-name');
   const activePartSelectWrap = document.getElementById('active-part-select-wrap');
+  const activePartSelectLabel = document.getElementById('active-part-select-label');
   const activePartSelect = /** @type {HTMLSelectElement | null} */ (document.getElementById('active-part-select'));
   const tapZonePlus = document.getElementById('tap-zone-plus');
   const rowCounterValueEl = document.getElementById('row-counter-value');
@@ -571,11 +572,12 @@ export function initApp() {
    */
   function flashButtonConfirmation(btnEl, confirmedText, defaultText) {
     if (!btnEl) return;
+    const targetEl = btnEl.querySelector('span') || btnEl;
     btnEl.classList.add('is-confirmed');
-    btnEl.textContent = confirmedText;
+    targetEl.textContent = confirmedText;
     setTimeout(() => {
       btnEl.classList.remove('is-confirmed');
-      btnEl.textContent = defaultText;
+      targetEl.textContent = defaultText;
     }, 1800);
   }
 
@@ -992,6 +994,7 @@ export function initApp() {
     if (project.parts.length > 1 && activePartSelectWrap && activePartSelect) {
       if (activePartNameEl) activePartNameEl.hidden = true;
       activePartSelectWrap.hidden = false;
+      if (activePartSelectLabel) activePartSelectLabel.textContent = part.name;
       activePartSelect.replaceChildren(
         ...project.parts.map((p) => {
           const opt = document.createElement('option');

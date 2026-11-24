@@ -86,10 +86,11 @@
         <span class="active-part-sep">·</span>
         <span id="active-part-name" class="active-part-name">Основное полотно</span>
         <div id="active-part-select-wrap" class="active-part-select-wrap" hidden>
-          <select id="active-part-select" class="active-part-select" aria-label="Выбрать деталь проекта"></select>
+          <span id="active-part-select-label" class="active-part-select-label"></span>
           <svg class="active-part-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <polyline points="6 9 12 15 18 9"></polyline>
           </svg>
+          <select id="active-part-select" class="active-part-select" aria-label="Выбрать деталь проекта"></select>
         </div>
       </div>
 
@@ -351,7 +352,13 @@
               <input id="input-part-target-rows" type="number" min="1" inputmode="numeric" class="glass-input glass-input-compact" placeholder="∞">
             </div>
             <div id="remove-part-row" class="inline-add-form" hidden>
-              <button id="btn-remove-active-part" type="button" class="btn-glass-add btn-photo-remove">Удалить активную деталь</button>
+              <button id="btn-remove-active-part" type="button" class="btn-glass-add btn-photo-remove">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+                <span>Удалить активную деталь</span>
+              </button>
             </div>
             <div class="ios-divider"></div>
             <form id="form-add-part" class="inline-add-form">
@@ -498,7 +505,13 @@
               <div class="ios-grouped-section">
                 <div class="inline-add-form">
                   <p class="passport-hint-text">Мгновенно создаёт симметричную копию активной детали со всеми целями, правилами и маркерами.</p>
-                  <button id="btn-clone-paired-part" type="button" class="btn-glass-add">Связать парную деталь</button>
+                  <button id="btn-clone-paired-part" type="button" class="btn-glass-add">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                    <span>Связать парную деталь</span>
+                  </button>
                 </div>
               </div>
 
@@ -511,7 +524,12 @@
                     <button id="btn-remove-project-photo" type="button" class="btn-glass-add btn-photo-remove">Удалить фото</button>
                   </div>
                   <label for="input-project-photo" class="btn-glass-add btn-file-label">
-                    Выбрать фото
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                      <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                      <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                    <span>Выбрать фото</span>
                     <input id="input-project-photo" type="file" accept="image/*" hidden>
                   </label>
                 </div>
@@ -593,7 +611,12 @@
               </div>
 
               <div id="gauge-target-result" class="gauge-result-pill" hidden></div>
-              <button id="btn-apply-gauge-targets" type="button" class="btn-glass-add" hidden>Применить к активной детали</button>
+              <button id="btn-apply-gauge-targets" type="button" class="btn-glass-add btn-glass-action" hidden>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>Применить к активной детали</span>
+              </button>
             </div>
           </div>
         </div>
