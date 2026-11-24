@@ -77,6 +77,8 @@ export function initApp() {
   // Active Knitting Elements
   const activeProjectNameEl = document.getElementById('active-project-name');
   const activePartNameEl = document.getElementById('active-part-name');
+  const activePartSelectWrap = document.getElementById('active-part-select-wrap');
+  const activePartSelect = /** @type {HTMLSelectElement | null} */ (document.getElementById('active-part-select'));
   const tapZonePlus = document.getElementById('tap-zone-plus');
   const rowCounterValueEl = document.getElementById('row-counter-value');
   const rowGoalPillEl = document.getElementById('row-goal-pill');
@@ -262,15 +264,15 @@ export function initApp() {
     requestAnimationFrame(() => updateScrollFadeMask(scrollEl));
   }
 
-  /** @type {import('./core/checkpoint-engine.js').RowMarker[]} */
-  let pendingMarkersAfterCheck = [];
+  /** @type {Array<() => void>} */
+  let rowAlertQueue = [];
 
-  function flushPendingMarkersAfterCheck() {
-    if (pendingMarkersAfterCheck.length > 0) {
-      const markersToShow = [...pendingMarkersAfterCheck];
-      const rowNum = store.getActivePart().currentRow;
-      pendingMarkersAfterCheck = [];
-      setTimeout(() => openRowMarkerModal(rowNum, markersToShow), 200);
+  function flushNextRowAlert() {
+    if (rowAlertQueue.length > 0) {
+      const next = rowAlertQueue.shift();
+      if (next) {
+        setTimeout(next, 220);
+      }
     }
   }
 
@@ -278,9 +280,9 @@ export function initApp() {
   const settingsModal = createModalController(settingsModalEl);
   const rowLogModal = createModalController(rowLogModalEl, { onOpen: renderRowLog });
   const resetConfirmModal = createModalController(resetConfirmModalEl);
-  const stitchCheckModal = createModalController(stitchCheckModalEl, { onClose: flushPendingMarkersAfterCheck });
-  const rowMarkerModal = createModalController(rowMarkerModalEl);
-  const goalReachedModal = createModalController(goalReachedModalEl);
+  const stitchCheckModal = createModalController(stitchCheckModalEl, { onClose: flushNextRowAlert });
+  const rowMarkerModal = createModalController(rowMarkerModalEl, { onClose: flushNextRowAlert });
+  const goalReachedModal = createModalController(goalReachedModalEl, { onClose: flushNextRowAlert });
 
   btnCloseGoalReached?.addEventListener('click', goalReachedModal.close);
   btnAckGoalReached?.addEventListener('click', goalReachedModal.close);
@@ -987,8 +989,24 @@ export function initApp() {
     if (activeProjectNameEl) {
       activeProjectNameEl.textContent = project.name;
     }
-    if (activePartNameEl) {
-      activePartNameEl.textContent = part.name;
+    if (project.parts.length > 1 && activePartSelectWrap && activePartSelect) {
+      if (activePartNameEl) activePartNameEl.hidden = true;
+      activePartSelectWrap.hidden = false;
+      activePartSelect.replaceChildren(
+        ...project.parts.map((p) => {
+          const opt = document.createElement('option');
+          opt.value = p.id;
+          opt.textContent = p.name;
+          return opt;
+        })
+      );
+      activePartSelect.value = part.id;
+    } else {
+      if (activePartNameEl) {
+        activePartNameEl.hidden = false;
+        activePartNameEl.textContent = part.name;
+      }
+      if (activePartSelectWrap) activePartSelectWrap.hidden = true;
     }
     if (rowCounterValueEl) {
       rowCounterValueEl.textContent = String(part.currentRow);
@@ -1060,27 +1078,56 @@ export function initApp() {
       && shouldTriggerStitchCheck(part.currentRow, part.stitchCheckInterval);
     const activeMarkers = getRowMarkersForRow(part.currentRow, part.rowMarkers);
 
-    if (needsStitchCheck) {
-      pendingMarkersAfterCheck = activeMarkers;
-      if (stitchCheckDescEl) {
-        stitchCheckDescEl.textContent = `Ряд ${part.currentRow}: пора пересчитать петли на спицах! Должно быть: ${part.targetStitchCount} петель.`;
-      }
-      if (inputStitchCheckActual) {
-        inputStitchCheckActual.value = String(part.targetStitchCount);
-      }
-      if (btnStitchCheckConfirm) {
-        btnStitchCheckConfirm.textContent = `Всё сходится (${part.targetStitchCount})`;
-      }
-      stitchCheckModal.open();
-    } else if (activeMarkers.length > 0) {
-      openRowMarkerModal(part.currentRow, activeMarkers);
-    } else if (part.targetRows !== null && part.currentRow === part.targetRows) {
-      if (goalReachedDescEl) {
-        goalReachedDescEl.textContent = `Деталь «${part.name}»: связано ${part.currentRow} из ${part.targetRows} рядов!`;
-      }
-      goalReachedModal.open();
+    rowAlertQueue = [];
+
+    if (part.targetRows !== null && part.currentRow === part.targetRows) {
+      const goalRow = part.currentRow;
+      const goalTarget = part.targetRows;
+      const goalPartName = part.name;
+      rowAlertQueue.push(() => {
+        if (goalReachedDescEl) {
+          goalReachedDescEl.textContent = `Деталь «${goalPartName}»: связано ${goalRow} из ${goalTarget} рядов!`;
+        }
+        goalReachedModal.open();
+      });
+    }
+
+    if (needsStitchCheck && part.targetStitchCount !== null) {
+      const checkRow = part.currentRow;
+      const targetStitches = part.targetStitchCount;
+      rowAlertQueue.push(() => {
+        if (stitchCheckDescEl) {
+          stitchCheckDescEl.textContent = `Ряд ${checkRow}: пора пересчитать петли на спицах! Должно быть: ${targetStitches} петель.`;
+        }
+        if (inputStitchCheckActual) {
+          inputStitchCheckActual.value = String(targetStitches);
+        }
+        if (btnStitchCheckConfirm) {
+          btnStitchCheckConfirm.textContent = `Всё сходится (${targetStitches})`;
+        }
+        stitchCheckModal.open();
+      });
+    }
+
+    if (activeMarkers.length > 0) {
+      const markerRow = part.currentRow;
+      const markersCopy = [...activeMarkers];
+      rowAlertQueue.push(() => {
+        openRowMarkerModal(markerRow, markersCopy);
+      });
+    }
+
+    const firstAlert = rowAlertQueue.shift();
+    if (firstAlert) {
+      firstAlert();
     }
   }
+
+  activePartSelect?.addEventListener('change', () => {
+    if (activePartSelect.value) {
+      store.setActivePart(activePartSelect.value);
+    }
+  });
 
   tapZonePlus?.addEventListener('click', handleTapIncrement);
 

@@ -1168,7 +1168,16 @@ button.active-part-header:active {
 
 .inline-marker-row {
   display: flex;
+  align-items: center;
   gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.inline-marker-row > .glass-input:not(.glass-input-row-num) {
+  flex: 1;
+  min-width: 0;
+  width: auto;
 }
 
 .btn-glass-add {
@@ -1198,16 +1207,53 @@ button.active-part-header:active {
   color: #34c759;
 }
 
-.tap-zone-top-bar {
+.row-counter-center {
+  position: relative;
+  z-index: 2;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
+  gap: 10px;
+  pointer-events: none;
 }
 
-.tap-zone-top-bar:has(.row-goal-pill[hidden]) {
-  justify-content: center;
+.row-counter-center .row-counter-btn {
+  pointer-events: auto;
+}
+
+.active-part-select-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.active-part-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 600;
+  padding-right: 16px;
+  cursor: pointer;
+  outline: none;
+  max-width: 170px;
+  text-overflow: ellipsis;
+}
+
+.active-part-select option {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.active-part-chevron {
+  position: absolute;
+  right: 0;
+  pointer-events: none;
+  color: var(--text-secondary);
 }
 
 .preset-chips-wrap {
@@ -1239,16 +1285,53 @@ button.active-part-header:active {
   letter-spacing: 0.01em;
 }
 
-[data-theme="light-minimal"] .tap-zone-top-bar {
+[data-theme="light-minimal"] .row-counter-center {
+  position: relative;
+  z-index: 2;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
+  gap: 10px;
+  pointer-events: none;
 }
 
-.tap-zone-top-bar:has(.row-goal-pill[hidden]) {
-  justify-content: center;
+.row-counter-center .row-counter-btn {
+  pointer-events: auto;
+}
+
+.active-part-select-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.active-part-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 600;
+  padding-right: 16px;
+  cursor: pointer;
+  outline: none;
+  max-width: 170px;
+  text-overflow: ellipsis;
+}
+
+.active-part-select option {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.active-part-chevron {
+  position: absolute;
+  right: 0;
+  pointer-events: none;
+  color: var(--text-secondary);
 }
 
 .preset-chips-wrap {
