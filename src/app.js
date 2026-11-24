@@ -79,7 +79,7 @@ export function initApp() {
   const activePartNameEl = document.getElementById('active-part-name');
   const tapZonePlus = document.getElementById('tap-zone-plus');
   const rowCounterValueEl = document.getElementById('row-counter-value');
-  const rowCounterSubLabelEl = document.getElementById('row-counter-sub-label');
+  const rowGoalPillEl = document.getElementById('row-goal-pill');
   const btnRowLog = document.getElementById('btn-row-log');
   const btnRowMinus = /** @type {HTMLButtonElement | null} */ (document.getElementById('btn-row-minus'));
   const btnTimerToggle = document.getElementById('btn-timer-toggle');
@@ -97,13 +97,8 @@ export function initApp() {
   const btnCancelReset = document.getElementById('btn-cancel-reset');
   const btnConfirmReset = document.getElementById('btn-confirm-reset');
 
-  // Part Settings, Checkpoints, Rules & Markers Elements
+  // Part Settings, Checkpoints, Rules & Markers Elements (inside Project Parameters sheet)
   const rowHintsBarEl = document.getElementById('row-hints-bar');
-  const btnOpenPartSettings = document.getElementById('btn-open-part-settings');
-  const partSettingsModalEl = document.getElementById('part-settings-modal');
-  const partSettingsScrollEl = /** @type {HTMLElement | null} */ (partSettingsModalEl?.querySelector('.part-settings-scroll') ?? null);
-  attachScrollFade(partSettingsScrollEl);
-  const btnClosePartSettings = document.getElementById('btn-close-part-settings');
   const inputStitchInterval = /** @type {HTMLInputElement | null} */ (document.getElementById('input-stitch-interval'));
   const inputTargetStitches = /** @type {HTMLInputElement | null} */ (document.getElementById('input-target-stitches'));
   const actualStitchStatusRow = document.getElementById('actual-stitch-status-row');
@@ -134,7 +129,14 @@ export function initApp() {
   const rowMarkerModalTitleEl = document.getElementById('row-marker-modal-title');
   const rowMarkerModalBodyEl = document.getElementById('row-marker-modal-body');
 
-  // Project Passport & Gauge Calculator Modal Elements
+  // Gauge & Wet-Blocking Calculator Modal Elements
+  const btnOpenGauge = document.getElementById('btn-open-gauge');
+  const gaugeModalEl = document.getElementById('gauge-modal');
+  const gaugeScrollEl = /** @type {HTMLElement | null} */ (gaugeModalEl?.querySelector('.gauge-scroll') ?? null);
+  attachScrollFade(gaugeScrollEl);
+  const btnCloseGauge = document.getElementById('btn-close-gauge');
+
+  // Project Parameters Modal Elements
   const btnOpenPassport = document.getElementById('btn-open-passport');
   const passportModalEl = document.getElementById('passport-modal');
   const passportScrollEl = /** @type {HTMLElement | null} */ (passportModalEl?.querySelector('.passport-scroll') ?? null);
@@ -262,7 +264,6 @@ export function initApp() {
   const settingsModal = createModalController(settingsModalEl);
   const rowLogModal = createModalController(rowLogModalEl, { onOpen: renderRowLog });
   const resetConfirmModal = createModalController(resetConfirmModalEl);
-  const partSettingsModal = createModalController(partSettingsModalEl, { onOpen: renderPartSettings });
   const stitchCheckModal = createModalController(stitchCheckModalEl, { onClose: flushPendingMarkersAfterCheck });
   const rowMarkerModal = createModalController(rowMarkerModalEl);
 
@@ -364,8 +365,8 @@ export function initApp() {
       }
     }
 
-    if (partSettingsScrollEl) {
-      requestAnimationFrame(() => updateScrollFadeMask(partSettingsScrollEl));
+    if (passportScrollEl) {
+      requestAnimationFrame(() => updateScrollFadeMask(passportScrollEl));
     }
   }
 
@@ -389,9 +390,6 @@ export function initApp() {
     }
     rowMarkerModal.open();
   }
-
-  btnOpenPartSettings?.addEventListener('click', partSettingsModal.open);
-  btnClosePartSettings?.addEventListener('click', partSettingsModal.close);
 
   intervalPresetChips.forEach((chip) => {
     chip.addEventListener('click', () => {
@@ -545,6 +543,45 @@ export function initApp() {
     return { gaugeInput, targetWidthCm, targetHeightCm, counts };
   }
 
+  /**
+   * Briefly highlights a button in green with a confirmation label so the user sees immediate feedback.
+   * @param {HTMLElement | null} btnEl
+   * @param {string} confirmedText
+   * @param {string} defaultText
+   */
+  function flashButtonConfirmation(btnEl, confirmedText, defaultText) {
+    if (!btnEl) return;
+    btnEl.classList.add('is-confirmed');
+    btnEl.textContent = confirmedText;
+    setTimeout(() => {
+      btnEl.classList.remove('is-confirmed');
+      btnEl.textContent = defaultText;
+    }, 1800);
+  }
+
+  function renderGaugeModal() {
+    const g = store.getActiveProject().gauge;
+    if (inputGaugeStitches) inputGaugeStitches.value = g.stitchesCount !== null ? String(g.stitchesCount) : '';
+    if (inputGaugeRows) inputGaugeRows.value = g.rowsCount !== null ? String(g.rowsCount) : '';
+    if (inputGaugePreW) inputGaugePreW.value = g.widthPreWashCm !== null ? String(g.widthPreWashCm) : '';
+    if (inputGaugePreH) inputGaugePreH.value = g.heightPreWashCm !== null ? String(g.heightPreWashCm) : '';
+    if (inputGaugePostW) inputGaugePostW.value = g.widthPostWashCm !== null ? String(g.widthPostWashCm) : '';
+    if (inputGaugePostH) inputGaugePostH.value = g.heightPostWashCm !== null ? String(g.heightPostWashCm) : '';
+    if (inputGaugeTargetW) inputGaugeTargetW.value = g.targetWidthCm !== null ? String(g.targetWidthCm) : '';
+    if (inputGaugeTargetH) inputGaugeTargetH.value = g.targetHeightCm !== null ? String(g.targetHeightCm) : '';
+    renderGaugeResults();
+    if (gaugeScrollEl) {
+      requestAnimationFrame(() => updateScrollFadeMask(gaugeScrollEl));
+    }
+  }
+
+  const gaugeModal = createModalController(gaugeModalEl, {
+    onOpen: renderGaugeModal
+  });
+
+  btnOpenGauge?.addEventListener('click', gaugeModal.open);
+  btnCloseGauge?.addEventListener('click', gaugeModal.close);
+
   function renderPassportModal() {
     const project = store.getActiveProject();
     const activePart = store.getActivePart();
@@ -641,17 +678,8 @@ export function initApp() {
       }
     }
 
-    // Gauge inputs
-    const g = project.gauge;
-    if (inputGaugeStitches) inputGaugeStitches.value = g.stitchesCount !== null ? String(g.stitchesCount) : '';
-    if (inputGaugeRows) inputGaugeRows.value = g.rowsCount !== null ? String(g.rowsCount) : '';
-    if (inputGaugePreW) inputGaugePreW.value = g.widthPreWashCm !== null ? String(g.widthPreWashCm) : '';
-    if (inputGaugePreH) inputGaugePreH.value = g.heightPreWashCm !== null ? String(g.heightPreWashCm) : '';
-    if (inputGaugePostW) inputGaugePostW.value = g.widthPostWashCm !== null ? String(g.widthPostWashCm) : '';
-    if (inputGaugePostH) inputGaugePostH.value = g.heightPostWashCm !== null ? String(g.heightPostWashCm) : '';
-    if (inputGaugeTargetW) inputGaugeTargetW.value = g.targetWidthCm !== null ? String(g.targetWidthCm) : '';
-    if (inputGaugeTargetH) inputGaugeTargetH.value = g.targetHeightCm !== null ? String(g.targetHeightCm) : '';
-    renderGaugeResults();
+    // Stitch check, row rules & markers for active part
+    renderPartSettings();
 
     // Photo preview
     if (projectPhotoPreviewWrap && projectPhotoPreview) {
@@ -706,8 +734,9 @@ export function initApp() {
   });
 
   btnClonePairedPart?.addEventListener('click', () => {
-    store.clonePairedPart();
+    const cloned = store.clonePairedPart();
     renderPassportModal();
+    flashButtonConfirmation(btnClonePairedPart, `✓ Создана: ${cloned.name}`, 'Связать парную деталь');
   });
 
   formAddYarn?.addEventListener('submit', (e) => {
@@ -750,13 +779,17 @@ export function initApp() {
 
   btnApplyGaugeTargets?.addEventListener('click', () => {
     const { counts } = renderGaugeResults();
+    const appliedParts = [];
     if (counts.castOnStitches !== null) {
       store.updatePartCheckSettings({ targetStitchCount: counts.castOnStitches });
+      appliedParts.push(`${counts.castOnStitches} п.`);
     }
     if (counts.targetRows !== null) {
       store.updatePartTargetRows(counts.targetRows);
+      appliedParts.push(`${counts.targetRows} р.`);
     }
-    renderPassportModal();
+    const label = appliedParts.length > 0 ? `✓ Применено (${appliedParts.join(' · ')})` : '✓ Применено';
+    flashButtonConfirmation(btnApplyGaugeTargets, label, 'Применить к активной детали');
   });
 
   inputProjectPhoto?.addEventListener('change', () => {
@@ -880,10 +913,14 @@ export function initApp() {
     if (rowCounterValueEl) {
       rowCounterValueEl.textContent = String(part.currentRow);
     }
-    if (rowCounterSubLabelEl) {
-      rowCounterSubLabelEl.textContent = part.targetRows !== null
-        ? `Цель: ${part.targetRows} р. · Журнал`
-        : 'Журнал рядов';
+    if (rowGoalPillEl) {
+      if (part.targetRows !== null) {
+        rowGoalPillEl.hidden = false;
+        rowGoalPillEl.textContent = `Цель: ${part.targetRows} р.`;
+        rowGoalPillEl.classList.toggle('completed', part.currentRow >= part.targetRows);
+      } else {
+        rowGoalPillEl.hidden = true;
+      }
     }
     if (btnRowMinus) {
       btnRowMinus.disabled = part.currentRow <= 0;

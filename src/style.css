@@ -154,6 +154,7 @@ html, body {
 .header-actions {
   display: flex;
   align-items: center;
+  gap: 10px;
 }
 
 .btn-icon {
@@ -1171,10 +1172,45 @@ button.active-part-header:active {
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
+  transition: transform 0.14s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, filter 0.14s ease;
 }
 
-.btn-glass-add:active {
-  transform: scale(0.98);
+.btn-glass-add:active,
+.btn-skein-step:active,
+.btn-remove-item:active,
+.preset-chip:active,
+.modal-close-btn:active {
+  transform: scale(0.94);
+  filter: brightness(1.18);
+}
+
+.btn-glass-add.is-confirmed {
+  background: rgba(52, 199, 89, 0.22);
+  border-color: rgba(52, 199, 89, 0.55);
+  color: #34c759;
+}
+
+.row-goal-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+[data-theme="light-minimal"] .row-goal-pill {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.row-goal-pill.completed {
+  background: rgba(52, 199, 89, 0.18);
+  border-color: rgba(52, 199, 89, 0.45);
+  color: #34c759;
 }
 
 .stitch-check-edit-row {

@@ -43,8 +43,24 @@
       </div>
 
       <div class="header-actions">
-        <!-- Project Passport Button -->
-        <button id="btn-open-passport" class="btn-icon" aria-label="Паспорт проекта">
+        <!-- Gauge & Wet-Blocking Calculator Button -->
+        <button id="btn-open-gauge" class="btn-icon" aria-label="Калькулятор образца ВТО">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="2" width="16" height="20" rx="3"></rect>
+            <line x1="8" y1="6" x2="16" y2="6"></line>
+            <line x1="8" y1="11" x2="8.01" y2="11"></line>
+            <line x1="12" y1="11" x2="12.01" y2="11"></line>
+            <line x1="16" y1="11" x2="16.01" y2="11"></line>
+            <line x1="8" y1="15" x2="8.01" y2="15"></line>
+            <line x1="12" y1="15" x2="12.01" y2="15"></line>
+            <line x1="16" y1="15" x2="16.01" y2="15"></line>
+            <line x1="8" y1="19" x2="12" y2="19"></line>
+            <line x1="16" y1="19" x2="16.01" y2="19"></line>
+          </svg>
+        </button>
+
+        <!-- Project Parameters Button -->
+        <button id="btn-open-passport" class="btn-icon" aria-label="Параметры проекта">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path>
             <path d="M8 7h8"></path>
@@ -52,8 +68,8 @@
           </svg>
         </button>
 
-        <!-- Settings Button -->
-        <button id="btn-open-settings" class="btn-icon" aria-label="Настройки">
+        <!-- Global Settings Button (hidden on active counter screen; shown on home screen) -->
+        <button id="btn-open-settings" class="btn-icon" aria-label="Настройки" hidden>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
             <circle cx="12" cy="12" r="3"></circle>
@@ -65,22 +81,11 @@
     <!-- Main Content: Active Knitting Screen -->
     <main class="main-content" id="app-main">
       <!-- Part / Project Context Pill -->
-      <button id="btn-open-part-settings" type="button" class="active-part-header" aria-label="Настройки детали: контроль петель, правила и маркеры">
+      <div class="active-part-header">
         <span id="active-project-name" class="active-project-name">Шарф «Лицевая гладь»</span>
         <span class="active-part-sep">·</span>
         <span id="active-part-name" class="active-part-name">Основное полотно</span>
-        <svg class="active-part-gear" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <line x1="4" y1="21" x2="4" y2="14"></line>
-          <line x1="4" y1="10" x2="4" y2="3"></line>
-          <line x1="12" y1="21" x2="12" y2="12"></line>
-          <line x1="12" y1="8" x2="12" y2="3"></line>
-          <line x1="20" y1="21" x2="20" y2="16"></line>
-          <line x1="20" y1="12" x2="20" y2="3"></line>
-          <line x1="1" y1="14" x2="7" y2="14"></line>
-          <line x1="9" y1="8" x2="15" y2="8"></line>
-          <line x1="17" y1="16" x2="23" y2="16"></line>
-        </svg>
-      </button>
+      </div>
 
       <!-- Active Row Rules & Markers Hint Bar -->
       <div id="row-hints-bar" class="row-hints-bar" hidden></div>
@@ -103,13 +108,14 @@
           class="row-counter-btn"
           aria-label="Открыть журнал рядов"
         >
+          <span id="row-goal-pill" class="row-goal-pill" hidden></span>
           <span id="row-counter-value" class="row-counter-value">0</span>
           <span class="row-counter-sub">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <circle cx="12" cy="12" r="10"></circle>
               <polyline points="12 6 12 12 16 14"></polyline>
             </svg>
-            <span id="row-counter-sub-label">Журнал рядов</span>
+            Журнал рядов
           </span>
         </button>
       </div>
@@ -198,117 +204,6 @@
       </div>
     </div>
 
-    <!-- Part Settings Modal Sheet (Stitch Check, Row Rules, Row Markers) -->
-    <div id="part-settings-modal" class="modal-backdrop">
-      <div class="modal-sheet modal-sheet-scrollable">
-        <div class="modal-header">
-          <h3 class="modal-title">Настройки детали</h3>
-          <button id="btn-close-part-settings" class="modal-close-btn" aria-label="Закрыть">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          </button>
-        </div>
-
-        <div class="part-settings-scroll scroll-fade">
-          <!-- Section 1: Stitch Check -->
-          <div class="ios-section-title">Контрольная проверка петель</div>
-          <div class="ios-grouped-section">
-            <div class="ios-row ios-row-stack">
-              <span class="ios-row-label">Шаг проверки (ряды)</span>
-              <div class="preset-chips-row">
-                <button type="button" class="preset-chip" data-interval="10">10</button>
-                <button type="button" class="preset-chip" data-interval="15">15</button>
-                <button type="button" class="preset-chip" data-interval="0">Выкл</button>
-                <input
-                  id="input-stitch-interval"
-                  type="number"
-                  min="0"
-                  inputmode="numeric"
-                  class="glass-input glass-input-compact"
-                  placeholder="Шаг"
-                  aria-label="Свой шаг проверки петель"
-                >
-              </div>
-            </div>
-            <div class="ios-divider"></div>
-            <div class="ios-row">
-              <label for="input-target-stitches" class="ios-row-label">Целевое число петель</label>
-              <input
-                id="input-target-stitches"
-                type="number"
-                min="1"
-                inputmode="numeric"
-                class="glass-input glass-input-compact"
-                placeholder="Напр. 80"
-              >
-            </div>
-            <div id="actual-stitch-status-row" class="ios-row-sub-info" hidden></div>
-          </div>
-
-          <!-- Section 2: Row Rules -->
-          <div class="ios-section-title">Правила ряда (реглан, косы, убавки)</div>
-          <div class="ios-grouped-section">
-            <div id="row-rules-list" class="settings-item-list"></div>
-            <div class="ios-divider"></div>
-            <form id="form-add-rule" class="inline-add-form">
-              <input
-                id="input-rule-label"
-                type="text"
-                class="glass-input"
-                placeholder="Подсказка (напр. Прибавки реглана)"
-                required
-              >
-              <div class="inline-form-grid">
-                <label class="inline-field">
-                  <span>Каждые N р.</span>
-                  <input id="input-rule-every" type="number" min="1" value="2" inputmode="numeric" class="glass-input" required>
-                </label>
-                <label class="inline-field">
-                  <span>С ряда</span>
-                  <input id="input-rule-start" type="number" min="1" value="1" inputmode="numeric" class="glass-input" required>
-                </label>
-                <label class="inline-field">
-                  <span>Повторов</span>
-                  <input id="input-rule-repeat" type="number" min="1" inputmode="numeric" class="glass-input" placeholder="∞">
-                </label>
-              </div>
-              <button type="submit" class="btn-glass-add">+ Добавить правило</button>
-            </form>
-          </div>
-
-          <!-- Section 3: Row Markers -->
-          <div class="ios-section-title">Маркеры рядов</div>
-          <div class="ios-grouped-section">
-            <div id="row-markers-list" class="settings-item-list"></div>
-            <div class="ios-divider"></div>
-            <form id="form-add-marker" class="inline-add-form">
-              <div class="inline-marker-row">
-                <input
-                  id="input-marker-row"
-                  type="number"
-                  min="1"
-                  inputmode="numeric"
-                  class="glass-input glass-input-row-num"
-                  placeholder="Ряд"
-                  required
-                >
-                <input
-                  id="input-marker-text"
-                  type="text"
-                  class="glass-input"
-                  placeholder="Заметка (напр. Разделить рукава)"
-                  required
-                >
-              </div>
-              <button type="submit" class="btn-glass-add">+ Добавить маркер</button>
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Stitch Check Modal Sheet -->
     <div id="stitch-check-modal" class="modal-backdrop">
       <div class="modal-sheet">
@@ -360,11 +255,11 @@
       </div>
     </div>
 
-    <!-- Project Passport & Gauge Calculator Modal Sheet -->
+    <!-- Project Parameters Modal Sheet -->
     <div id="passport-modal" class="modal-backdrop">
       <div class="modal-sheet modal-sheet-scrollable">
         <div class="modal-header">
-          <h3 class="modal-title">Паспорт проекта</h3>
+          <h3 class="modal-title">Параметры проекта</h3>
           <button id="btn-close-passport" class="modal-close-btn" aria-label="Закрыть">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -445,59 +340,98 @@
                 </form>
               </div>
 
-              <!-- Gauge & Wet Blocking (ВТО) Calculator -->
-              <div class="ios-section-title">Калькулятор образца ВТО</div>
+              <!-- Stitch Check -->
+              <div class="ios-section-title">Контрольная проверка петель</div>
               <div class="ios-grouped-section">
-                <div class="inline-add-form">
-                  <div class="gauge-grid-2">
-                    <label class="inline-field">
-                      <span>Петель в образце</span>
-                      <input id="input-gauge-stitches" type="number" min="1" inputmode="numeric" class="glass-input" placeholder="22">
-                    </label>
-                    <label class="inline-field">
-                      <span>Рядов в образце</span>
-                      <input id="input-gauge-rows" type="number" min="1" inputmode="numeric" class="glass-input" placeholder="30">
-                    </label>
+                <div class="ios-row ios-row-stack">
+                  <span class="ios-row-label">Шаг проверки (ряды)</span>
+                  <div class="preset-chips-row">
+                    <button type="button" class="preset-chip" data-interval="10">10</button>
+                    <button type="button" class="preset-chip" data-interval="15">15</button>
+                    <button type="button" class="preset-chip" data-interval="0">Выкл</button>
+                    <input
+                      id="input-stitch-interval"
+                      type="number"
+                      min="0"
+                      inputmode="numeric"
+                      class="glass-input glass-input-compact"
+                      placeholder="Шаг"
+                      aria-label="Свой шаг проверки петель"
+                    >
                   </div>
-                  <div class="gauge-grid-2">
-                    <label class="inline-field">
-                      <span>Ширина до ВТО (см)</span>
-                      <input id="input-gauge-pre-w" type="number" min="0.1" step="0.1" inputmode="decimal" class="glass-input" placeholder="10">
-                    </label>
-                    <label class="inline-field">
-                      <span>Высота до ВТО (см)</span>
-                      <input id="input-gauge-pre-h" type="number" min="0.1" step="0.1" inputmode="decimal" class="glass-input" placeholder="10">
-                    </label>
-                  </div>
-                  <div class="gauge-grid-2">
-                    <label class="inline-field">
-                      <span>Ширина после ВТО (см)</span>
-                      <input id="input-gauge-post-w" type="number" min="0.1" step="0.1" inputmode="decimal" class="glass-input" placeholder="9.5">
-                    </label>
-                    <label class="inline-field">
-                      <span>Высота после ВТО (см)</span>
-                      <input id="input-gauge-post-h" type="number" min="0.1" step="0.1" inputmode="decimal" class="glass-input" placeholder="10.5">
-                    </label>
-                  </div>
-
-                  <div id="gauge-metrics-summary" class="gauge-summary-card">
-                    Введите замеры образца для расчёта плотности и усадки ВТО.
-                  </div>
-
-                  <div class="gauge-grid-2">
-                    <label class="inline-field">
-                      <span>Желаемая ширина (см)</span>
-                      <input id="input-gauge-target-w" type="number" min="0.1" step="0.5" inputmode="decimal" class="glass-input" placeholder="52">
-                    </label>
-                    <label class="inline-field">
-                      <span>Желаемая длина (см)</span>
-                      <input id="input-gauge-target-h" type="number" min="0.1" step="0.5" inputmode="decimal" class="glass-input" placeholder="60">
-                    </label>
-                  </div>
-
-                  <div id="gauge-target-result" class="gauge-result-pill" hidden></div>
-                  <button id="btn-apply-gauge-targets" type="button" class="btn-glass-add" hidden>Применить к активной детали</button>
                 </div>
+                <div class="ios-divider"></div>
+                <div class="ios-row">
+                  <label for="input-target-stitches" class="ios-row-label">Целевое число петель</label>
+                  <input
+                    id="input-target-stitches"
+                    type="number"
+                    min="1"
+                    inputmode="numeric"
+                    class="glass-input glass-input-compact"
+                    placeholder="Напр. 80"
+                  >
+                </div>
+                <div id="actual-stitch-status-row" class="ios-row-sub-info" hidden></div>
+              </div>
+
+              <!-- Row Rules -->
+              <div class="ios-section-title">Правила ряда (реглан, косы, убавки)</div>
+              <div class="ios-grouped-section">
+                <div id="row-rules-list" class="settings-item-list"></div>
+                <div class="ios-divider"></div>
+                <form id="form-add-rule" class="inline-add-form">
+                  <input
+                    id="input-rule-label"
+                    type="text"
+                    class="glass-input"
+                    placeholder="Подсказка (напр. Прибавки реглана)"
+                    required
+                  >
+                  <div class="inline-form-grid">
+                    <label class="inline-field">
+                      <span>Каждые N р.</span>
+                      <input id="input-rule-every" type="number" min="1" value="2" inputmode="numeric" class="glass-input" required>
+                    </label>
+                    <label class="inline-field">
+                      <span>С ряда</span>
+                      <input id="input-rule-start" type="number" min="1" value="1" inputmode="numeric" class="glass-input" required>
+                    </label>
+                    <label class="inline-field">
+                      <span>Повторов</span>
+                      <input id="input-rule-repeat" type="number" min="1" inputmode="numeric" class="glass-input" placeholder="∞">
+                    </label>
+                  </div>
+                  <button type="submit" class="btn-glass-add">+ Добавить правило</button>
+                </form>
+              </div>
+
+              <!-- Row Markers -->
+              <div class="ios-section-title">Маркеры рядов</div>
+              <div class="ios-grouped-section">
+                <div id="row-markers-list" class="settings-item-list"></div>
+                <div class="ios-divider"></div>
+                <form id="form-add-marker" class="inline-add-form">
+                  <div class="inline-marker-row">
+                    <input
+                      id="input-marker-row"
+                      type="number"
+                      min="1"
+                      inputmode="numeric"
+                      class="glass-input glass-input-row-num"
+                      placeholder="Ряд"
+                      required
+                    >
+                    <input
+                      id="input-marker-text"
+                      type="text"
+                      class="glass-input"
+                      placeholder="Заметка (напр. Разделить рукава)"
+                      required
+                    >
+                  </div>
+                  <button type="submit" class="btn-glass-add">+ Добавить маркер</button>
+                </form>
               </div>
 
               <!-- Finished Photo -->
@@ -522,6 +456,76 @@
                   <textarea id="input-project-notes" class="glass-input glass-textarea" rows="3" placeholder="Заметки по узору, спицам или расходу..."></textarea>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gauge & Wet Blocking (ВТО) Calculator Modal Sheet -->
+    <div id="gauge-modal" class="modal-backdrop">
+      <div class="modal-sheet modal-sheet-scrollable">
+        <div class="modal-header">
+          <h3 class="modal-title">Калькулятор образца ВТО</h3>
+          <button id="btn-close-gauge" class="modal-close-btn" aria-label="Закрыть">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <div class="part-settings-scroll gauge-scroll scroll-fade">
+          <div class="ios-grouped-section">
+            <div class="inline-add-form">
+              <div class="gauge-grid-2">
+                <label class="inline-field">
+                  <span>Петель в образце</span>
+                  <input id="input-gauge-stitches" type="number" min="1" inputmode="numeric" class="glass-input" placeholder="22">
+                </label>
+                <label class="inline-field">
+                  <span>Рядов в образце</span>
+                  <input id="input-gauge-rows" type="number" min="1" inputmode="numeric" class="glass-input" placeholder="30">
+                </label>
+              </div>
+              <div class="gauge-grid-2">
+                <label class="inline-field">
+                  <span>Ширина до ВТО (см)</span>
+                  <input id="input-gauge-pre-w" type="number" min="0.1" step="0.1" inputmode="decimal" class="glass-input" placeholder="10">
+                </label>
+                <label class="inline-field">
+                  <span>Высота до ВТО (см)</span>
+                  <input id="input-gauge-pre-h" type="number" min="0.1" step="0.1" inputmode="decimal" class="glass-input" placeholder="10">
+                </label>
+              </div>
+              <div class="gauge-grid-2">
+                <label class="inline-field">
+                  <span>Ширина после ВТО (см)</span>
+                  <input id="input-gauge-post-w" type="number" min="0.1" step="0.1" inputmode="decimal" class="glass-input" placeholder="9.5">
+                </label>
+                <label class="inline-field">
+                  <span>Высота после ВТО (см)</span>
+                  <input id="input-gauge-post-h" type="number" min="0.1" step="0.1" inputmode="decimal" class="glass-input" placeholder="10.5">
+                </label>
+              </div>
+
+              <div id="gauge-metrics-summary" class="gauge-summary-card">
+                Введите замеры образца для расчёта плотности и усадки ВТО.
+              </div>
+
+              <div class="gauge-grid-2">
+                <label class="inline-field">
+                  <span>Желаемая ширина (см)</span>
+                  <input id="input-gauge-target-w" type="number" min="0.1" step="0.5" inputmode="decimal" class="glass-input" placeholder="52">
+                </label>
+                <label class="inline-field">
+                  <span>Желаемая длина (см)</span>
+                  <input id="input-gauge-target-h" type="number" min="0.1" step="0.5" inputmode="decimal" class="glass-input" placeholder="60">
+                </label>
+              </div>
+
+              <div id="gauge-target-result" class="gauge-result-pill" hidden></div>
+              <button id="btn-apply-gauge-targets" type="button" class="btn-glass-add" hidden>Применить к активной детали</button>
             </div>
           </div>
         </div>
