@@ -808,9 +808,9 @@ export function initApp() {
   btnTogglePassportAdvanced?.addEventListener('click', () => {
     const isOpen = passportAdvancedPanel?.classList.toggle('open') ?? false;
     btnTogglePassportAdvanced.setAttribute('aria-expanded', String(isOpen));
-    const labelSpan = btnTogglePassportAdvanced.querySelector('span');
+    const labelSpan = document.getElementById('disclosure-label-text');
     if (labelSpan) {
-      labelSpan.textContent = isOpen ? '− Скрыть дополнительные параметры' : '+ Дополнительные параметры';
+      labelSpan.textContent = isOpen ? 'Скрыть дополнительные параметры' : 'Дополнительные параметры';
     }
     if (passportScrollEl) {
       setTimeout(() => updateScrollFadeMask(passportScrollEl), 340);

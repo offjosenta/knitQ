@@ -1475,12 +1475,24 @@ button.active-part-header:active {
   transform: scale(0.98);
 }
 
+.disclosure-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .disclosure-chevron {
   color: var(--text-secondary);
   transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.btn-glass-disclosure[aria-expanded="true"] .disclosure-chevron {
+.btn-glass-disclosure[aria-expanded="true"] .disclosure-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.disclosure-chevron {
   transform: rotate(180deg);
 }
 
