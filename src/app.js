@@ -143,10 +143,24 @@ export function initApp() {
   attachScrollFade(passportScrollEl);
   const btnClosePassport = document.getElementById('btn-close-passport');
   const inputProjectName = /** @type {HTMLInputElement | null} */ (document.getElementById('input-project-name'));
+  const toolPresetChips = Array.from(document.querySelectorAll('.preset-chip[data-tool]'));
   const inputNeedleSize = /** @type {HTMLInputElement | null} */ (document.getElementById('input-needle-size'));
-  const inputPartTargetRows = /** @type {HTMLInputElement | null} */ (document.getElementById('input-part-target-rows'));
-  const passportPartsSection = document.getElementById('passport-parts-section');
+  const methodPresetChips = Array.from(document.querySelectorAll('.preset-chip[data-method]'));
+  const patternPresetChips = Array.from(document.querySelectorAll('.preset-chip[data-pattern]'));
+  const inputStitchPattern = /** @type {HTMLInputElement | null} */ (document.getElementById('input-stitch-pattern'));
   const passportPartsChips = document.getElementById('passport-parts-chips');
+  const inputActivePartName = /** @type {HTMLInputElement | null} */ (document.getElementById('input-active-part-name'));
+  const inputPartTargetRows = /** @type {HTMLInputElement | null} */ (document.getElementById('input-part-target-rows'));
+  const removePartRow = document.getElementById('remove-part-row');
+  const btnRemoveActivePart = document.getElementById('btn-remove-active-part');
+  const formAddPart = /** @type {HTMLFormElement | null} */ (document.getElementById('form-add-part'));
+  const inputNewPartName = /** @type {HTMLInputElement | null} */ (document.getElementById('input-new-part-name'));
+
+  // Goal Reached Modal Elements
+  const goalReachedModalEl = document.getElementById('goal-reached-modal');
+  const btnCloseGoalReached = document.getElementById('btn-close-goal-reached');
+  const btnAckGoalReached = document.getElementById('btn-ack-goal-reached');
+  const goalReachedDescEl = document.getElementById('goal-reached-desc');
   const btnTogglePassportAdvanced = document.getElementById('btn-toggle-passport-advanced');
   const passportAdvancedPanel = document.getElementById('passport-advanced-panel');
   const btnClonePairedPart = document.getElementById('btn-clone-paired-part');
@@ -266,6 +280,10 @@ export function initApp() {
   const resetConfirmModal = createModalController(resetConfirmModalEl);
   const stitchCheckModal = createModalController(stitchCheckModalEl, { onClose: flushPendingMarkersAfterCheck });
   const rowMarkerModal = createModalController(rowMarkerModalEl);
+  const goalReachedModal = createModalController(goalReachedModalEl);
+
+  btnCloseGoalReached?.addEventListener('click', goalReachedModal.close);
+  btnAckGoalReached?.addEventListener('click', goalReachedModal.close);
 
   /**
    * @param {{ title: string, subtitle?: string, ariaLabel: string, onRemove: () => void }} opts
@@ -587,31 +605,39 @@ export function initApp() {
     const activePart = store.getActivePart();
 
     if (inputProjectName) inputProjectName.value = project.name;
+    toolPresetChips.forEach((chip) => {
+      chip.classList.toggle('active', chip.getAttribute('data-tool') === project.toolType);
+    });
     if (inputNeedleSize) inputNeedleSize.value = project.needleSize || '';
+    methodPresetChips.forEach((chip) => {
+      chip.classList.toggle('active', chip.getAttribute('data-method') === project.knittingMethod);
+    });
+    patternPresetChips.forEach((chip) => {
+      chip.classList.toggle('active', chip.getAttribute('data-pattern') === project.stitchPattern);
+    });
+    if (inputStitchPattern) inputStitchPattern.value = project.stitchPattern || '';
+
+    // Parts switcher & active part controls
+    if (passportPartsChips) {
+      passportPartsChips.replaceChildren();
+      for (const p of project.parts) {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = `preset-chip ${p.id === activePart.id ? 'active' : ''}`;
+        chip.textContent = p.name;
+        chip.addEventListener('click', () => {
+          store.setActivePart(p.id);
+          renderPassportModal();
+        });
+        passportPartsChips.appendChild(chip);
+      }
+    }
+    if (inputActivePartName) inputActivePartName.value = activePart.name;
     if (inputPartTargetRows) {
       inputPartTargetRows.value = activePart.targetRows !== null ? String(activePart.targetRows) : '';
     }
-
-    // Parts switcher
-    if (passportPartsSection && passportPartsChips) {
-      if (project.parts.length > 1) {
-        passportPartsSection.hidden = false;
-        passportPartsChips.replaceChildren();
-        for (const p of project.parts) {
-          const chip = document.createElement('button');
-          chip.type = 'button';
-          chip.className = `preset-chip ${p.id === activePart.id ? 'active' : ''}`;
-          chip.textContent = p.name;
-          chip.addEventListener('click', () => {
-            store.setActivePart(p.id);
-            renderPassportModal();
-          });
-          passportPartsChips.appendChild(chip);
-        }
-      } else {
-        passportPartsSection.hidden = true;
-        passportPartsChips.replaceChildren();
-      }
+    if (removePartRow) {
+      removePartRow.hidden = project.parts.length <= 1;
     }
 
     // Yarns list
@@ -713,12 +739,66 @@ export function initApp() {
     store.updateProjectPassport({ name: inputProjectName.value });
   });
 
+  toolPresetChips.forEach((chip) => {
+    chip.addEventListener('click', () => {
+      const val = chip.getAttribute('data-tool');
+      if (val === 'needles' || val === 'hook') {
+        store.updateProjectPassport({ toolType: val });
+        renderPassportModal();
+      }
+    });
+  });
+
   inputNeedleSize?.addEventListener('change', () => {
     store.updateProjectPassport({ needleSize: inputNeedleSize.value });
   });
 
+  methodPresetChips.forEach((chip) => {
+    chip.addEventListener('click', () => {
+      const val = chip.getAttribute('data-method');
+      if (val) {
+        store.updateProjectPassport({ knittingMethod: val });
+        renderPassportModal();
+      }
+    });
+  });
+
+  patternPresetChips.forEach((chip) => {
+    chip.addEventListener('click', () => {
+      const val = chip.getAttribute('data-pattern');
+      if (val) {
+        store.updateProjectPassport({ stitchPattern: val });
+        renderPassportModal();
+      }
+    });
+  });
+
+  inputStitchPattern?.addEventListener('change', () => {
+    store.updateProjectPassport({ stitchPattern: inputStitchPattern.value });
+    renderPassportModal();
+  });
+
+  inputActivePartName?.addEventListener('change', () => {
+    store.renamePart(store.getActivePart().id, inputActivePartName.value);
+    renderPassportModal();
+  });
+
   inputPartTargetRows?.addEventListener('change', () => {
     store.updatePartTargetRows(parseOptionalPositive(inputPartTargetRows));
+  });
+
+  btnRemoveActivePart?.addEventListener('click', () => {
+    store.removePart(store.getActivePart().id);
+    renderPassportModal();
+  });
+
+  formAddPart?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = inputNewPartName?.value.trim() || '';
+    if (!name) return;
+    store.addPart(name);
+    if (inputNewPartName) inputNewPartName.value = '';
+    renderPassportModal();
   });
 
   btnTogglePassportAdvanced?.addEventListener('click', () => {
@@ -994,6 +1074,11 @@ export function initApp() {
       stitchCheckModal.open();
     } else if (activeMarkers.length > 0) {
       openRowMarkerModal(part.currentRow, activeMarkers);
+    } else if (part.targetRows !== null && part.currentRow === part.targetRows) {
+      if (goalReachedDescEl) {
+        goalReachedDescEl.textContent = `Деталь «${part.name}»: связано ${part.currentRow} из ${part.targetRows} рядов!`;
+      }
+      goalReachedModal.open();
     }
   }
 

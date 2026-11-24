@@ -98,7 +98,10 @@
           class="tap-zone-trigger"
           aria-label="Добавить 1 ряд"
         >
-          <span class="tap-zone-hint-top">Нажмите в любом месте (+1 ряд)</span>
+          <span class="tap-zone-top-bar">
+            <span class="tap-zone-hint-top">Нажмите в любом месте (+1 ряд)</span>
+            <span id="row-goal-pill" class="row-goal-pill" hidden></span>
+          </span>
           <span class="tap-zone-plus-badge" aria-hidden="true">+1</span>
         </button>
 
@@ -108,7 +111,6 @@
           class="row-counter-btn"
           aria-label="Открыть журнал рядов"
         >
-          <span id="row-goal-pill" class="row-goal-pill" hidden></span>
           <span id="row-counter-value" class="row-counter-value">0</span>
           <span class="row-counter-sub">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -255,6 +257,27 @@
       </div>
     </div>
 
+    <!-- Goal Reached Modal Sheet -->
+    <div id="goal-reached-modal" class="modal-backdrop">
+      <div class="modal-sheet">
+        <div class="modal-header">
+          <h3 class="modal-title">Цель достигнута!</h3>
+          <button id="btn-close-goal-reached" class="modal-close-btn" aria-label="Закрыть">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <p id="goal-reached-desc" class="reset-confirm-desc">
+          Отличная работа! Целевое количество рядов связано.
+        </p>
+        <div class="reset-confirm-actions">
+          <button id="btn-ack-goal-reached" type="button" class="btn-primary-action">Продолжить</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Project Parameters Modal Sheet -->
     <div id="passport-modal" class="modal-backdrop">
       <div class="modal-sheet modal-sheet-scrollable">
@@ -269,7 +292,7 @@
         </div>
 
         <div class="part-settings-scroll passport-scroll scroll-fade">
-          <!-- Basic 3 Fields (Progressive Disclosure) -->
+          <!-- Basic Project Settings -->
           <div class="ios-section-title">Основное</div>
           <div class="ios-grouped-section">
             <div class="ios-row">
@@ -277,21 +300,121 @@
               <input id="input-project-name" type="text" class="glass-input glass-input-wide" placeholder="Название проекта">
             </div>
             <div class="ios-divider"></div>
+            <div class="ios-row ios-row-stack">
+              <span class="ios-row-label">Инструмент и размер</span>
+              <div class="preset-chips-row">
+                <button type="button" class="preset-chip" data-tool="needles">Спицы</button>
+                <button type="button" class="preset-chip" data-tool="hook">Крючок</button>
+                <input id="input-needle-size" type="text" class="glass-input glass-input-compact" placeholder="4.0 мм" aria-label="Размер спиц или крючка">
+              </div>
+            </div>
+            <div class="ios-divider"></div>
+            <div class="ios-row ios-row-stack">
+              <span class="ios-row-label">Способ вязания</span>
+              <div class="preset-chips-row preset-chips-wrap">
+                <button type="button" class="preset-chip" data-method="flat">Поворотное</button>
+                <button type="button" class="preset-chip" data-method="circular">Круговое</button>
+                <button type="button" class="preset-chip" data-method="magic-loop">Magic Loop</button>
+              </div>
+            </div>
+            <div class="ios-divider"></div>
+            <div class="ios-row ios-row-stack">
+              <span class="ios-row-label">Узор / вид петель</span>
+              <div class="preset-chips-row preset-chips-wrap">
+                <button type="button" class="preset-chip" data-pattern="Лицевая гладь">Лицевая гладь</button>
+                <button type="button" class="preset-chip" data-pattern="Платочная вязка">Платочная</button>
+                <button type="button" class="preset-chip" data-pattern="Резинка 1×1">Резинка 1×1</button>
+                <button type="button" class="preset-chip" data-pattern="Резинка 2×2">Резинка 2×2</button>
+              </div>
+              <input id="input-stitch-pattern" type="text" class="glass-input" placeholder="Или введите свой узор...">
+            </div>
+          </div>
+
+          <!-- Parts / Counters Management -->
+          <div class="ios-section-title">Детали и счётчики</div>
+          <div class="ios-grouped-section">
+            <div id="passport-parts-chips" class="passport-parts-chips-inner"></div>
+            <div class="ios-divider"></div>
             <div class="ios-row">
-              <label for="input-needle-size" class="ios-row-label">Номер спиц</label>
-              <input id="input-needle-size" type="text" class="glass-input glass-input-compact" placeholder="4.0 мм">
+              <label for="input-active-part-name" class="ios-row-label">Активная деталь</label>
+              <input id="input-active-part-name" type="text" class="glass-input glass-input-wide" placeholder="Название детали">
             </div>
             <div class="ios-divider"></div>
             <div class="ios-row">
               <label for="input-part-target-rows" class="ios-row-label">Цель по рядам</label>
               <input id="input-part-target-rows" type="number" min="1" inputmode="numeric" class="glass-input glass-input-compact" placeholder="∞">
             </div>
+            <div id="remove-part-row" class="inline-add-form" hidden>
+              <button id="btn-remove-active-part" type="button" class="btn-glass-add btn-photo-remove">Удалить активную деталь</button>
+            </div>
+            <div class="ios-divider"></div>
+            <form id="form-add-part" class="inline-add-form">
+              <div class="inline-marker-row">
+                <input id="input-new-part-name" type="text" class="glass-input" placeholder="Новая часть (напр. Отворот, Макушка)" required>
+                <button type="submit" class="btn-glass-add btn-compact-add">+ Часть</button>
+              </div>
+            </form>
           </div>
 
-          <!-- Parts Switcher (visible when project has multiple parts) -->
-          <div id="passport-parts-section" hidden>
-            <div class="ios-section-title">Детали проекта</div>
-            <div id="passport-parts-chips" class="passport-parts-chips"></div>
+          <!-- Stitch Check (Main Settings) -->
+          <div class="ios-section-title">Контрольная проверка петель</div>
+          <div class="ios-grouped-section">
+            <div class="ios-row ios-row-stack">
+              <span class="ios-row-label">Шаг проверки (ряды)</span>
+              <div class="preset-chips-row">
+                <button type="button" class="preset-chip" data-interval="10">10</button>
+                <button type="button" class="preset-chip" data-interval="15">15</button>
+                <button type="button" class="preset-chip" data-interval="0">Выкл</button>
+                <input
+                  id="input-stitch-interval"
+                  type="number"
+                  min="0"
+                  inputmode="numeric"
+                  class="glass-input glass-input-compact"
+                  placeholder="Шаг"
+                  aria-label="Свой шаг проверки петель"
+                >
+              </div>
+            </div>
+            <div class="ios-divider"></div>
+            <div class="ios-row">
+              <label for="input-target-stitches" class="ios-row-label">Целевое число петель</label>
+              <input
+                id="input-target-stitches"
+                type="number"
+                min="1"
+                inputmode="numeric"
+                class="glass-input glass-input-compact"
+                placeholder="Напр. 80"
+              >
+            </div>
+            <div id="actual-stitch-status-row" class="ios-row-sub-info" hidden></div>
+          </div>
+
+          <!-- Yarn & Skeins (Main Settings) -->
+          <div class="ios-section-title">Пряжа и мотки</div>
+          <div class="ios-grouped-section">
+            <div id="yarn-list" class="settings-item-list"></div>
+            <div class="ios-divider"></div>
+            <form id="form-add-yarn" class="inline-add-form">
+              <input id="input-yarn-name" type="text" class="glass-input" placeholder="Название пряжи" required>
+              <input id="input-yarn-composition" type="text" class="glass-input" placeholder="Состав (напр. 100% меринос)">
+              <div class="inline-form-grid">
+                <label class="inline-field">
+                  <span>Нитей</span>
+                  <input id="input-yarn-strands" type="number" min="1" value="1" inputmode="numeric" class="glass-input" required>
+                </label>
+                <label class="inline-field">
+                  <span>Использ.</span>
+                  <input id="input-yarn-used" type="number" min="0" step="0.5" value="0" inputmode="decimal" class="glass-input" required>
+                </label>
+                <label class="inline-field">
+                  <span>Всего</span>
+                  <input id="input-yarn-total" type="number" min="0" step="0.5" value="1" inputmode="decimal" class="glass-input" required>
+                </label>
+              </div>
+              <button type="submit" class="btn-glass-add">+ Добавить пряжу</button>
+            </form>
           </div>
 
           <!-- Progressive Disclosure Toggle -->
@@ -305,76 +428,6 @@
           <!-- Collapsible Advanced Sections -->
           <div id="passport-advanced-panel" class="passport-advanced-panel">
             <div class="passport-advanced-inner">
-              <!-- Paired Part Cloning -->
-              <div class="ios-section-title">Парная деталь</div>
-              <div class="ios-grouped-section">
-                <div class="inline-add-form">
-                  <p class="passport-hint-text">Мгновенно создаёт симметричную копию активной детали со всеми целями, правилами и маркерами.</p>
-                  <button id="btn-clone-paired-part" type="button" class="btn-glass-add">Связать парную деталь</button>
-                </div>
-              </div>
-
-              <!-- Yarn & Skeins -->
-              <div class="ios-section-title">Пряжа и мотки</div>
-              <div class="ios-grouped-section">
-                <div id="yarn-list" class="settings-item-list"></div>
-                <div class="ios-divider"></div>
-                <form id="form-add-yarn" class="inline-add-form">
-                  <input id="input-yarn-name" type="text" class="glass-input" placeholder="Название пряжи" required>
-                  <input id="input-yarn-composition" type="text" class="glass-input" placeholder="Состав (напр. 100% меринос)">
-                  <div class="inline-form-grid">
-                    <label class="inline-field">
-                      <span>Нитей</span>
-                      <input id="input-yarn-strands" type="number" min="1" value="1" inputmode="numeric" class="glass-input" required>
-                    </label>
-                    <label class="inline-field">
-                      <span>Использ.</span>
-                      <input id="input-yarn-used" type="number" min="0" step="0.5" value="0" inputmode="decimal" class="glass-input" required>
-                    </label>
-                    <label class="inline-field">
-                      <span>Всего</span>
-                      <input id="input-yarn-total" type="number" min="0" step="0.5" value="1" inputmode="decimal" class="glass-input" required>
-                    </label>
-                  </div>
-                  <button type="submit" class="btn-glass-add">+ Добавить пряжу</button>
-                </form>
-              </div>
-
-              <!-- Stitch Check -->
-              <div class="ios-section-title">Контрольная проверка петель</div>
-              <div class="ios-grouped-section">
-                <div class="ios-row ios-row-stack">
-                  <span class="ios-row-label">Шаг проверки (ряды)</span>
-                  <div class="preset-chips-row">
-                    <button type="button" class="preset-chip" data-interval="10">10</button>
-                    <button type="button" class="preset-chip" data-interval="15">15</button>
-                    <button type="button" class="preset-chip" data-interval="0">Выкл</button>
-                    <input
-                      id="input-stitch-interval"
-                      type="number"
-                      min="0"
-                      inputmode="numeric"
-                      class="glass-input glass-input-compact"
-                      placeholder="Шаг"
-                      aria-label="Свой шаг проверки петель"
-                    >
-                  </div>
-                </div>
-                <div class="ios-divider"></div>
-                <div class="ios-row">
-                  <label for="input-target-stitches" class="ios-row-label">Целевое число петель</label>
-                  <input
-                    id="input-target-stitches"
-                    type="number"
-                    min="1"
-                    inputmode="numeric"
-                    class="glass-input glass-input-compact"
-                    placeholder="Напр. 80"
-                  >
-                </div>
-                <div id="actual-stitch-status-row" class="ios-row-sub-info" hidden></div>
-              </div>
-
               <!-- Row Rules -->
               <div class="ios-section-title">Правила ряда (реглан, косы, убавки)</div>
               <div class="ios-grouped-section">
@@ -432,6 +485,15 @@
                   </div>
                   <button type="submit" class="btn-glass-add">+ Добавить маркер</button>
                 </form>
+              </div>
+
+              <!-- Paired Part Cloning (below Row Markers) -->
+              <div class="ios-section-title">Парная деталь</div>
+              <div class="ios-grouped-section">
+                <div class="inline-add-form">
+                  <p class="passport-hint-text">Мгновенно создаёт симметричную копию активной детали со всеми целями, правилами и маркерами.</p>
+                  <button id="btn-clone-paired-part" type="button" class="btn-glass-add">Связать парную деталь</button>
+                </div>
               </div>
 
               <!-- Finished Photo -->

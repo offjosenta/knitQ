@@ -39,7 +39,10 @@ export const KNIT_STORAGE_KEY = 'knitq_store_v1';
  * @typedef {{
  *   id: string,
  *   name: string,
+ *   toolType: 'needles' | 'hook',
  *   needleSize: string,
+ *   knittingMethod: string,
+ *   stitchPattern: string,
  *   yarns: YarnEntry[],
  *   notes: string,
  *   photoDataUrl: string | null,
@@ -82,7 +85,10 @@ function createDefaultState() {
       {
         id: projectId,
         name: 'Шарф «Лицевая гладь»',
+        toolType: 'needles',
         needleSize: '',
+        knittingMethod: 'flat',
+        stitchPattern: 'Лицевая гладь',
         yarns: [],
         notes: '',
         photoDataUrl: null,
@@ -144,8 +150,17 @@ function isValidStoreState(candidate) {
  */
 function normalizeStoreState(loaded) {
   for (const project of loaded.projects) {
+    if (project.toolType !== 'needles' && project.toolType !== 'hook') {
+      project.toolType = 'needles';
+    }
     if (typeof project.needleSize !== 'string') {
       project.needleSize = '';
+    }
+    if (typeof project.knittingMethod !== 'string') {
+      project.knittingMethod = 'flat';
+    }
+    if (typeof project.stitchPattern !== 'string') {
+      project.stitchPattern = '';
     }
     if (!Array.isArray(project.yarns)) {
       project.yarns = [];
@@ -458,10 +473,13 @@ export function createKnitStore(options = {}) {
     },
 
     /**
-     * Updates project passport fields (name, needleSize, notes, photoDataUrl, gauge).
+     * Updates project passport fields (name, toolType, needleSize, knittingMethod, stitchPattern, notes, photoDataUrl, gauge).
      * @param {{
      *   name?: string,
+     *   toolType?: 'needles' | 'hook',
      *   needleSize?: string,
+     *   knittingMethod?: string,
+     *   stitchPattern?: string,
      *   notes?: string,
      *   photoDataUrl?: string | null,
      *   gauge?: Partial<ProjectGauge>
@@ -475,8 +493,17 @@ export function createKnitStore(options = {}) {
           project.name = trimmed;
         }
       }
+      if (updates.toolType === 'needles' || updates.toolType === 'hook') {
+        project.toolType = updates.toolType;
+      }
       if (typeof updates.needleSize === 'string') {
         project.needleSize = updates.needleSize.trim();
+      }
+      if (typeof updates.knittingMethod === 'string') {
+        project.knittingMethod = updates.knittingMethod;
+      }
+      if (typeof updates.stitchPattern === 'string') {
+        project.stitchPattern = updates.stitchPattern.trim();
       }
       if (typeof updates.notes === 'string') {
         project.notes = updates.notes;
@@ -638,6 +665,69 @@ export function createKnitStore(options = {}) {
       const target = project.parts.find((p) => p.id === partId);
       if (target && project.activePartId !== target.id) {
         project.activePartId = target.id;
+        commit();
+      }
+    },
+
+    /**
+     * Adds a new blank part (e.g. Отворот, Основание, Макушка) to the active project and activates it.
+     * @param {string} name
+     * @returns {Part}
+     */
+    addPart(name) {
+      const project = getActiveProject();
+      const timestamp = now();
+      /** @type {Part} */
+      const newPart = {
+        id: createId('part', timestamp),
+        name: String(name || '').trim() || `Деталь ${project.parts.length + 1}`,
+        currentRow: 0,
+        targetRows: null,
+        rowLog: [],
+        timer: {
+          elapsedMs: 0,
+          runningSince: null
+        },
+        stitchCheckInterval: 10,
+        targetStitchCount: null,
+        actualStitchCount: null,
+        rowRules: [],
+        rowMarkers: []
+      };
+      project.parts.push(newPart);
+      project.activePartId = newPart.id;
+      commit();
+      return newPart;
+    },
+
+    /**
+     * Renames a part in the active project.
+     * @param {string} partId
+     * @param {string} name
+     */
+    renamePart(partId, name) {
+      const project = getActiveProject();
+      const target = project.parts.find((p) => p.id === partId);
+      const trimmed = String(name || '').trim();
+      if (target && trimmed) {
+        target.name = trimmed;
+        commit();
+      }
+    },
+
+    /**
+     * Removes a part from the active project if at least one part remains.
+     * @param {string} partId
+     */
+    removePart(partId) {
+      const project = getActiveProject();
+      if (project.parts.length <= 1) return;
+      const next = project.parts.filter((p) => p.id !== partId);
+      if (next.length !== project.parts.length) {
+        project.parts = next;
+        if (project.activePartId === partId) {
+          project.activePartId = next[0].id;
+        }
         commit();
       }
     },

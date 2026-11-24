@@ -308,3 +308,36 @@ test('KnitStore clones a paired part preserving targets, rules, and markers whil
   assert.equal(store.getActivePart().id, original.id);
   assert.equal(store.getActivePart().currentRow, 2);
 });
+
+test('KnitStore adds, renames, removes parts and updates toolType, knittingMethod, stitchPattern', () => {
+  const storage = createMemoryStorage();
+  const store = createKnitStore({ storage });
+
+  store.updateProjectPassport({
+    toolType: 'hook',
+    knittingMethod: 'circular',
+    stitchPattern: 'Резинка 1×1'
+  });
+  assert.equal(store.getActiveProject().toolType, 'hook');
+  assert.equal(store.getActiveProject().knittingMethod, 'circular');
+  assert.equal(store.getActiveProject().stitchPattern, 'Резинка 1×1');
+
+  const firstId = store.getActivePart().id;
+  store.renamePart(firstId, 'Отворот');
+  assert.equal(store.getActivePart().name, 'Отворот');
+
+  const crown = store.addPart('Макушка');
+  assert.equal(crown.name, 'Макушка');
+  assert.equal(crown.currentRow, 0);
+  assert.equal(store.getActivePart().id, crown.id);
+  assert.equal(store.getActiveProject().parts.length, 2);
+
+  // Removing active part switches back to remaining part
+  store.removePart(crown.id);
+  assert.equal(store.getActiveProject().parts.length, 1);
+  assert.equal(store.getActivePart().id, firstId);
+
+  // Cannot remove the last remaining part
+  store.removePart(firstId);
+  assert.equal(store.getActiveProject().parts.length, 1);
+});
