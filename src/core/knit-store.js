@@ -6,6 +6,7 @@ export const KNIT_STORAGE_KEY = 'knitq_store_v1';
  * @typedef {{ elapsedMs: number, runningSince: number | null }} PartTimerState
  * @typedef {import('./checkpoint-engine.js').RowRule} RowRule
  * @typedef {import('./checkpoint-engine.js').RowMarker} RowMarker
+ * @typedef {{ name: string, color: string }} FolderItem
  * @typedef {{
  *   id: string,
  *   name: string,
@@ -43,9 +44,12 @@ export const KNIT_STORAGE_KEY = 'knitq_store_v1';
  *   name: string,
  *   status: 'active' | 'completed',
  *   folder: string,
+ *   icon: string,
+ *   color: string,
  *   tags: string[],
  *   createdAt: string,
  *   completedAt: string | null,
+ *   deletedAt?: string,
  *   toolType: 'needles' | 'hook',
  *   needleSize: string,
  *   knittingMethod: string,
@@ -58,9 +62,20 @@ export const KNIT_STORAGE_KEY = 'knitq_store_v1';
  *   activePartId: string
  * }} Project
  * @typedef {{
+ *   name: string,
+ *   color: string,
+ *   projects: Project[],
+ *   deletedAt: string
+ * }} TrashedFolder
+ * @typedef {{
  *   projects: Project[],
  *   activeProjectId: string,
- *   folders: string[]
+ *   lastTimedProjectId: string | null,
+ *   folders: FolderItem[],
+ *   trash: {
+ *     projects: Project[],
+ *     folders: TrashedFolder[]
+ *   }
  * }} StoreState
  */
 
@@ -89,13 +104,20 @@ function createDefaultState() {
 
   return {
     activeProjectId: projectId,
+    lastTimedProjectId: null,
     folders: [],
+    trash: {
+      projects: [],
+      folders: []
+    },
     projects: [
       {
         id: projectId,
         name: 'Шарф «Лицевая гладь»',
         status: 'active',
         folder: '',
+        icon: 'scarf',
+        color: '#8e8e93',
         tags: [],
         createdAt: '2026-01-10T10:00:00.000Z',
         completedAt: null,
@@ -177,10 +199,37 @@ export function normalizeStoreState(loaded) {
   if (typeof loaded.activeProjectId !== 'string' || !loaded.projects.some((p) => p.id === loaded.activeProjectId)) {
     loaded.activeProjectId = loaded.projects[0].id;
   }
-  const initialFolders = Array.isArray(loaded.folders)
-    ? loaded.folders.map((f) => String(f).trim()).filter(Boolean)
-    : [];
-  const folderSet = new Set(initialFolders);
+  if (typeof loaded.lastTimedProjectId !== 'string' || !loaded.projects.some((p) => p.id === loaded.lastTimedProjectId)) {
+    loaded.lastTimedProjectId = null;
+  }
+  if (!loaded.trash || typeof loaded.trash !== 'object') {
+    loaded.trash = { projects: [], folders: [] };
+  } else {
+    if (!Array.isArray(loaded.trash.projects)) loaded.trash.projects = [];
+    if (!Array.isArray(loaded.trash.folders)) loaded.trash.folders = [];
+  }
+
+  /** @type {Map<string, FolderItem>} */
+  const folderMap = new Map();
+  if (Array.isArray(loaded.folders)) {
+    for (const item of /** @type {unknown[]} */ (loaded.folders)) {
+      if (typeof item === 'string') {
+        const trimmed = item.trim();
+        if (trimmed && !folderMap.has(trimmed)) {
+          folderMap.set(trimmed, { name: trimmed, color: '#8e8e93' });
+        }
+      } else if (item && typeof item === 'object' && typeof (/** @type {any} */ (item)).name === 'string') {
+        const obj = /** @type {{ name: string, color?: unknown }} */ (item);
+        const trimmed = obj.name.trim();
+        if (trimmed && !folderMap.has(trimmed)) {
+          folderMap.set(trimmed, {
+            name: trimmed,
+            color: typeof obj.color === 'string' && obj.color ? obj.color : '#8e8e93'
+          });
+        }
+      }
+    }
+  }
 
   for (const project of loaded.projects) {
     if (project.status !== 'active' && project.status !== 'completed') {
@@ -188,8 +237,14 @@ export function normalizeStoreState(loaded) {
     }
     if (typeof project.folder !== 'string') {
       project.folder = '';
-    } else if (project.folder.trim()) {
-      folderSet.add(project.folder.trim());
+    } else if (project.folder.trim() && !folderMap.has(project.folder.trim())) {
+      folderMap.set(project.folder.trim(), { name: project.folder.trim(), color: '#8e8e93' });
+    }
+    if (typeof project.icon !== 'string' || !project.icon) {
+      project.icon = 'yarn';
+    }
+    if (typeof project.color !== 'string' || !project.color) {
+      project.color = '#8e8e93';
     }
     if (!Array.isArray(project.tags)) {
       project.tags = [];
@@ -253,7 +308,7 @@ export function normalizeStoreState(loaded) {
       }
     }
   }
-  loaded.folders = Array.from(folderSet);
+  loaded.folders = Array.from(folderMap.values());
   return loaded;
 }
 
@@ -354,6 +409,7 @@ export function createKnitStore(options = {}) {
     getActivePart,
 
     incrementRow() {
+      const project = getActiveProject();
       const part = getActivePart();
       const timestampMs = now();
       part.currentRow += 1;
@@ -364,6 +420,7 @@ export function createKnitStore(options = {}) {
       if (part.timer.runningSince === null) {
         part.timer.runningSince = timestampMs;
       }
+      state.lastTimedProjectId = project.id;
       commit();
     },
 
@@ -396,15 +453,18 @@ export function createKnitStore(options = {}) {
     },
 
     startTimer() {
+      const project = getActiveProject();
       const part = getActivePart();
       if (part.timer.runningSince !== null) {
         return;
       }
       part.timer.runningSince = now();
+      state.lastTimedProjectId = project.id;
       commit();
     },
 
     pauseTimer() {
+      const project = getActiveProject();
       const part = getActivePart();
       if (part.timer.runningSince === null) {
         return;
@@ -418,6 +478,7 @@ export function createKnitStore(options = {}) {
       }
       part.timer.elapsedMs = getPartElapsedMs(part);
       part.timer.runningSince = null;
+      state.lastTimedProjectId = project.id;
       commit();
     },
 
@@ -812,25 +873,147 @@ export function createKnitStore(options = {}) {
     },
 
     /**
-     * Adds a user-created folder if non-empty and not already present.
+     * Checks whether a project name is already used (case-insensitive).
      * @param {string} name
-     * @returns {string | null}
+     * @param {string} [excludeProjectId]
+     * @returns {boolean}
      */
-    addFolder(name) {
-      const trimmed = String(name || '').trim();
-      if (!trimmed) return null;
-      if (!state.folders.includes(trimmed)) {
-        state.folders.push(trimmed);
-        commit();
-      }
-      return trimmed;
+    isProjectNameTaken(name, excludeProjectId) {
+      const normalized = String(name || '').trim().toLocaleLowerCase('ru');
+      if (!normalized) return false;
+      return state.projects.some(
+        (p) => p.id !== excludeProjectId && p.name.trim().toLocaleLowerCase('ru') === normalized
+      );
     },
 
     /**
-     * Creates a new project and activates it.
+     * Returns the pinned project (the one where the timer last ran, or active fallback).
+     * @returns {Project}
+     */
+    getPinnedProject() {
+      if (state.lastTimedProjectId) {
+        const timed = state.projects.find((p) => p.id === state.lastTimedProjectId);
+        if (timed) return timed;
+      }
+      const withTime = state.projects.find((p) =>
+        p.parts.some((pt) => pt.timer.elapsedMs > 0 || pt.timer.runningSince !== null)
+      );
+      return withTime || getActiveProject();
+    },
+
+    /**
+     * Adds a user-created folder with a color if non-empty and not already present.
+     * @param {string} name
+     * @param {string} [color]
+     * @returns {FolderItem | null}
+     */
+    addFolder(name, color = '#8e8e93') {
+      const trimmed = String(name || '').trim();
+      if (!trimmed) return null;
+      const existing = state.folders.find(
+        (f) => f.name.toLocaleLowerCase('ru') === trimmed.toLocaleLowerCase('ru')
+      );
+      if (existing) return existing;
+      const folder = { name: trimmed, color: color || '#8e8e93' };
+      state.folders.push(folder);
+      commit();
+      return folder;
+    },
+
+    /**
+     * Updates an existing folder's name and/or color and migrates project references.
+     * @param {string} currentName
+     * @param {{ name?: string, color?: string }} updates
+     * @returns {{ ok: boolean, error?: string }}
+     */
+    updateFolder(currentName, updates) {
+      const folder = state.folders.find((f) => f.name === currentName);
+      if (!folder) return { ok: false, error: 'Папка не найдена.' };
+
+      if (typeof updates.name === 'string') {
+        const nextName = updates.name.trim();
+        if (!nextName) return { ok: false, error: 'Введите название папки.' };
+        const duplicate = state.folders.some(
+          (f) => f !== folder && f.name.toLocaleLowerCase('ru') === nextName.toLocaleLowerCase('ru')
+        );
+        if (duplicate) return { ok: false, error: 'Папка с таким названием уже существует.' };
+        if (nextName !== currentName) {
+          for (const p of state.projects) {
+            if (p.folder === currentName) {
+              p.folder = nextName;
+            }
+          }
+          folder.name = nextName;
+        }
+      }
+      if (typeof updates.color === 'string' && updates.color) {
+        folder.color = updates.color;
+      }
+      commit();
+      return { ok: true };
+    },
+
+    /**
+     * Deletes a folder. Empty folders are removed permanently; non-empty folders can either
+     * move their projects to the root ('move-to-root') or move folder + projects to trash ('trash').
+     * @param {string} folderName
+     * @param {'trash' | 'move-to-root'} [mode]
+     * @returns {{ ok: boolean, error?: string }}
+     */
+    deleteFolder(folderName, mode = 'move-to-root') {
+      const idx = state.folders.findIndex((f) => f.name === folderName);
+      if (idx === -1) return { ok: false, error: 'Папка не найдена.' };
+      const folderObj = state.folders[idx];
+      const insideProjects = state.projects.filter((p) => p.folder === folderName);
+
+      if (insideProjects.length === 0) {
+        state.folders.splice(idx, 1);
+        commit();
+        return { ok: true };
+      }
+
+      if (mode === 'move-to-root') {
+        for (const p of insideProjects) {
+          p.folder = '';
+        }
+        state.folders.splice(idx, 1);
+        commit();
+        return { ok: true };
+      }
+
+      // mode === 'trash'
+      if (insideProjects.length >= state.projects.length) {
+        return { ok: false, error: 'Нельзя удалить папку со всеми проектами — должен остаться хотя бы один проект.' };
+      }
+
+      const deletedAt = new Date(now()).toISOString();
+      const trashedProjects = insideProjects.map((p) => ({ ...p, deletedAt }));
+      state.trash.folders.unshift({
+        name: folderObj.name,
+        color: folderObj.color,
+        projects: trashedProjects,
+        deletedAt
+      });
+      const deletedIds = new Set(insideProjects.map((p) => p.id));
+      state.projects = state.projects.filter((p) => !deletedIds.has(p.id));
+      state.folders.splice(idx, 1);
+      if (!state.projects.some((p) => p.id === state.activeProjectId)) {
+        state.activeProjectId = state.projects[0].id;
+      }
+      if (state.lastTimedProjectId && deletedIds.has(state.lastTimedProjectId)) {
+        state.lastTimedProjectId = null;
+      }
+      commit();
+      return { ok: true };
+    },
+
+    /**
+     * Creates a new project and activates it (enforces unique project names).
      * @param {{
      *   name: string,
      *   folder?: string,
+     *   icon?: string,
+     *   color?: string,
      *   tags?: string[],
      *   toolType?: 'needles' | 'hook',
      *   needleSize?: string
@@ -841,8 +1024,8 @@ export function createKnitStore(options = {}) {
       const timestamp = now();
       const projectId = createId('project', timestamp);
       const folder = String(input.folder || '').trim();
-      if (folder && !state.folders.includes(folder)) {
-        state.folders.push(folder);
+      if (folder && !state.folders.some((f) => f.name === folder)) {
+        state.folders.push({ name: folder, color: '#8e8e93' });
       }
 
       const parts = [createBlankPart(createId('part-1', timestamp), 'Основное полотно')];
@@ -853,6 +1036,8 @@ export function createKnitStore(options = {}) {
         name: String(input.name || '').trim() || 'Новый проект',
         status: 'active',
         folder,
+        icon: String(input.icon || 'yarn'),
+        color: String(input.color || '#8e8e93'),
         tags: Array.isArray(input.tags) ? input.tags.map((t) => String(t).trim()).filter(Boolean) : [],
         createdAt: new Date(timestamp).toISOString(),
         completedAt: null,
@@ -872,6 +1057,103 @@ export function createKnitStore(options = {}) {
       state.activeProjectId = project.id;
       commit();
       return project;
+    },
+
+    /**
+     * Updates a project's name, color, or icon by id (enforces unique name).
+     * @param {string} projectId
+     * @param {{ name?: string, color?: string, icon?: string }} updates
+     * @returns {{ ok: boolean, error?: string }}
+     */
+    updateProjectMeta(projectId, updates) {
+      const project = state.projects.find((p) => p.id === projectId);
+      if (!project) return { ok: false, error: 'Проект не найден.' };
+
+      if (typeof updates.name === 'string') {
+        const trimmed = updates.name.trim();
+        if (!trimmed) return { ok: false, error: 'Введите название изделия.' };
+        const duplicate = state.projects.some(
+          (p) => p.id !== projectId && p.name.trim().toLocaleLowerCase('ru') === trimmed.toLocaleLowerCase('ru')
+        );
+        if (duplicate) return { ok: false, error: 'Изделие с таким названием уже существует.' };
+        project.name = trimmed;
+      }
+      if (typeof updates.color === 'string' && updates.color) {
+        project.color = updates.color;
+      }
+      if (typeof updates.icon === 'string' && updates.icon) {
+        project.icon = updates.icon;
+      }
+      commit();
+      return { ok: true };
+    },
+
+    /**
+     * Moves a project to the trash (requires at least one remaining project).
+     * @param {string} projectId
+     * @returns {{ ok: boolean, error?: string }}
+     */
+    deleteProject(projectId) {
+      if (state.projects.length <= 1) {
+        return { ok: false, error: 'Должен остаться хотя бы один проект.' };
+      }
+      const idx = state.projects.findIndex((p) => p.id === projectId);
+      if (idx === -1) return { ok: false, error: 'Проект не найден.' };
+      const [removed] = state.projects.splice(idx, 1);
+      removed.deletedAt = new Date(now()).toISOString();
+      state.trash.projects.unshift(removed);
+      if (state.activeProjectId === projectId) {
+        state.activeProjectId = state.projects[0].id;
+      }
+      if (state.lastTimedProjectId === projectId) {
+        state.lastTimedProjectId = null;
+      }
+      commit();
+      return { ok: true };
+    },
+
+    /**
+     * Restores a trashed project back to the main list.
+     * @param {string} projectId
+     */
+    restoreTrashedProject(projectId) {
+      const idx = state.trash.projects.findIndex((p) => p.id === projectId);
+      if (idx === -1) return;
+      const [proj] = state.trash.projects.splice(idx, 1);
+      delete proj.deletedAt;
+      if (proj.folder && !state.folders.some((f) => f.name === proj.folder)) {
+        proj.folder = '';
+      }
+      state.projects.unshift(proj);
+      commit();
+    },
+
+    /**
+     * Restores a trashed folder and all its projects.
+     * @param {number} index
+     */
+    restoreTrashedFolder(index) {
+      const folderEntry = state.trash.folders[index];
+      if (!folderEntry) return;
+      state.trash.folders.splice(index, 1);
+      if (!state.folders.some((f) => f.name === folderEntry.name)) {
+        state.folders.push({ name: folderEntry.name, color: folderEntry.color });
+      }
+      for (const proj of folderEntry.projects) {
+        delete proj.deletedAt;
+        proj.folder = folderEntry.name;
+        state.projects.unshift(proj);
+      }
+      commit();
+    },
+
+    /**
+     * Permanently clears all items in the trash.
+     */
+    emptyTrash() {
+      state.trash.projects = [];
+      state.trash.folders = [];
+      commit();
     },
 
     /**

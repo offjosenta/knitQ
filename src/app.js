@@ -1,6 +1,7 @@
 import { createThemeManager } from './core/theme-manager.js';
 import { createWakeLockManager } from './core/wake-lock-manager.js';
 import { createKnitStore } from './core/knit-store.js';
+import { COLOR_PALETTE, KNITTING_ICONS, renderKnittingIconSvg } from './core/knitting-icons.js';
 import { createBackupPayload, parseAndValidateBackup } from './core/backup-manager.js';
 import {
   shouldTriggerStitchCheck,
@@ -68,6 +69,7 @@ export function initApp() {
   }
 
   // Navigation & Dashboard Elements
+  const topBrandEl = document.getElementById('top-brand');
   const dashboardViewEl = document.getElementById('dashboard-view');
   const dashboardScrollEl = document.getElementById('dashboard-scroll');
   attachScrollFade(dashboardScrollEl);
@@ -87,6 +89,7 @@ export function initApp() {
   const catalogStatusTabs = Array.from(document.querySelectorAll('[data-catalog-status]'));
   const catalogTitleEl = document.getElementById('catalog-title');
   const btnCatalogFolderBack = document.getElementById('btn-catalog-folder-back');
+  const btnEditOpenedFolder = document.getElementById('btn-edit-opened-folder');
   const catalogTagChipsEl = document.getElementById('catalog-tag-chips');
   const projectsCatalogListEl = document.getElementById('projects-catalog-list');
 
@@ -111,6 +114,8 @@ export function initApp() {
   const btnCloseNewFolder = document.getElementById('btn-close-new-folder');
   const formNewFolder = /** @type {HTMLFormElement | null} */ (document.getElementById('form-new-folder'));
   const inputNewFolderName = /** @type {HTMLInputElement | null} */ (document.getElementById('input-new-folder-name'));
+  const newFolderColorsEl = document.getElementById('new-folder-colors');
+  const newFolderErrorEl = document.getElementById('new-folder-error');
 
   // New Project Modal Elements
   const newProjectModalEl = document.getElementById('new-project-modal');
@@ -119,8 +124,45 @@ export function initApp() {
   const inputNewProjectName = /** @type {HTMLInputElement | null} */ (document.getElementById('input-new-project-name'));
   const inputNewProjectTags = /** @type {HTMLInputElement | null} */ (document.getElementById('input-new-project-tags'));
   const inputNewProjectNeedle = /** @type {HTMLInputElement | null} */ (document.getElementById('input-new-project-needle'));
+  const newProjectIconsEl = document.getElementById('new-project-icons');
+  const newProjectColorsEl = document.getElementById('new-project-colors');
   const newProjectFolderChipsEl = document.getElementById('new-project-folder-chips');
+  const newProjectErrorEl = document.getElementById('new-project-error');
   const newToolChips = Array.from(document.querySelectorAll('[data-new-tool]'));
+
+  // Edit Folder, Edit Project, Delete Confirm & Trash Elements
+  const editFolderModalEl = document.getElementById('edit-folder-modal');
+  const btnCloseEditFolder = document.getElementById('btn-close-edit-folder');
+  const formEditFolder = /** @type {HTMLFormElement | null} */ (document.getElementById('form-edit-folder'));
+  const inputEditFolderName = /** @type {HTMLInputElement | null} */ (document.getElementById('input-edit-folder-name'));
+  const editFolderColorsEl = document.getElementById('edit-folder-colors');
+  const editFolderErrorEl = document.getElementById('edit-folder-error');
+  const btnRequestDeleteFolder = document.getElementById('btn-request-delete-folder');
+
+  const editProjectModalEl = document.getElementById('edit-project-modal');
+  const btnCloseEditProject = document.getElementById('btn-close-edit-project');
+  const formEditProject = /** @type {HTMLFormElement | null} */ (document.getElementById('form-edit-project'));
+  const inputEditProjectName = /** @type {HTMLInputElement | null} */ (document.getElementById('input-edit-project-name'));
+  const editProjectIconsEl = document.getElementById('edit-project-icons');
+  const editProjectColorsEl = document.getElementById('edit-project-colors');
+  const editProjectErrorEl = document.getElementById('edit-project-error');
+  const btnRequestDeleteProject = document.getElementById('btn-request-delete-project');
+
+  const deleteConfirmModalEl = document.getElementById('delete-confirm-modal');
+  const btnCloseDeleteConfirm = document.getElementById('btn-close-delete-confirm');
+  const deleteConfirmTitleEl = document.getElementById('delete-confirm-title');
+  const deleteConfirmDescEl = document.getElementById('delete-confirm-desc');
+  const deleteConfirmErrorEl = document.getElementById('delete-confirm-error');
+  const deleteConfirmActionsEl = document.getElementById('delete-confirm-actions');
+
+  const btnOpenTrash = document.getElementById('btn-open-trash');
+  const trashCountBadgeEl = document.getElementById('trash-count-badge');
+  const trashViewEl = document.getElementById('trash-view');
+  const trashScrollEl = document.getElementById('trash-scroll');
+  attachScrollFade(trashScrollEl);
+  const btnCloseTrash = document.getElementById('btn-close-trash');
+  const btnEmptyTrash = document.getElementById('btn-empty-trash');
+  const trashListEl = document.getElementById('trash-list');
 
   // Settings & Backup Elements
   const settingsModalEl = document.getElementById('settings-modal');
@@ -821,9 +863,17 @@ export function initApp() {
     }
   }
 
-  const passportModal = createModalController(passportModalEl, {
-    onOpen: renderPassportModal
-  });
+  const passportModal = {
+    open: () => {
+      if (!passportModalEl) return;
+      renderPassportModal();
+      passportModalEl.hidden = false;
+    },
+    close: () => {
+      if (!passportModalEl) return;
+      passportModalEl.hidden = true;
+    }
+  };
 
   btnOpenPassport?.addEventListener('click', passportModal.open);
   btnClosePassport?.addEventListener('click', passportModal.close);
@@ -1071,6 +1121,10 @@ export function initApp() {
     if (backupStatusMsgEl) backupStatusMsgEl.hidden = true;
     backupPanelEl?.classList.remove('open');
     btnToggleBackup?.setAttribute('aria-expanded', 'false');
+    if (trashCountBadgeEl) {
+      const t = store.getState().trash;
+      trashCountBadgeEl.textContent = String(t.projects.length + t.folders.length);
+    }
     settingsModal.open();
   });
   closeSettingsBtn?.addEventListener('click', settingsModal.close);
@@ -1204,14 +1258,76 @@ export function initApp() {
     setTimeout(() => openNewFolderDialog(() => renderDashboard()), 180);
   });
 
+  /**
+   * Renders 7 classic color swatches into a container.
+   * @param {HTMLElement | null} containerEl
+   * @param {string} selectedHex
+   * @param {(hex: string) => void} onSelect
+   */
+  function renderColorSwatches(containerEl, selectedHex, onSelect) {
+    if (!containerEl) return;
+    containerEl.replaceChildren(
+      ...COLOR_PALETTE.map((c) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `color-swatch ${selectedHex === c.hex ? 'active' : ''}`;
+        btn.style.backgroundColor = c.hex;
+        btn.setAttribute('aria-label', c.label);
+        btn.addEventListener('click', () => onSelect(c.hex));
+        return btn;
+      })
+    );
+  }
+
+  /**
+   * Renders the 10 knitting icons colored with selectedHex when active.
+   * @param {HTMLElement | null} containerEl
+   * @param {string} selectedIcon
+   * @param {string} selectedHex
+   * @param {(iconId: string) => void} onSelect
+   */
+  function renderIconPicker(containerEl, selectedIcon, selectedHex, onSelect) {
+    if (!containerEl) return;
+    containerEl.replaceChildren(
+      ...KNITTING_ICONS.map((ic) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        const isActive = selectedIcon === ic.id;
+        btn.className = `icon-picker-btn ${isActive ? 'active' : ''}`;
+        btn.style.color = isActive ? selectedHex : 'var(--text-secondary)';
+        btn.setAttribute('aria-label', ic.label);
+        btn.innerHTML = renderKnittingIconSvg(ic.id, 20);
+        btn.addEventListener('click', () => onSelect(ic.id));
+        return btn;
+      })
+    );
+  }
+
+  let newFolderColor = COLOR_PALETTE[4].hex;
+
   const newFolderModal = createModalController(newFolderModalEl, {
     onOpen: () => {
+      newFolderColor = COLOR_PALETTE[4].hex;
+      if (newFolderErrorEl) newFolderErrorEl.hidden = true;
       if (inputNewFolderName) {
         inputNewFolderName.value = '';
         setTimeout(() => inputNewFolderName.focus(), 120);
       }
+      renderColorSwatches(newFolderColorsEl, newFolderColor, (hex) => {
+        newFolderColor = hex;
+        renderColorSwatches(newFolderColorsEl, newFolderColor, () => {});
+        // Re-bind via recursive helper
+        refreshNewFolderColors();
+      });
     }
   });
+
+  function refreshNewFolderColors() {
+    renderColorSwatches(newFolderColorsEl, newFolderColor, (hex) => {
+      newFolderColor = hex;
+      refreshNewFolderColors();
+    });
+  }
 
   /** @param {(folderName: string) => void} onCreated */
   function openNewFolderDialog(onCreated) {
@@ -1222,10 +1338,22 @@ export function initApp() {
   btnCloseNewFolder?.addEventListener('click', newFolderModal.close);
   formNewFolder?.addEventListener('submit', (e) => {
     e.preventDefault();
-    const created = store.addFolder(inputNewFolderName?.value || '');
+    const rawName = inputNewFolderName?.value.trim() || '';
+    if (!rawName) return;
+    const duplicate = store.getState().folders.some(
+      (f) => f.name.toLocaleLowerCase('ru') === rawName.toLocaleLowerCase('ru')
+    );
+    if (duplicate) {
+      if (newFolderErrorEl) {
+        newFolderErrorEl.textContent = 'Папка с таким названием уже существует.';
+        newFolderErrorEl.hidden = false;
+      }
+      return;
+    }
+    const created = store.addFolder(rawName, newFolderColor);
     if (!created) return;
     newFolderModal.close();
-    pendingFolderCallback?.(created);
+    pendingFolderCallback?.(created.name);
     pendingFolderCallback = null;
   });
 
@@ -1247,8 +1375,8 @@ export function initApp() {
     if (opts.includeNone && folders.length > 0) {
       nodes.push(createFilterChip('Без папки', selectedFolder === '', () => onSelect('')));
     }
-    for (const folderName of folders) {
-      nodes.push(createFilterChip(folderName, selectedFolder === folderName, () => onSelect(folderName)));
+    for (const folderObj of folders) {
+      nodes.push(createFilterChip(folderObj.name, selectedFolder === folderObj.name, () => onSelect(folderObj.name)));
     }
 
     const addLabel = folders.length === 0 ? '+ Добавить папку' : '+';
@@ -1267,6 +1395,7 @@ export function initApp() {
   function setActiveView(view) {
     currentView = view;
     const isDashboard = view === 'dashboard';
+    if (topBrandEl) topBrandEl.hidden = !isDashboard;
     if (dashboardViewEl) dashboardViewEl.hidden = !isDashboard;
     if (appMainEl) appMainEl.hidden = isDashboard;
     if (btnBackDashboard) btnBackDashboard.hidden = isDashboard;
@@ -1325,31 +1454,31 @@ export function initApp() {
   });
 
   function renderDashboard() {
-    const activeProject = store.getActiveProject();
-    const activePart = store.getActivePart();
-    const activeElapsed = store.getProjectTotalElapsedMs(activeProject.id);
+    const pinnedProject = store.getPinnedProject();
+    const pinnedPart = pinnedProject.parts.find((p) => p.id === pinnedProject.activePartId) || pinnedProject.parts[0];
+    const pinnedElapsed = store.getProjectTotalElapsedMs(pinnedProject.id);
 
     if (heroFolderBadgeEl) {
       heroFolderBadgeEl.textContent =
-        activeProject.status === 'completed'
+        pinnedProject.status === 'completed'
           ? 'Завершён'
-          : (activeProject.folder || 'Сейчас в работе');
+          : (pinnedProject.folder || 'Сейчас в работе');
     }
     if (btnContinueKnitting) {
       const labelEl = btnContinueKnitting.querySelector('span');
       if (labelEl) {
-        labelEl.textContent = activeProject.status === 'completed' ? 'Открыть проект' : 'Продолжить вязать';
+        labelEl.textContent = pinnedProject.status === 'completed' ? 'Открыть проект' : 'Продолжить вязать';
       }
     }
     if (heroActiveTimeEl) {
-      heroActiveTimeEl.textContent = formatDuration(activeElapsed);
+      heroActiveTimeEl.textContent = formatDuration(pinnedElapsed);
     }
     if (heroProjectTitleEl) {
-      heroProjectTitleEl.textContent = activeProject.name;
+      heroProjectTitleEl.textContent = pinnedProject.name;
     }
     if (heroProjectMetaEl) {
-      const targetPart = activePart.targetRows ? ` / ${activePart.targetRows}` : '';
-      heroProjectMetaEl.textContent = `${activePart.name} · Ряд ${activePart.currentRow}${targetPart}`;
+      const targetPart = pinnedPart.targetRows ? ` / ${pinnedPart.targetRows}` : '';
+      heroProjectMetaEl.textContent = `${pinnedPart.name} · Ряд ${pinnedPart.currentRow}${targetPart}`;
     }
 
     const allProjects = store.getState().projects;
@@ -1369,12 +1498,15 @@ export function initApp() {
     const statusProjects = allProjects.filter((p) => p.status === catalogStatus);
     const folders = store.getState().folders;
 
-    if (openedFolder !== null && !folders.includes(openedFolder)) {
+    if (openedFolder !== null && !folders.some((f) => f.name === openedFolder)) {
       openedFolder = null;
     }
 
     if (btnCatalogFolderBack) {
       btnCatalogFolderBack.hidden = openedFolder === null;
+    }
+    if (btnEditOpenedFolder) {
+      btnEditOpenedFolder.hidden = openedFolder === null;
     }
     if (catalogTitleEl) {
       catalogTitleEl.textContent = openedFolder !== null ? openedFolder : 'Проекты';
@@ -1410,10 +1542,13 @@ export function initApp() {
       }
     }
 
+    const editPencilSvg =
+      '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>';
+
     /** @param {import('./core/knit-store.js').Project} proj */
     const createProjectSquareTile = (proj) => {
       const tile = document.createElement('div');
-      tile.className = `square-tile ${proj.id === activeProject.id ? 'is-active' : ''}`;
+      tile.className = `square-tile ${proj.id === pinnedProject.id ? 'is-active' : ''}`;
       tile.setAttribute('role', 'button');
       tile.tabIndex = 0;
 
@@ -1425,20 +1560,31 @@ export function initApp() {
         tile.appendChild(thumb);
       }
 
-      const totalRows = proj.parts.reduce((s, pt) => s + pt.currentRow, 0);
-      const badge = document.createElement('span');
-      badge.className = 'square-tile-badge';
-      badge.textContent = `${totalRows} р.`;
+      const editBtn = document.createElement('button');
+      editBtn.type = 'button';
+      editBtn.className = 'square-tile-edit';
+      editBtn.setAttribute('aria-label', `Редактировать ${proj.name}`);
+      editBtn.innerHTML = editPencilSvg;
+      editBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openEditProjectModal(proj.id);
+      });
+
+      const iconWrap = document.createElement('div');
+      iconWrap.className = 'square-tile-icon';
+      iconWrap.style.color = proj.color || '#8e8e93';
+      iconWrap.innerHTML = renderKnittingIconSvg(proj.icon || 'yarn', 20);
 
       const title = document.createElement('div');
       title.className = 'square-tile-title';
       title.textContent = proj.name;
 
+      const totalRows = proj.parts.reduce((s, pt) => s + pt.currentRow, 0);
       const sub = document.createElement('div');
       sub.className = 'square-tile-sub';
-      sub.textContent = formatHoursMinutes(store.getProjectTotalElapsedMs(proj.id));
+      sub.textContent = `${totalRows} р. · ${formatHoursMinutes(store.getProjectTotalElapsedMs(proj.id))}`;
 
-      tile.append(badge, title, sub);
+      tile.append(editBtn, iconWrap, title, sub);
 
       const openProject = () => {
         store.setActiveProject(proj.id);
@@ -1459,31 +1605,41 @@ export function initApp() {
       const tiles = [];
 
       if (openedFolder === null) {
-        // Folder square tiles (when no tag filter is active)
         if (catalogTag === 'all') {
-          for (const folderName of folders) {
-            const count = statusProjects.filter((p) => p.folder === folderName).length;
+          for (const folderObj of folders) {
+            const count = statusProjects.filter((p) => p.folder === folderObj.name).length;
             const folderTile = document.createElement('div');
             folderTile.className = 'square-tile';
             folderTile.setAttribute('role', 'button');
             folderTile.tabIndex = 0;
 
+            const editBtn = document.createElement('button');
+            editBtn.type = 'button';
+            editBtn.className = 'square-tile-edit';
+            editBtn.setAttribute('aria-label', `Редактировать папку ${folderObj.name}`);
+            editBtn.innerHTML = editPencilSvg;
+            editBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              openEditFolderModal(folderObj.name);
+            });
+
             const iconWrap = document.createElement('div');
             iconWrap.className = 'square-tile-icon';
+            iconWrap.style.color = folderObj.color || '#8e8e93';
             iconWrap.innerHTML =
-              '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>';
+              '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>';
 
             const title = document.createElement('div');
             title.className = 'square-tile-title';
-            title.textContent = folderName;
+            title.textContent = folderObj.name;
 
             const sub = document.createElement('div');
             sub.className = 'square-tile-sub';
             sub.textContent = `${count} шт.`;
 
-            folderTile.append(iconWrap, title, sub);
+            folderTile.append(editBtn, iconWrap, title, sub);
             const openFolder = () => {
-              openedFolder = folderName;
+              openedFolder = folderObj.name;
               renderDashboard();
             };
             folderTile.addEventListener('click', openFolder);
@@ -1497,7 +1653,6 @@ export function initApp() {
           }
         }
 
-        // Root projects (without folder, or matching active tag)
         const rootProjects = statusProjects.filter((p) => {
           if (catalogTag !== 'all') return p.tags.includes(catalogTag);
           return !p.folder;
@@ -1506,7 +1661,6 @@ export function initApp() {
           tiles.push(createProjectSquareTile(proj));
         }
       } else {
-        // Inside an opened folder: show all projects in this folder
         const folderProjects = scopeProjects.filter(
           (p) => catalogTag === 'all' || p.tags.includes(catalogTag)
         );
@@ -1539,9 +1693,17 @@ export function initApp() {
     renderDashboard();
   });
 
-  // New Project Modal Logic (no templates)
+  btnEditOpenedFolder?.addEventListener('click', () => {
+    if (openedFolder) {
+      openEditFolderModal(openedFolder);
+    }
+  });
+
+  // New Project Modal Logic (with icons, colors & unique names)
   let newFolder = '';
   let newTool = /** @type {'needles' | 'hook'} */ ('needles');
+  let newProjectIcon = 'yarn';
+  let newProjectColor = COLOR_PALETTE[4].hex;
 
   function renderNewProjectFolders() {
     if (!newProjectFolderChipsEl) return;
@@ -1556,13 +1718,28 @@ export function initApp() {
     );
   }
 
+  function refreshNewProjectAppearance() {
+    renderIconPicker(newProjectIconsEl, newProjectIcon, newProjectColor, (ic) => {
+      newProjectIcon = ic;
+      refreshNewProjectAppearance();
+    });
+    renderColorSwatches(newProjectColorsEl, newProjectColor, (hex) => {
+      newProjectColor = hex;
+      refreshNewProjectAppearance();
+    });
+  }
+
   const newProjectModal = createModalController(newProjectModalEl, {
     onOpen: () => {
       newFolder = '';
+      newProjectIcon = 'yarn';
+      newProjectColor = COLOR_PALETTE[4].hex;
+      if (newProjectErrorEl) newProjectErrorEl.hidden = true;
       if (inputNewProjectName) inputNewProjectName.value = '';
       if (inputNewProjectTags) inputNewProjectTags.value = '';
       if (inputNewProjectNeedle) inputNewProjectNeedle.value = '';
       renderNewProjectFolders();
+      refreshNewProjectAppearance();
     }
   });
 
@@ -1582,16 +1759,317 @@ export function initApp() {
     e.preventDefault();
     const name = inputNewProjectName?.value.trim() || '';
     if (!name) return;
+    if (store.isProjectNameTaken(name)) {
+      if (newProjectErrorEl) {
+        newProjectErrorEl.textContent = 'Изделие с таким названием уже есть. Измените хотя бы один символ.';
+        newProjectErrorEl.hidden = false;
+      }
+      return;
+    }
     const tags = parseTagsInput(inputNewProjectTags?.value || '');
     store.createProject({
       name,
       folder: newFolder,
+      icon: newProjectIcon,
+      color: newProjectColor,
       tags,
       toolType: newTool,
       needleSize: inputNewProjectNeedle?.value.trim() || ''
     });
     newProjectModal.close();
     setActiveView('counter');
+  });
+
+  // Edit Folder, Edit Project, Delete Confirmation & Trash
+  let editingFolderName = '';
+  let editingFolderColor = COLOR_PALETTE[4].hex;
+
+  function refreshEditFolderColors() {
+    renderColorSwatches(editFolderColorsEl, editingFolderColor, (hex) => {
+      editingFolderColor = hex;
+      refreshEditFolderColors();
+    });
+  }
+
+  const editFolderModal = createModalController(editFolderModalEl);
+  btnCloseEditFolder?.addEventListener('click', editFolderModal.close);
+
+  /** @param {string} folderName */
+  function openEditFolderModal(folderName) {
+    const found = store.getState().folders.find((f) => f.name === folderName);
+    if (!found) return;
+    editingFolderName = found.name;
+    editingFolderColor = found.color || COLOR_PALETTE[4].hex;
+    if (inputEditFolderName) inputEditFolderName.value = found.name;
+    if (editFolderErrorEl) editFolderErrorEl.hidden = true;
+    refreshEditFolderColors();
+    editFolderModal.open();
+  }
+
+  formEditFolder?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const res = store.updateFolder(editingFolderName, {
+      name: inputEditFolderName?.value || '',
+      color: editingFolderColor
+    });
+    if (!res.ok) {
+      if (editFolderErrorEl) {
+        editFolderErrorEl.textContent = res.error || 'Ошибка';
+        editFolderErrorEl.hidden = false;
+      }
+      return;
+    }
+    if (openedFolder === editingFolderName && inputEditFolderName) {
+      openedFolder = inputEditFolderName.value.trim();
+    }
+    editFolderModal.close();
+    renderDashboard();
+  });
+
+  let editingProjectId = '';
+  let editingProjectIcon = 'yarn';
+  let editingProjectColor = COLOR_PALETTE[4].hex;
+
+  function refreshEditProjectAppearance() {
+    renderIconPicker(editProjectIconsEl, editingProjectIcon, editingProjectColor, (ic) => {
+      editingProjectIcon = ic;
+      refreshEditProjectAppearance();
+    });
+    renderColorSwatches(editProjectColorsEl, editingProjectColor, (hex) => {
+      editingProjectColor = hex;
+      refreshEditProjectAppearance();
+    });
+  }
+
+  const editProjectModal = createModalController(editProjectModalEl);
+  btnCloseEditProject?.addEventListener('click', editProjectModal.close);
+
+  /** @param {string} projectId */
+  function openEditProjectModal(projectId) {
+    const proj = store.getState().projects.find((p) => p.id === projectId);
+    if (!proj) return;
+    editingProjectId = proj.id;
+    editingProjectIcon = proj.icon || 'yarn';
+    editingProjectColor = proj.color || COLOR_PALETTE[4].hex;
+    if (inputEditProjectName) inputEditProjectName.value = proj.name;
+    if (editProjectErrorEl) editProjectErrorEl.hidden = true;
+    refreshEditProjectAppearance();
+    editProjectModal.open();
+  }
+
+  formEditProject?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const res = store.updateProjectMeta(editingProjectId, {
+      name: inputEditProjectName?.value || '',
+      icon: editingProjectIcon,
+      color: editingProjectColor
+    });
+    if (!res.ok) {
+      if (editProjectErrorEl) {
+        editProjectErrorEl.textContent = res.error || 'Ошибка';
+        editProjectErrorEl.hidden = false;
+      }
+      return;
+    }
+    editProjectModal.close();
+    renderDashboard();
+  });
+
+  const deleteConfirmModal = createModalController(deleteConfirmModalEl);
+  btnCloseDeleteConfirm?.addEventListener('click', deleteConfirmModal.close);
+
+  btnRequestDeleteProject?.addEventListener('click', () => {
+    const proj = store.getState().projects.find((p) => p.id === editingProjectId);
+    if (!proj || !deleteConfirmActionsEl) return;
+    editProjectModal.close();
+    if (deleteConfirmTitleEl) deleteConfirmTitleEl.textContent = 'Удалить изделие?';
+    if (deleteConfirmDescEl) {
+      deleteConfirmDescEl.textContent = `Точно удалить «${proj.name}»? Изделие переместится в корзину.`;
+    }
+    if (deleteConfirmErrorEl) deleteConfirmErrorEl.hidden = true;
+
+    const btnDel = document.createElement('button');
+    btnDel.type = 'button';
+    btnDel.className = 'btn-glass-add btn-photo-remove';
+    btnDel.textContent = 'Удалить в корзину';
+    btnDel.addEventListener('click', () => {
+      const res = store.deleteProject(proj.id);
+      if (!res.ok) {
+        if (deleteConfirmErrorEl) {
+          deleteConfirmErrorEl.textContent = res.error || 'Не удалось удалить.';
+          deleteConfirmErrorEl.hidden = false;
+        }
+        return;
+      }
+      deleteConfirmModal.close();
+      renderDashboard();
+    });
+
+    const btnCancel = document.createElement('button');
+    btnCancel.type = 'button';
+    btnCancel.className = 'btn-continue-knitting';
+    btnCancel.textContent = 'Отмена';
+    btnCancel.addEventListener('click', deleteConfirmModal.close);
+
+    deleteConfirmActionsEl.replaceChildren(btnDel, btnCancel);
+    setTimeout(() => deleteConfirmModal.open(), 180);
+  });
+
+  btnRequestDeleteFolder?.addEventListener('click', () => {
+    const folderName = editingFolderName;
+    const insideCount = store.getState().projects.filter((p) => p.folder === folderName).length;
+    if (!deleteConfirmActionsEl) return;
+    editFolderModal.close();
+
+    if (deleteConfirmTitleEl) deleteConfirmTitleEl.textContent = 'Удалить папку?';
+    if (deleteConfirmErrorEl) deleteConfirmErrorEl.hidden = true;
+
+    /** @type {HTMLElement[]} */
+    const actions = [];
+    if (insideCount === 0) {
+      if (deleteConfirmDescEl) {
+        deleteConfirmDescEl.textContent = `Папка «${folderName}» пустая. Точно удалить её безвозвратно?`;
+      }
+      const btnDel = document.createElement('button');
+      btnDel.type = 'button';
+      btnDel.className = 'btn-glass-add btn-photo-remove';
+      btnDel.textContent = 'Удалить папку';
+      btnDel.addEventListener('click', () => {
+        store.deleteFolder(folderName, 'move-to-root');
+        if (openedFolder === folderName) openedFolder = null;
+        deleteConfirmModal.close();
+        renderDashboard();
+      });
+      actions.push(btnDel);
+    } else {
+      if (deleteConfirmDescEl) {
+        deleteConfirmDescEl.textContent = `В папке «${folderName}» есть изделия (${insideCount} шт.). Выберите действие:`;
+      }
+      const btnMove = document.createElement('button');
+      btnMove.type = 'button';
+      btnMove.className = 'btn-continue-knitting';
+      btnMove.textContent = 'Перенести изделия на главный экран';
+      btnMove.addEventListener('click', () => {
+        store.deleteFolder(folderName, 'move-to-root');
+        if (openedFolder === folderName) openedFolder = null;
+        deleteConfirmModal.close();
+        renderDashboard();
+      });
+
+      const btnTrash = document.createElement('button');
+      btnTrash.type = 'button';
+      btnTrash.className = 'btn-glass-add btn-photo-remove';
+      btnTrash.textContent = 'Удалить папку с изделиями в корзину';
+      btnTrash.addEventListener('click', () => {
+        const res = store.deleteFolder(folderName, 'trash');
+        if (!res.ok) {
+          if (deleteConfirmErrorEl) {
+            deleteConfirmErrorEl.textContent = res.error || 'Не удалось удалить.';
+            deleteConfirmErrorEl.hidden = false;
+          }
+          return;
+        }
+        if (openedFolder === folderName) openedFolder = null;
+        deleteConfirmModal.close();
+        renderDashboard();
+      });
+      actions.push(btnMove, btnTrash);
+    }
+
+    const btnCancel = document.createElement('button');
+    btnCancel.type = 'button';
+    btnCancel.className = 'btn-glass-add';
+    btnCancel.textContent = 'Отмена';
+    btnCancel.addEventListener('click', deleteConfirmModal.close);
+    actions.push(btnCancel);
+
+    deleteConfirmActionsEl.replaceChildren(...actions);
+    setTimeout(() => deleteConfirmModal.open(), 180);
+  });
+
+  function renderTrashView() {
+    if (!trashListEl) return;
+    const { projects, folders } = store.getState().trash;
+    const total = projects.length + folders.length;
+    if (btnEmptyTrash) btnEmptyTrash.hidden = total === 0;
+
+    if (total === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'catalog-empty';
+      empty.textContent = 'Корзина пуста.';
+      trashListEl.replaceChildren(empty);
+      return;
+    }
+
+    /** @type {HTMLElement[]} */
+    const cards = [];
+    folders.forEach((f, idx) => {
+      const row = document.createElement('div');
+      row.className = 'trash-item-card';
+      const info = document.createElement('div');
+      info.className = 'project-card-body';
+      const title = document.createElement('div');
+      title.className = 'project-card-title';
+      title.textContent = `Папка «${f.name}»`;
+      const sub = document.createElement('div');
+      sub.className = 'project-card-meta';
+      sub.textContent = `Изделий: ${f.projects.length}`;
+      info.append(title, sub);
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn-restore-trash';
+      btn.textContent = 'Восстановить';
+      btn.addEventListener('click', () => {
+        store.restoreTrashedFolder(idx);
+        renderTrashView();
+      });
+      row.append(info, btn);
+      cards.push(row);
+    });
+
+    for (const proj of projects) {
+      const row = document.createElement('div');
+      row.className = 'trash-item-card';
+      const info = document.createElement('div');
+      info.className = 'project-card-body';
+      const title = document.createElement('div');
+      title.className = 'project-card-title';
+      title.textContent = proj.name;
+      const sub = document.createElement('div');
+      sub.className = 'project-card-meta';
+      sub.textContent = proj.folder ? `Из папки «${proj.folder}»` : 'Отдельное изделие';
+      info.append(title, sub);
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn-restore-trash';
+      btn.textContent = 'Восстановить';
+      btn.addEventListener('click', () => {
+        store.restoreTrashedProject(proj.id);
+        renderTrashView();
+      });
+      row.append(info, btn);
+      cards.push(row);
+    }
+
+    trashListEl.replaceChildren(...cards);
+  }
+
+  btnOpenTrash?.addEventListener('click', () => {
+    settingsModal.close();
+    renderTrashView();
+    if (trashViewEl) trashViewEl.hidden = false;
+  });
+
+  btnCloseTrash?.addEventListener('click', () => {
+    if (trashViewEl) trashViewEl.hidden = true;
+    renderDashboard();
+  });
+
+  btnEmptyTrash?.addEventListener('click', () => {
+    store.emptyTrash();
+    renderTrashView();
   });
 
   catalogStatusTabs.forEach((tab) => {
@@ -1609,7 +2087,10 @@ export function initApp() {
     });
   });
 
-  btnContinueKnitting?.addEventListener('click', () => setActiveView('counter'));
+  btnContinueKnitting?.addEventListener('click', () => {
+    store.setActiveProject(store.getPinnedProject().id);
+    setActiveView('counter');
+  });
   btnBackDashboard?.addEventListener('click', () => setActiveView('dashboard'));
 
   // Render active knitting UI

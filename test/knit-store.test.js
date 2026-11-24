@@ -342,28 +342,31 @@ test('KnitStore adds, renames, removes parts and updates toolType, knittingMetho
   assert.equal(store.getActiveProject().parts.length, 1);
 });
 
-test('KnitStore creates projects with custom folders and tags and manages completed status', () => {
+test('KnitStore creates projects with custom folders, colors, icons, unique names, and trash', () => {
   const storage = createMemoryStorage();
   let currentTime = new Date(2026, 10, 24, 10, 0, 0).getTime();
   const store = createKnitStore({ storage, now: () => currentTime });
 
   assert.deepEqual(store.getState().folders, []);
-  store.addFolder('Шапки');
-  assert.deepEqual(store.getState().folders, ['Шапки']);
+  const folder = store.addFolder('Шапки', '#34c759');
+  assert.equal(folder?.name, 'Шапки');
+  assert.equal(folder?.color, '#34c759');
 
   const first = store.createProject({
     name: 'Снуд',
     folder: 'Шарфы',
+    icon: 'scarf',
+    color: '#af52de',
     tags: ['зима', 'шерсть'],
     toolType: 'needles',
     needleSize: '6 мм'
   });
   assert.equal(first.parts.length, 1);
   assert.equal(first.folder, 'Шарфы');
-  assert.deepEqual(first.tags, ['зима', 'шерсть']);
-  assert.equal(first.status, 'active');
-  assert.equal(store.getState().folders.includes('Шарфы'), true);
-  assert.equal(store.getActiveProject().id, first.id);
+  assert.equal(first.icon, 'scarf');
+  assert.equal(first.color, '#af52de');
+  assert.equal(store.isProjectNameTaken('снуд'), true);
+  assert.equal(store.isProjectNameTaken('Снуд', first.id), false);
 
   const second = store.createProject({
     name: 'Носки',
@@ -371,13 +374,24 @@ test('KnitStore creates projects with custom folders and tags and manages comple
   });
   assert.equal(store.getActiveProject().id, second.id);
 
-  store.setProjectStatus(first.id, 'completed');
-  const updatedFirst = store.getState().projects.find((p) => p.id === first.id);
-  assert.equal(updatedFirst?.status, 'completed');
-  assert.ok(updatedFirst?.completedAt);
-
+  // Pinned project tracks where timer/rows actually ran, not just active view
   store.setActiveProject(first.id);
-  assert.equal(store.getActiveProject().id, first.id);
+  store.incrementRow();
+  store.setActiveProject(second.id);
+  assert.equal(store.getPinnedProject().id, first.id);
+
+  // Delete project moves to trash and can be restored
+  const delRes = store.deleteProject(second.id);
+  assert.equal(delRes.ok, true);
+  assert.equal(store.getState().trash.projects.length, 1);
+  store.restoreTrashedProject(second.id);
+  assert.equal(store.getState().trash.projects.length, 0);
+  assert.equal(store.getState().projects.some((p) => p.id === second.id), true);
+
+  // Deleting empty folder removes it immediately without trash
+  store.deleteFolder('Шапки');
+  assert.equal(store.getState().folders.some((f) => f.name === 'Шапки'), false);
+  assert.equal(store.getState().trash.folders.length, 0);
 });
 
 test('KnitStore aggregates daily rows and time across morning and evening sessions, plus monthly and all-time stats', () => {
