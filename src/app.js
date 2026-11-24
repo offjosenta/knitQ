@@ -183,7 +183,7 @@ export function initApp() {
   const inputGaugeTargetW = /** @type {HTMLInputElement | null} */ (document.getElementById('input-gauge-target-w'));
   const inputGaugeTargetH = /** @type {HTMLInputElement | null} */ (document.getElementById('input-gauge-target-h'));
   const gaugeMetricsSummaryEl = document.getElementById('gauge-metrics-summary');
-  const gaugeTargetResultEl = document.getElementById('gauge-target-result');
+  const gaugeTargetResultTextEl = document.getElementById('gauge-target-result-text');
   const btnApplyGaugeTargets = document.getElementById('btn-apply-gauge-targets');
   const inputProjectPhoto = /** @type {HTMLInputElement | null} */ (document.getElementById('input-project-photo'));
   const projectPhotoPreviewWrap = document.getElementById('project-photo-preview-wrap');
@@ -289,6 +289,26 @@ export function initApp() {
   btnAckGoalReached?.addEventListener('click', goalReachedModal.close);
 
   /**
+   * Creates a circular remove button with a perfectly centered SVG cross icon.
+   * @param {string} ariaLabel
+   * @param {() => void} onRemove
+   * @returns {HTMLButtonElement}
+   */
+  function createRemoveButton(ariaLabel, onRemove) {
+    const delBtn = document.createElement('button');
+    delBtn.type = 'button';
+    delBtn.className = 'btn-remove-item';
+    delBtn.setAttribute('aria-label', ariaLabel);
+    delBtn.innerHTML =
+      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      '<line x1="18" y1="6" x2="6" y2="18"></line>' +
+      '<line x1="6" y1="6" x2="18" y2="18"></line>' +
+      '</svg>';
+    delBtn.addEventListener('click', onRemove);
+    return delBtn;
+  }
+
+  /**
    * @param {{ title: string, subtitle?: string, ariaLabel: string, onRemove: () => void }} opts
    */
   function createSettingsListItem(opts) {
@@ -310,12 +330,7 @@ export function initApp() {
       main.appendChild(subEl);
     }
 
-    const delBtn = document.createElement('button');
-    delBtn.type = 'button';
-    delBtn.className = 'btn-remove-item';
-    delBtn.setAttribute('aria-label', opts.ariaLabel);
-    delBtn.textContent = '×';
-    delBtn.addEventListener('click', opts.onRemove);
+    const delBtn = createRemoveButton(opts.ariaLabel, opts.onRemove);
 
     item.append(main, delBtn);
     return item;
@@ -547,16 +562,14 @@ export function initApp() {
       }
     }
 
-    if (gaugeTargetResultEl && btnApplyGaugeTargets) {
+    if (gaugeTargetResultTextEl && btnApplyGaugeTargets) {
       if (counts.castOnStitches !== null || counts.targetRows !== null) {
         const parts = [];
         if (counts.castOnStitches !== null) parts.push(`Набрать: ${counts.castOnStitches} п.`);
         if (counts.targetRows !== null) parts.push(`Связать: ${counts.targetRows} р.`);
-        gaugeTargetResultEl.textContent = parts.join(' · ');
-        gaugeTargetResultEl.hidden = false;
+        gaugeTargetResultTextEl.textContent = parts.join(' · ');
         btnApplyGaugeTargets.hidden = false;
       } else {
-        gaugeTargetResultEl.hidden = true;
         btnApplyGaugeTargets.hidden = true;
       }
     }
@@ -691,12 +704,7 @@ export function initApp() {
             renderPassportModal();
           });
 
-          const removeBtn = document.createElement('button');
-          removeBtn.type = 'button';
-          removeBtn.className = 'btn-remove-item';
-          removeBtn.textContent = '×';
-          removeBtn.setAttribute('aria-label', `Удалить пряжу ${yarn.name}`);
-          removeBtn.addEventListener('click', () => {
+          const removeBtn = createRemoveButton(`Удалить пряжу ${yarn.name}`, () => {
             store.removeYarnEntry(yarn.id);
             renderPassportModal();
           });
@@ -863,17 +871,14 @@ export function initApp() {
 
   btnApplyGaugeTargets?.addEventListener('click', () => {
     const { counts } = renderGaugeResults();
-    const appliedParts = [];
+    const defaultText = gaugeTargetResultTextEl?.textContent || '';
     if (counts.castOnStitches !== null) {
       store.updatePartCheckSettings({ targetStitchCount: counts.castOnStitches });
-      appliedParts.push(`${counts.castOnStitches} п.`);
     }
     if (counts.targetRows !== null) {
       store.updatePartTargetRows(counts.targetRows);
-      appliedParts.push(`${counts.targetRows} р.`);
     }
-    const label = appliedParts.length > 0 ? `✓ Применено (${appliedParts.join(' · ')})` : '✓ Применено';
-    flashButtonConfirmation(btnApplyGaugeTargets, label, 'Применить к активной детали');
+    flashButtonConfirmation(btnApplyGaugeTargets, 'Применено к активной детали', defaultText);
   });
 
   inputProjectPhoto?.addEventListener('change', () => {

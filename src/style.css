@@ -953,32 +953,32 @@ button.active-part-header:active {
   -webkit-mask-image: linear-gradient(
     to bottom,
     #000 0%,
-    #000 calc(100% - 28px),
-    rgba(0, 0, 0, 0.72) calc(100% - 12px),
-    rgba(0, 0, 0, 0.22) 100%
+    #000 calc(100% - 22px),
+    rgba(0, 0, 0, 0.72) calc(100% - 10px),
+    rgba(0, 0, 0, 0.2) 100%
   );
   mask-image: linear-gradient(
     to bottom,
     #000 0%,
-    #000 calc(100% - 28px),
-    rgba(0, 0, 0, 0.72) calc(100% - 12px),
-    rgba(0, 0, 0, 0.22) 100%
+    #000 calc(100% - 22px),
+    rgba(0, 0, 0, 0.72) calc(100% - 10px),
+    rgba(0, 0, 0, 0.2) 100%
   );
 }
 
 .part-settings-scroll.scroll-fade.fade-top {
   -webkit-mask-image: linear-gradient(
     to bottom,
-    rgba(0, 0, 0, 0.22) 0%,
-    rgba(0, 0, 0, 0.72) 12px,
-    #000 28px,
+    rgba(0, 0, 0, 0.2) 0%,
+    rgba(0, 0, 0, 0.72) 10px,
+    #000 22px,
     #000 100%
   );
   mask-image: linear-gradient(
     to bottom,
-    rgba(0, 0, 0, 0.22) 0%,
-    rgba(0, 0, 0, 0.72) 12px,
-    #000 28px,
+    rgba(0, 0, 0, 0.2) 0%,
+    rgba(0, 0, 0, 0.72) 10px,
+    #000 22px,
     #000 100%
   );
 }
@@ -986,21 +986,21 @@ button.active-part-header:active {
 .part-settings-scroll.scroll-fade.fade-top.fade-bottom {
   -webkit-mask-image: linear-gradient(
     to bottom,
-    rgba(0, 0, 0, 0.22) 0%,
-    rgba(0, 0, 0, 0.72) 12px,
-    #000 28px,
-    #000 calc(100% - 28px),
-    rgba(0, 0, 0, 0.72) calc(100% - 12px),
-    rgba(0, 0, 0, 0.22) 100%
+    rgba(0, 0, 0, 0.2) 0%,
+    rgba(0, 0, 0, 0.72) 10px,
+    #000 22px,
+    #000 calc(100% - 22px),
+    rgba(0, 0, 0, 0.72) calc(100% - 10px),
+    rgba(0, 0, 0, 0.2) 100%
   );
   mask-image: linear-gradient(
     to bottom,
-    rgba(0, 0, 0, 0.22) 0%,
-    rgba(0, 0, 0, 0.72) 12px,
-    #000 28px,
-    #000 calc(100% - 28px),
-    rgba(0, 0, 0, 0.72) calc(100% - 12px),
-    rgba(0, 0, 0, 0.22) 100%
+    rgba(0, 0, 0, 0.2) 0%,
+    rgba(0, 0, 0, 0.72) 10px,
+    #000 22px,
+    #000 calc(100% - 22px),
+    rgba(0, 0, 0, 0.72) calc(100% - 10px),
+    rgba(0, 0, 0, 0.2) 100%
   );
 }
 
@@ -1136,12 +1136,12 @@ button.active-part-header:active {
 .btn-remove-item {
   width: 28px;
   height: 28px;
+  padding: 0;
   border-radius: 50%;
   border: 1px solid var(--border-color);
   background: var(--bg-card-inner);
   color: var(--text-secondary);
-  font-size: 1rem;
-  line-height: 1;
+  line-height: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1562,15 +1562,34 @@ button.active-part-header:active {
   gap: 4px;
 }
 
-.gauge-result-pill {
-  padding: 12px 14px;
+.gauge-result-btn {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
   border-radius: 16px;
   background: rgba(52, 199, 89, 0.14);
   border: 1px solid rgba(52, 199, 89, 0.38);
   color: var(--text-primary);
+  font-family: inherit;
   font-size: 0.9rem;
   font-weight: 600;
-  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: transform 0.14s ease, background-color 0.2s ease, border-color 0.2s ease, filter 0.14s ease;
+}
+
+.gauge-result-btn:active {
+  transform: scale(0.95);
+  filter: brightness(1.18);
+}
+
+.gauge-result-btn.is-confirmed {
+  background: rgba(52, 199, 89, 0.28);
+  border-color: rgba(52, 199, 89, 0.65);
+  color: #34c759;
 }
 
 .project-photo-wrap {
