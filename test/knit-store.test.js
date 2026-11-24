@@ -342,47 +342,42 @@ test('KnitStore adds, renames, removes parts and updates toolType, knittingMetho
   assert.equal(store.getActiveProject().parts.length, 1);
 });
 
-test('KnitStore creates projects from simple, paired, and complex templates with folders and tags', () => {
+test('KnitStore creates projects with custom folders and tags and manages completed status', () => {
   const storage = createMemoryStorage();
   let currentTime = new Date(2026, 10, 24, 10, 0, 0).getTime();
   const store = createKnitStore({ storage, now: () => currentTime });
 
-  const simple = store.createProject({
+  assert.deepEqual(store.getState().folders, []);
+  store.addFolder('Шапки');
+  assert.deepEqual(store.getState().folders, ['Шапки']);
+
+  const first = store.createProject({
     name: 'Снуд',
-    template: 'simple',
     folder: 'Шарфы',
-    tags: ['зима', 'толстая пряжа'],
+    tags: ['зима', 'шерсть'],
     toolType: 'needles',
     needleSize: '6 мм'
   });
-  assert.equal(simple.parts.length, 1);
-  assert.equal(simple.folder, 'Шарфы');
-  assert.deepEqual(simple.tags, ['зима', 'толстая пряжа']);
-  assert.equal(simple.status, 'active');
-  assert.equal(store.getActiveProject().id, simple.id);
+  assert.equal(first.parts.length, 1);
+  assert.equal(first.folder, 'Шарфы');
+  assert.deepEqual(first.tags, ['зима', 'шерсть']);
+  assert.equal(first.status, 'active');
+  assert.equal(store.getState().folders.includes('Шарфы'), true);
+  assert.equal(store.getActiveProject().id, first.id);
 
-  const paired = store.createProject({
-    name: 'Носки с косами',
-    template: 'paired',
+  const second = store.createProject({
+    name: 'Носки',
     folder: 'Носки'
   });
-  assert.equal(paired.parts.length, 2);
-  assert.equal(store.getActiveProject().id, paired.id);
+  assert.equal(store.getActiveProject().id, second.id);
 
-  const complex = store.createProject({
-    name: 'Джемпер реглан',
-    template: 'complex',
-    folder: 'Свитера'
-  });
-  assert.equal(complex.parts.length, 3);
+  store.setProjectStatus(first.id, 'completed');
+  const updatedFirst = store.getState().projects.find((p) => p.id === first.id);
+  assert.equal(updatedFirst?.status, 'completed');
+  assert.ok(updatedFirst?.completedAt);
 
-  store.setProjectStatus(simple.id, 'completed');
-  const updatedSimple = store.getState().projects.find((p) => p.id === simple.id);
-  assert.equal(updatedSimple?.status, 'completed');
-  assert.ok(updatedSimple?.completedAt);
-
-  store.setActiveProject(paired.id);
-  assert.equal(store.getActiveProject().id, paired.id);
+  store.setActiveProject(first.id);
+  assert.equal(store.getActiveProject().id, first.id);
 });
 
 test('KnitStore aggregates daily rows and time across morning and evening sessions, plus monthly and all-time stats', () => {
@@ -412,10 +407,12 @@ test('KnitStore aggregates daily rows and time across morning and evening sessio
   store.incrementRow();
   currentTime += 25 * 60_000;
 
+  store.setProjectStatus(store.getActiveProject().id, 'completed');
+
   const stats = store.getActivityStats();
   assert.equal(stats.todayRows, 3);
   assert.equal(stats.todayTimeMs, 45 * 60_000);
   assert.equal(stats.monthTimeMs, 105 * 60_000);
   assert.equal(stats.totalTimeMs >= 105 * 60_000, true);
-  assert.equal(stats.completedProjectsCount >= 1, true);
+  assert.equal(stats.completedProjectsCount, 1);
 });

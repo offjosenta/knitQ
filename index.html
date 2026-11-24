@@ -75,6 +75,15 @@
           </svg>
         </button>
 
+        <!-- Stats Button (shown on home screen) -->
+        <button id="btn-open-stats" class="btn-icon" aria-label="Статистика активности">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="20" x2="18" y2="10"></line>
+            <line x1="12" y1="20" x2="12" y2="4"></line>
+            <line x1="6" y1="20" x2="6" y2="14"></line>
+          </svg>
+        </button>
+
         <!-- Global Settings Button (hidden on active counter screen; shown on home screen) -->
         <button id="btn-open-settings" class="btn-icon" aria-label="Настройки">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -88,7 +97,29 @@
     <!-- Main Content: Home Dashboard Screen -->
     <section class="dashboard-view" id="dashboard-view">
       <div class="dashboard-scroll scroll-fade" id="dashboard-scroll">
-        <!-- Active Project Hero Card -->
+        <!-- Projects Catalog (Top) -->
+        <div class="catalog-section">
+          <div class="catalog-header">
+            <h2 class="catalog-title">Проекты</h2>
+          </div>
+
+          <!-- Status Segmented Control (hidden when no completed projects exist) -->
+          <div class="segmented-control" id="catalog-status-tabs" role="tablist" aria-label="Статус проектов" hidden>
+            <button type="button" class="segmented-tab active" data-catalog-status="active" role="tab" aria-selected="true">В процессе</button>
+            <button type="button" class="segmented-tab" data-catalog-status="completed" role="tab" aria-selected="false">Готовые</button>
+          </div>
+
+          <!-- Folder Filter Chips (user-created only + Add button) -->
+          <div class="filter-chips-scroll" id="catalog-folder-chips"></div>
+
+          <!-- Tag Filter Chips -->
+          <div class="filter-chips-scroll filter-tags-row" id="catalog-tag-chips" hidden></div>
+
+          <!-- Project Cards List -->
+          <div class="projects-catalog-list" id="projects-catalog-list"></div>
+        </div>
+
+        <!-- Active Project Quick-Resume Card -->
         <div class="glass-card active-hero-card" id="active-hero-card">
           <div class="hero-top-row">
             <span class="hero-badge" id="hero-folder-badge">Сейчас в работе</span>
@@ -103,63 +134,10 @@
             <span>Продолжить вязать</span>
           </button>
         </div>
-
-        <!-- Activity Stats Widget -->
-        <div class="stats-bento-grid" id="activity-stats-widget">
-          <div class="glass-card stat-card stat-card-wide">
-            <span class="stat-label">Сегодня</span>
-            <div class="stat-today-values">
-              <div class="stat-metric">
-                <strong class="stat-value" id="stat-today-rows">0</strong>
-                <span class="stat-unit">рядов</span>
-              </div>
-              <div class="stat-divider-v"></div>
-              <div class="stat-metric">
-                <strong class="stat-value" id="stat-today-time">0 мин</strong>
-                <span class="stat-unit">за спицами</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="glass-card stat-card">
-            <span class="stat-label">За месяц</span>
-            <strong class="stat-value" id="stat-month-time">0 ч</strong>
-            <span class="stat-unit">вязания</span>
-          </div>
-
-          <div class="glass-card stat-card">
-            <span class="stat-label">За всё время</span>
-            <div class="stat-alltime-row">
-              <strong class="stat-value" id="stat-total-time">0 ч</strong>
-              <span class="stat-pill-done" id="stat-completed-count">1 готово</span>
-            </div>
-            <span class="stat-unit">всего</span>
-          </div>
-        </div>
-
-        <!-- Projects Catalog -->
-        <div class="catalog-section">
-          <div class="catalog-header">
-            <h2 class="catalog-title">Проекты</h2>
-            <button type="button" id="btn-new-project" class="btn-new-project">+ Новое изделие</button>
-          </div>
-
-          <!-- Status Segmented Control -->
-          <div class="segmented-control" role="tablist" aria-label="Статус проектов">
-            <button type="button" class="segmented-tab active" data-catalog-status="active" role="tab" aria-selected="true">В процессе</button>
-            <button type="button" class="segmented-tab" data-catalog-status="completed" role="tab" aria-selected="false">Готовые</button>
-          </div>
-
-          <!-- Folder Filter Chips -->
-          <div class="filter-chips-scroll" id="catalog-folder-chips"></div>
-
-          <!-- Tag Filter Chips -->
-          <div class="filter-chips-scroll filter-tags-row" id="catalog-tag-chips" hidden></div>
-
-          <!-- Project Cards List -->
-          <div class="projects-catalog-list" id="projects-catalog-list"></div>
-        </div>
       </div>
+
+      <!-- Floating Action Button (bottom-right) -->
+      <button type="button" id="btn-new-project" class="fab-new-project">+ Новое изделие</button>
     </section>
 
     <!-- Main Content: Active Knitting Screen -->
@@ -388,31 +366,7 @@
           <div class="ios-grouped-section">
             <div class="ios-row">
               <label for="input-project-name" class="ios-row-label">Название</label>
-              <input id="input-project-name" type="text" class="glass-input glass-input-wide" placeholder="Название проекта">
-            </div>
-            <div class="ios-divider"></div>
-            <div class="ios-row ios-row-stack">
-              <span class="ios-row-label">Статус проекта</span>
-              <div class="preset-chips-row">
-                <button type="button" class="preset-chip" data-passport-status="active">В процессе</button>
-                <button type="button" class="preset-chip" data-passport-status="completed">Готово</button>
-              </div>
-            </div>
-            <div class="ios-divider"></div>
-            <div class="ios-row ios-row-stack">
-              <span class="ios-row-label">Папка</span>
-              <div class="preset-chips-row preset-chips-wrap">
-                <button type="button" class="preset-chip" data-passport-folder="Шапки">Шапки</button>
-                <button type="button" class="preset-chip" data-passport-folder="Шарфы">Шарфы</button>
-                <button type="button" class="preset-chip" data-passport-folder="Носки">Носки</button>
-                <button type="button" class="preset-chip" data-passport-folder="Свитера">Свитера</button>
-                <button type="button" class="preset-chip" data-passport-folder="">Без папки</button>
-              </div>
-            </div>
-            <div class="ios-divider"></div>
-            <div class="ios-row">
-              <label for="input-passport-tags" class="ios-row-label">Теги</label>
-              <input id="input-passport-tags" type="text" class="glass-input glass-input-wide" placeholder="зима, меринос">
+              <input id="input-project-name" type="text" class="glass-input glass-input-wide" placeholder="Шапка">
             </div>
             <div class="ios-divider"></div>
             <div class="ios-row ios-row-stack">
@@ -471,7 +425,7 @@
             <div class="ios-divider"></div>
             <form id="form-add-part" class="inline-add-form">
               <div class="inline-marker-row">
-                <input id="input-new-part-name" type="text" class="glass-input" placeholder="Новая часть (напр. Отворот, Макушка)" required>
+                <input id="input-new-part-name" type="text" class="glass-input" placeholder="Отворот" required>
                 <button type="submit" class="btn-glass-add btn-compact-add">+ Часть</button>
               </div>
             </form>
@@ -506,7 +460,7 @@
                 min="1"
                 inputmode="numeric"
                 class="glass-input glass-input-compact"
-                placeholder="Напр. 80"
+                placeholder="80"
               >
             </div>
             <div id="actual-stitch-status-row" class="ios-row-sub-info" hidden></div>
@@ -519,7 +473,7 @@
             <div class="ios-divider"></div>
             <form id="form-add-yarn" class="inline-add-form">
               <input id="input-yarn-name" type="text" class="glass-input" placeholder="Название пряжи" required>
-              <input id="input-yarn-composition" type="text" class="glass-input" placeholder="Состав (напр. 100% меринос)">
+              <input id="input-yarn-composition" type="text" class="glass-input" placeholder="меринос">
               <div class="inline-form-grid">
                 <label class="inline-field">
                   <span>Нитей</span>
@@ -572,7 +526,7 @@
                     id="input-rule-label"
                     type="text"
                     class="glass-input"
-                    placeholder="Подсказка (напр. Прибавки реглана)"
+                    placeholder="Прибавка"
                     required
                   >
                   <div class="inline-form-grid">
@@ -613,7 +567,7 @@
                       id="input-marker-text"
                       type="text"
                       class="glass-input"
-                      placeholder="Заметка (напр. Разделить рукава)"
+                      placeholder="Рукава"
                       required
                     >
                   </div>
@@ -660,7 +614,44 @@
               <div class="ios-section-title">Заметки</div>
               <div class="ios-grouped-section">
                 <div class="inline-add-form">
-                  <textarea id="input-project-notes" class="glass-input glass-textarea" rows="3" placeholder="Заметки по узору, спицам или расходу..."></textarea>
+                  <textarea id="input-project-notes" class="glass-input glass-textarea" rows="3" placeholder="Заметки по проекту"></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Organization & Status Disclosure (bottom) -->
+          <button id="btn-toggle-passport-org" type="button" class="btn-glass-disclosure" aria-expanded="false">
+            <span class="disclosure-label">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+              </svg>
+              <span>Организация и статус</span>
+            </span>
+            <svg class="disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+
+          <div id="passport-org-panel" class="passport-advanced-panel">
+            <div class="passport-advanced-inner">
+              <div class="ios-grouped-section">
+                <div class="ios-row ios-row-stack">
+                  <span class="ios-row-label">Статус</span>
+                  <div class="preset-chips-row">
+                    <button type="button" class="preset-chip" data-passport-status="active">В процессе</button>
+                    <button type="button" class="preset-chip" data-passport-status="completed">Готово</button>
+                  </div>
+                </div>
+                <div class="ios-divider"></div>
+                <div class="ios-row ios-row-stack">
+                  <span class="ios-row-label">Папка</span>
+                  <div class="preset-chips-row preset-chips-wrap" id="passport-folder-chips"></div>
+                </div>
+                <div class="ios-divider"></div>
+                <div class="ios-row">
+                  <label for="input-passport-tags" class="ios-row-label">Теги</label>
+                  <input id="input-passport-tags" type="text" class="glass-input glass-input-wide" placeholder="меринос">
                 </div>
               </div>
             </div>
@@ -817,20 +808,117 @@
           </div>
         </div>
 
-        <div class="ios-section-title">Резервное копирование</div>
-        <div class="ios-grouped-section">
-          <button type="button" class="ios-row ios-row-action" id="btn-export-backup">
-            <span class="ios-row-label">Экспорт в файл (.json)</span>
-            <span class="ios-row-action-badge">Сохранить</span>
+        <div class="backup-disclosure-wrap">
+          <button id="btn-toggle-backup" type="button" class="btn-glass-disclosure" aria-expanded="false">
+            <span class="disclosure-label">
+              <span>Резервное копирование</span>
+            </span>
+            <svg class="disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
           </button>
-          <div class="ios-divider"></div>
-          <label class="ios-row ios-row-action" for="input-import-backup" id="btn-import-backup">
-            <span class="ios-row-label">Восстановить из файла (.json)</span>
-            <span class="ios-row-action-badge">Выбрать</span>
-            <input type="file" id="input-import-backup" accept=".json,application/json" hidden>
-          </label>
+
+          <div id="backup-panel" class="passport-advanced-panel">
+            <div class="passport-advanced-inner">
+              <div class="ios-grouped-section">
+                <button type="button" class="ios-row ios-row-action" id="btn-export-backup">
+                  <span class="ios-row-label">Экспорт в файл (.json)</span>
+                  <span class="ios-row-action-badge">Сохранить</span>
+                </button>
+                <div class="ios-divider"></div>
+                <label class="ios-row ios-row-action" for="input-import-backup" id="btn-import-backup">
+                  <span class="ios-row-label">Восстановить из файла (.json)</span>
+                  <span class="ios-row-action-badge">Выбрать</span>
+                  <input type="file" id="input-import-backup" accept=".json,application/json" hidden>
+                </label>
+              </div>
+              <p id="backup-status-msg" class="backup-status-msg" hidden></p>
+            </div>
+          </div>
         </div>
-        <p id="backup-status-msg" class="backup-status-msg" hidden></p>
+      </div>
+    </div>
+
+    <!-- Activity Stats Modal Sheet -->
+    <div id="stats-modal" class="modal-backdrop">
+      <div class="modal-sheet">
+        <div class="modal-header">
+          <h3 class="modal-title">Статистика</h3>
+          <button id="btn-close-stats" class="modal-close-btn" aria-label="Закрыть">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <div class="segmented-control" role="tablist" aria-label="Период статистики">
+          <button type="button" class="segmented-tab active" data-stats-tab="today" role="tab" aria-selected="true">Сегодня</button>
+          <button type="button" class="segmented-tab" data-stats-tab="month" role="tab" aria-selected="false">Месяц</button>
+          <button type="button" class="segmented-tab" data-stats-tab="all" role="tab" aria-selected="false">За всё время</button>
+        </div>
+
+        <div class="stats-tab-panel" id="stats-tab-today">
+          <div class="ios-grouped-section">
+            <div class="ios-row">
+              <span class="ios-row-label">Связано рядов</span>
+              <strong class="stats-modal-val" id="stat-today-rows">0</strong>
+            </div>
+            <div class="ios-divider"></div>
+            <div class="ios-row">
+              <span class="ios-row-label">Время за спицами</span>
+              <strong class="stats-modal-val" id="stat-today-time">0 мин</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="stats-tab-panel" id="stats-tab-month" hidden>
+          <div class="ios-grouped-section">
+            <div class="ios-row">
+              <span class="ios-row-label">Время за месяц</span>
+              <strong class="stats-modal-val" id="stat-month-time">0 мин</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="stats-tab-panel" id="stats-tab-all" hidden>
+          <div class="ios-grouped-section">
+            <div class="ios-row">
+              <span class="ios-row-label">Всего часов</span>
+              <strong class="stats-modal-val" id="stat-total-time">0 мин</strong>
+            </div>
+            <div class="ios-divider"></div>
+            <div class="ios-row">
+              <span class="ios-row-label">Готовых работ</span>
+              <strong class="stats-modal-val" id="stat-completed-count">0</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- New Folder Modal Sheet -->
+    <div id="new-folder-modal" class="modal-backdrop">
+      <div class="modal-sheet">
+        <div class="modal-header">
+          <h3 class="modal-title">Новая папка</h3>
+          <button id="btn-close-new-folder" class="modal-close-btn" aria-label="Закрыть">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <form id="form-new-folder" class="new-project-form">
+          <div class="ios-grouped-section">
+            <div class="ios-row">
+              <label for="input-new-folder-name" class="ios-row-label">Название</label>
+              <input id="input-new-folder-name" type="text" class="glass-input glass-input-wide" placeholder="Шапки" required>
+            </div>
+          </div>
+          <button type="submit" class="btn-continue-knitting">Создать папку</button>
+        </form>
       </div>
     </div>
 
@@ -848,42 +936,10 @@
         </div>
 
         <form id="form-new-project" class="new-project-form">
-          <div class="ios-section-title">Быстрый шаблон</div>
-          <div class="template-cards-grid" id="new-project-templates">
-            <button type="button" class="template-card active" data-template="simple">
-              <strong>Простое</strong>
-              <span>1 деталь · шарф, шапка</span>
-            </button>
-            <button type="button" class="template-card" data-template="paired">
-              <strong>Парное</strong>
-              <span>2 детали · носки, рукава</span>
-            </button>
-            <button type="button" class="template-card" data-template="complex">
-              <strong>Сложное</strong>
-              <span>3 детали · свитер, реглан</span>
-            </button>
-          </div>
-
           <div class="ios-grouped-section">
             <div class="ios-row">
               <label for="input-new-project-name" class="ios-row-label">Название</label>
-              <input id="input-new-project-name" type="text" class="glass-input glass-input-wide" placeholder="Например: Шапка бини" required>
-            </div>
-            <div class="ios-divider"></div>
-            <div class="ios-row ios-row-stack">
-              <span class="ios-row-label">Папка</span>
-              <div class="preset-chips-row preset-chips-wrap" id="new-project-folder-chips">
-                <button type="button" class="preset-chip active" data-new-folder="Шапки">Шапки</button>
-                <button type="button" class="preset-chip" data-new-folder="Шарфы">Шарфы</button>
-                <button type="button" class="preset-chip" data-new-folder="Носки">Носки</button>
-                <button type="button" class="preset-chip" data-new-folder="Свитера">Свитера</button>
-                <button type="button" class="preset-chip" data-new-folder="">Без папки</button>
-              </div>
-            </div>
-            <div class="ios-divider"></div>
-            <div class="ios-row">
-              <label for="input-new-project-tags" class="ios-row-label">Теги</label>
-              <input id="input-new-project-tags" type="text" class="glass-input glass-input-wide" placeholder="меринос, подарок">
+              <input id="input-new-project-name" type="text" class="glass-input glass-input-wide" placeholder="Шапка" required>
             </div>
             <div class="ios-divider"></div>
             <div class="ios-row ios-row-stack">
@@ -894,9 +950,19 @@
                 <input id="input-new-project-needle" type="text" class="glass-input glass-input-compact" placeholder="4.0 мм">
               </div>
             </div>
+            <div class="ios-divider"></div>
+            <div class="ios-row ios-row-stack">
+              <span class="ios-row-label">Папка</span>
+              <div class="preset-chips-row preset-chips-wrap" id="new-project-folder-chips"></div>
+            </div>
+            <div class="ios-divider"></div>
+            <div class="ios-row">
+              <label for="input-new-project-tags" class="ios-row-label">Теги</label>
+              <input id="input-new-project-tags" type="text" class="glass-input glass-input-wide" placeholder="меринос">
+            </div>
           </div>
 
-          <button type="submit" class="btn-continue-knitting">Создать и начать вязать</button>
+          <button type="submit" class="btn-continue-knitting">Создать</button>
         </form>
       </div>
     </div>

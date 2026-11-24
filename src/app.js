@@ -84,10 +84,28 @@ export function initApp() {
   const statTotalTimeEl = document.getElementById('stat-total-time');
   const statCompletedCountEl = document.getElementById('stat-completed-count');
   const btnNewProject = document.getElementById('btn-new-project');
+  const catalogStatusTabsWrap = document.getElementById('catalog-status-tabs');
   const catalogStatusTabs = Array.from(document.querySelectorAll('[data-catalog-status]'));
   const catalogFolderChipsEl = document.getElementById('catalog-folder-chips');
   const catalogTagChipsEl = document.getElementById('catalog-tag-chips');
   const projectsCatalogListEl = document.getElementById('projects-catalog-list');
+
+  // Stats Modal Elements
+  const btnOpenStats = document.getElementById('btn-open-stats');
+  const statsModalEl = document.getElementById('stats-modal');
+  const btnCloseStats = document.getElementById('btn-close-stats');
+  const statsTabButtons = Array.from(document.querySelectorAll('[data-stats-tab]'));
+  const statsTabPanels = {
+    today: document.getElementById('stats-tab-today'),
+    month: document.getElementById('stats-tab-month'),
+    all: document.getElementById('stats-tab-all')
+  };
+
+  // New Folder Modal Elements
+  const newFolderModalEl = document.getElementById('new-folder-modal');
+  const btnCloseNewFolder = document.getElementById('btn-close-new-folder');
+  const formNewFolder = /** @type {HTMLFormElement | null} */ (document.getElementById('form-new-folder'));
+  const inputNewFolderName = /** @type {HTMLInputElement | null} */ (document.getElementById('input-new-folder-name'));
 
   // New Project Modal Elements
   const newProjectModalEl = document.getElementById('new-project-modal');
@@ -96,8 +114,7 @@ export function initApp() {
   const inputNewProjectName = /** @type {HTMLInputElement | null} */ (document.getElementById('input-new-project-name'));
   const inputNewProjectTags = /** @type {HTMLInputElement | null} */ (document.getElementById('input-new-project-tags'));
   const inputNewProjectNeedle = /** @type {HTMLInputElement | null} */ (document.getElementById('input-new-project-needle'));
-  const templateCardButtons = Array.from(document.querySelectorAll('[data-template]'));
-  const newFolderChips = Array.from(document.querySelectorAll('[data-new-folder]'));
+  const newProjectFolderChipsEl = document.getElementById('new-project-folder-chips');
   const newToolChips = Array.from(document.querySelectorAll('[data-new-tool]'));
 
   // Settings & Backup Elements
@@ -107,6 +124,8 @@ export function initApp() {
   const rowWakeLock = document.getElementById('row-wake-lock');
   const wakeLockToggle = /** @type {HTMLInputElement | null} */ (document.getElementById('toggle-wake-lock'));
   const rowThemeToggle = document.getElementById('row-theme-toggle');
+  const btnToggleBackup = document.getElementById('btn-toggle-backup');
+  const backupPanelEl = document.getElementById('backup-panel');
   const btnExportBackup = document.getElementById('btn-export-backup');
   const inputImportBackup = /** @type {HTMLInputElement | null} */ (document.getElementById('input-import-backup'));
   const backupStatusMsgEl = document.getElementById('backup-status-msg');
@@ -184,8 +203,10 @@ export function initApp() {
   const btnClosePassport = document.getElementById('btn-close-passport');
   const inputProjectName = /** @type {HTMLInputElement | null} */ (document.getElementById('input-project-name'));
   const passportStatusChips = Array.from(document.querySelectorAll('[data-passport-status]'));
-  const passportFolderChips = Array.from(document.querySelectorAll('[data-passport-folder]'));
+  const passportFolderChipsEl = document.getElementById('passport-folder-chips');
   const inputPassportTags = /** @type {HTMLInputElement | null} */ (document.getElementById('input-passport-tags'));
+  const btnTogglePassportOrg = document.getElementById('btn-toggle-passport-org');
+  const passportOrgPanel = document.getElementById('passport-org-panel');
   const toolPresetChips = Array.from(document.querySelectorAll('.preset-chip[data-tool]'));
   const inputNeedleSize = /** @type {HTMLInputElement | null} */ (document.getElementById('input-needle-size'));
   const methodPresetChips = Array.from(document.querySelectorAll('.preset-chip[data-method]'));
@@ -665,9 +686,17 @@ export function initApp() {
     passportStatusChips.forEach((chip) => {
       chip.classList.toggle('active', chip.getAttribute('data-passport-status') === project.status);
     });
-    passportFolderChips.forEach((chip) => {
-      chip.classList.toggle('active', (chip.getAttribute('data-passport-folder') ?? '') === (project.folder || ''));
-    });
+    if (passportFolderChipsEl) {
+      renderFolderChips(
+        passportFolderChipsEl,
+        project.folder || '',
+        (folderName) => {
+          store.updateProjectPassport({ folder: folderName });
+          renderPassportModal();
+        },
+        { includeAll: false, includeNone: true }
+      );
+    }
     if (inputPassportTags) inputPassportTags.value = project.tags.join(', ');
     toolPresetChips.forEach((chip) => {
       chip.classList.toggle('active', chip.getAttribute('data-tool') === project.toolType);
@@ -860,6 +889,19 @@ export function initApp() {
     renderPassportModal();
   });
 
+  /**
+   * Smoothly scrolls the passport sheet so the opened disclosure button moves to the top.
+   * @param {HTMLElement | null} toggleBtn
+   */
+  function scrollPassportToDisclosure(toggleBtn) {
+    if (!passportScrollEl || !toggleBtn) return;
+    setTimeout(() => {
+      const targetTop = Math.max(0, toggleBtn.offsetTop - passportScrollEl.offsetTop - 4);
+      passportScrollEl.scrollTo({ top: targetTop, behavior: 'smooth' });
+      updateScrollFadeMask(passportScrollEl);
+    }, 180);
+  }
+
   btnTogglePassportAdvanced?.addEventListener('click', () => {
     const isOpen = passportAdvancedPanel?.classList.toggle('open') ?? false;
     btnTogglePassportAdvanced.setAttribute('aria-expanded', String(isOpen));
@@ -867,7 +909,19 @@ export function initApp() {
     if (labelSpan) {
       labelSpan.textContent = isOpen ? 'Скрыть дополнительные параметры' : 'Дополнительные параметры';
     }
-    if (passportScrollEl) {
+    if (isOpen) {
+      scrollPassportToDisclosure(btnTogglePassportAdvanced);
+    } else if (passportScrollEl) {
+      setTimeout(() => updateScrollFadeMask(passportScrollEl), 340);
+    }
+  });
+
+  btnTogglePassportOrg?.addEventListener('click', () => {
+    const isOpen = passportOrgPanel?.classList.toggle('open') ?? false;
+    btnTogglePassportOrg.setAttribute('aria-expanded', String(isOpen));
+    if (isOpen) {
+      scrollPassportToDisclosure(btnTogglePassportOrg);
+    } else if (passportScrollEl) {
       setTimeout(() => updateScrollFadeMask(passportScrollEl), 340);
     }
   });
@@ -980,14 +1034,6 @@ export function initApp() {
     });
   });
 
-  passportFolderChips.forEach((chip) => {
-    chip.addEventListener('click', () => {
-      const folder = chip.getAttribute('data-passport-folder') ?? '';
-      store.updateProjectPassport({ folder });
-      renderPassportModal();
-    });
-  });
-
   /** @param {string} raw */
   function parseTagsInput(raw) {
     return raw
@@ -1018,9 +1064,16 @@ export function initApp() {
 
   openSettingsBtn?.addEventListener('click', () => {
     if (backupStatusMsgEl) backupStatusMsgEl.hidden = true;
+    backupPanelEl?.classList.remove('open');
+    btnToggleBackup?.setAttribute('aria-expanded', 'false');
     settingsModal.open();
   });
   closeSettingsBtn?.addEventListener('click', settingsModal.close);
+
+  btnToggleBackup?.addEventListener('click', () => {
+    const isOpen = backupPanelEl?.classList.toggle('open') ?? false;
+    btnToggleBackup.setAttribute('aria-expanded', String(isOpen));
+  });
 
   // Backup Export & Import
   btnExportBackup?.addEventListener('click', () => {
@@ -1130,6 +1183,68 @@ export function initApp() {
   let catalogStatus = /** @type {'active' | 'completed'} */ ('active');
   let catalogFolder = 'all';
   let catalogTag = 'all';
+  let activeStatsTab = /** @type {'today' | 'month' | 'all'} */ ('today');
+  /** @type {((folderName: string) => void) | null} */
+  let pendingFolderCallback = null;
+
+  const newFolderModal = createModalController(newFolderModalEl, {
+    onOpen: () => {
+      if (inputNewFolderName) {
+        inputNewFolderName.value = '';
+        setTimeout(() => inputNewFolderName.focus(), 120);
+      }
+    }
+  });
+
+  /** @param {(folderName: string) => void} onCreated */
+  function openNewFolderDialog(onCreated) {
+    pendingFolderCallback = onCreated;
+    newFolderModal.open();
+  }
+
+  btnCloseNewFolder?.addEventListener('click', newFolderModal.close);
+  formNewFolder?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const created = store.addFolder(inputNewFolderName?.value || '');
+    if (!created) return;
+    newFolderModal.close();
+    pendingFolderCallback?.(created);
+    pendingFolderCallback = null;
+  });
+
+  /**
+   * Renders user-created folder chips plus "+ Добавить папку" (when empty) or "+" (when folders exist).
+   * @param {HTMLElement} containerEl
+   * @param {string} selectedFolder
+   * @param {(folder: string) => void} onSelect
+   * @param {{ includeAll?: boolean, includeNone?: boolean }} [opts]
+   */
+  function renderFolderChips(containerEl, selectedFolder, onSelect, opts = {}) {
+    const folders = store.getState().folders;
+    /** @type {HTMLElement[]} */
+    const nodes = [];
+
+    if (opts.includeAll && folders.length > 0) {
+      nodes.push(createFilterChip('Все', selectedFolder === 'all', () => onSelect('all')));
+    }
+    if (opts.includeNone && folders.length > 0) {
+      nodes.push(createFilterChip('Без папки', selectedFolder === '', () => onSelect('')));
+    }
+    for (const folderName of folders) {
+      nodes.push(createFilterChip(folderName, selectedFolder === folderName, () => onSelect(folderName)));
+    }
+
+    const addLabel = folders.length === 0 ? '+ Добавить папку' : '+';
+    const addBtn = createFilterChip(addLabel, false, () => {
+      openNewFolderDialog((created) => onSelect(created));
+    });
+    if (folders.length > 0) {
+      addBtn.setAttribute('aria-label', 'Добавить папку');
+    }
+    nodes.push(addBtn);
+
+    containerEl.replaceChildren(...nodes);
+  }
 
   /** @param {'dashboard' | 'counter'} view */
   function setActiveView(view) {
@@ -1138,8 +1253,10 @@ export function initApp() {
     if (dashboardViewEl) dashboardViewEl.hidden = !isDashboard;
     if (appMainEl) appMainEl.hidden = isDashboard;
     if (btnBackDashboard) btnBackDashboard.hidden = isDashboard;
+    if (btnNewProject) btnNewProject.hidden = !isDashboard;
     if (btnOpenGauge) btnOpenGauge.hidden = isDashboard;
     if (btnOpenPassport) btnOpenPassport.hidden = isDashboard;
+    if (btnOpenStats) btnOpenStats.hidden = !isDashboard;
     if (openSettingsBtn) openSettingsBtn.hidden = !isDashboard;
     if (isDashboard) {
       renderDashboard();
@@ -1154,6 +1271,41 @@ export function initApp() {
     if (hours === 0) return `${mins} мин`;
     return mins > 0 ? `${hours} ч ${mins} м` : `${hours} ч`;
   }
+
+  function renderStatsModal() {
+    const stats = store.getActivityStats();
+    if (statTodayRowsEl) statTodayRowsEl.textContent = String(stats.todayRows);
+    if (statTodayTimeEl) statTodayTimeEl.textContent = formatHoursMinutes(stats.todayTimeMs);
+    if (statMonthTimeEl) statMonthTimeEl.textContent = formatHoursMinutes(stats.monthTimeMs);
+    if (statTotalTimeEl) statTotalTimeEl.textContent = formatHoursMinutes(stats.totalTimeMs);
+    if (statCompletedCountEl) statCompletedCountEl.textContent = String(stats.completedProjectsCount);
+
+    statsTabButtons.forEach((btn) => {
+      const tab = btn.getAttribute('data-stats-tab');
+      const isMatch = tab === activeStatsTab;
+      btn.classList.toggle('active', isMatch);
+      btn.setAttribute('aria-selected', String(isMatch));
+    });
+    for (const [key, panel] of Object.entries(statsTabPanels)) {
+      if (panel) panel.hidden = key !== activeStatsTab;
+    }
+  }
+
+  const statsModal = createModalController(statsModalEl, {
+    onOpen: renderStatsModal
+  });
+
+  btnOpenStats?.addEventListener('click', statsModal.open);
+  btnCloseStats?.addEventListener('click', statsModal.close);
+  statsTabButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const tab = btn.getAttribute('data-stats-tab');
+      if (tab === 'today' || tab === 'month' || tab === 'all') {
+        activeStatsTab = tab;
+        renderStatsModal();
+      }
+    });
+  });
 
   function renderDashboard() {
     const activeProject = store.getActiveProject();
@@ -1183,33 +1335,34 @@ export function initApp() {
       heroProjectMetaEl.textContent = `${activePart.name} · Ряд ${activePart.currentRow}${targetPart}`;
     }
 
-    const stats = store.getActivityStats();
-    if (statTodayRowsEl) statTodayRowsEl.textContent = String(stats.todayRows);
-    if (statTodayTimeEl) statTodayTimeEl.textContent = formatHoursMinutes(stats.todayTimeMs);
-    if (statMonthTimeEl) statMonthTimeEl.textContent = formatHoursMinutes(stats.monthTimeMs);
-    if (statTotalTimeEl) statTotalTimeEl.textContent = formatHoursMinutes(stats.totalTimeMs);
-    if (statCompletedCountEl) statCompletedCountEl.textContent = `${stats.completedProjectsCount} готово`;
-
     const allProjects = store.getState().projects;
+    const hasCompleted = allProjects.some((p) => p.status === 'completed');
+    if (!hasCompleted) {
+      catalogStatus = 'active';
+    }
+    if (catalogStatusTabsWrap) {
+      catalogStatusTabsWrap.hidden = !hasCompleted;
+    }
+    catalogStatusTabs.forEach((t) => {
+      const isMatch = t.getAttribute('data-catalog-status') === catalogStatus;
+      t.classList.toggle('active', isMatch);
+      t.setAttribute('aria-selected', String(isMatch));
+    });
+
     const statusProjects = allProjects.filter((p) => p.status === catalogStatus);
 
-    // Folder filter chips
-    const presetFolders = ['Шапки', 'Шарфы', 'Носки', 'Свитера'];
-    const dynamicFolders = Array.from(
-      new Set([...presetFolders, ...allProjects.map((p) => p.folder).filter(Boolean)])
-    );
+    if (catalogFolder !== 'all' && !store.getState().folders.includes(catalogFolder)) {
+      catalogFolder = 'all';
+    }
     if (catalogFolderChipsEl) {
-      catalogFolderChipsEl.replaceChildren(
-        createFilterChip('Все папки', catalogFolder === 'all', () => {
-          catalogFolder = 'all';
+      renderFolderChips(
+        catalogFolderChipsEl,
+        catalogFolder,
+        (selected) => {
+          catalogFolder = selected;
           renderDashboard();
-        }),
-        ...dynamicFolders.map((folderName) =>
-          createFilterChip(folderName, catalogFolder === folderName, () => {
-            catalogFolder = folderName;
-            renderDashboard();
-          })
-        )
+        },
+        { includeAll: true }
       );
     }
 
@@ -1282,7 +1435,7 @@ export function initApp() {
           const projTime = formatHoursMinutes(store.getProjectTotalElapsedMs(proj.id));
           const totalRows = proj.parts.reduce((s, pt) => s + pt.currentRow, 0);
           const folderLabel = proj.folder ? `${proj.folder} · ` : '';
-          meta.textContent = `${folderLabel}${proj.parts.length} дет. · ${totalRows} р. · ${projTime}`;
+          meta.textContent = `${folderLabel}${proj.parts.length} ч. · ${totalRows} р. · ${projTime}`;
 
           body.append(title, meta);
 
@@ -1322,38 +1475,35 @@ export function initApp() {
     }
   }
 
-  // New Project Modal Logic
-  let newTemplate = /** @type {'simple' | 'paired' | 'complex'} */ ('simple');
-  let newFolder = 'Шапки';
+  // New Project Modal Logic (no templates)
+  let newFolder = '';
   let newTool = /** @type {'needles' | 'hook'} */ ('needles');
+
+  function renderNewProjectFolders() {
+    if (!newProjectFolderChipsEl) return;
+    renderFolderChips(
+      newProjectFolderChipsEl,
+      newFolder,
+      (selected) => {
+        newFolder = selected;
+        renderNewProjectFolders();
+      },
+      { includeAll: false, includeNone: true }
+    );
+  }
 
   const newProjectModal = createModalController(newProjectModalEl, {
     onOpen: () => {
+      newFolder = '';
       if (inputNewProjectName) inputNewProjectName.value = '';
       if (inputNewProjectTags) inputNewProjectTags.value = '';
       if (inputNewProjectNeedle) inputNewProjectNeedle.value = '';
+      renderNewProjectFolders();
     }
   });
 
   btnNewProject?.addEventListener('click', newProjectModal.open);
   btnCloseNewProject?.addEventListener('click', newProjectModal.close);
-
-  templateCardButtons.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const tpl = btn.getAttribute('data-template');
-      if (tpl === 'simple' || tpl === 'paired' || tpl === 'complex') {
-        newTemplate = tpl;
-        templateCardButtons.forEach((b) => b.classList.toggle('active', b === btn));
-      }
-    });
-  });
-
-  newFolderChips.forEach((chip) => {
-    chip.addEventListener('click', () => {
-      newFolder = chip.getAttribute('data-new-folder') ?? '';
-      newFolderChips.forEach((c) => c.classList.toggle('active', c === chip));
-    });
-  });
 
   newToolChips.forEach((chip) => {
     chip.addEventListener('click', () => {
@@ -1372,7 +1522,6 @@ export function initApp() {
     const tags = parseTagsInput(inputNewProjectTags?.value || '');
     store.createProject({
       name,
-      template: newTemplate,
       folder: newFolder,
       tags,
       toolType: newTool,

@@ -1496,7 +1496,7 @@ button.active-part-header:active {
   gap: 8px;
 }
 
-.disclosure-chevron {
+.btn-glass-disclosure[aria-expanded="true"] .disclosure-chevron {
   transform: rotate(180deg);
 }
 
@@ -1651,7 +1651,39 @@ button.active-part-header:active {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  padding: 2px 0 calc(20px + env(safe-area-inset-bottom, 0px));
+  padding: 2px 0 calc(84px + env(safe-area-inset-bottom, 0px));
+}
+
+.fab-new-project {
+  position: fixed;
+  right: 20px;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  z-index: 30;
+  padding: 13px 20px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: var(--bg-card-main);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.14s ease, filter 0.14s ease;
+}
+
+.fab-new-project:active {
+  transform: scale(0.94);
+  filter: brightness(1.16);
+}
+
+[data-theme="light-minimal"] .fab-new-project {
+  background: #1c1c1e;
+  color: #ffffff;
+  border-color: rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
 }
 
 .active-hero-card {
@@ -2053,6 +2085,33 @@ button.active-part-header:active {
   padding: 4px 10px;
   border-radius: 999px;
   background: var(--bg-card-inner);
+}
+
+.backup-disclosure-wrap {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stats-tab-panel {
+  margin-top: 14px;
+}
+
+.stats-modal-val {
+  font-size: 17px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.preset-chip:active,
+.filter-chip:active,
+.segmented-tab:active,
+.btn-glass-disclosure:active,
+.ios-row-action:active {
+  transform: scale(0.95);
+  filter: brightness(1.14);
 }
 
 .backup-status-msg {

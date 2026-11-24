@@ -59,7 +59,8 @@ export const KNIT_STORAGE_KEY = 'knitq_store_v1';
  * }} Project
  * @typedef {{
  *   projects: Project[],
- *   activeProjectId: string
+ *   activeProjectId: string,
+ *   folders: string[]
  * }} StoreState
  */
 
@@ -79,67 +80,23 @@ function createDefaultGauge() {
   };
 }
 
-const DEMO_HAT_SVG =
-  "data:image/svg+xml;utf8," +
-  encodeURIComponent(
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160">' +
-      '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">' +
-      '<stop offset="0%" stop-color="#3a404d"/><stop offset="100%" stop-color="#1c1f26"/>' +
-      '</linearGradient></defs>' +
-      '<rect width="160" height="160" rx="24" fill="url(#g)"/>' +
-      '<circle cx="80" cy="40" r="14" fill="#d1d5db" opacity="0.9"/>' +
-      '<path d="M36 105 C36 62, 124 62, 124 105 Z" fill="#9ca3af"/>' +
-      '<rect x="30" y="98" width="100" height="24" rx="10" fill="#e5e7eb"/>' +
-      '<line x1="50" y1="98" x2="50" y2="122" stroke="#6b7280" stroke-width="2"/>' +
-      '<line x1="70" y1="98" x2="70" y2="122" stroke="#6b7280" stroke-width="2"/>' +
-      '<line x1="90" y1="98" x2="90" y2="122" stroke="#6b7280" stroke-width="2"/>' +
-      '<line x1="110" y1="98" x2="110" y2="122" stroke="#6b7280" stroke-width="2"/>' +
-      '</svg>'
-  );
-
-/**
- * @param {string} id
- * @param {string} name
- * @param {number | null} [targetRows]
- * @returns {Part}
- */
-function createBlankPart(id, name, targetRows = null) {
-  return {
-    id,
-    name,
-    currentRow: 0,
-    targetRows,
-    rowLog: [],
-    timer: {
-      elapsedMs: 0,
-      runningSince: null
-    },
-    sessions: [],
-    stitchCheckInterval: 10,
-    targetStitchCount: null,
-    actualStitchCount: null,
-    rowRules: [],
-    rowMarkers: []
-  };
-}
-
 /**
  * @returns {StoreState}
  */
 function createDefaultState() {
   const partId = 'part-1';
   const projectId = 'project-1';
-  const demoCompletedId = 'project-demo-hat';
 
   return {
     activeProjectId: projectId,
+    folders: [],
     projects: [
       {
         id: projectId,
         name: 'Шарф «Лицевая гладь»',
         status: 'active',
-        folder: 'Шарфы',
-        tags: ['базовый'],
+        folder: '',
+        tags: [],
         createdAt: '2026-01-10T10:00:00.000Z',
         completedAt: null,
         toolType: 'needles',
@@ -152,34 +109,6 @@ function createDefaultState() {
         gauge: createDefaultGauge(),
         activePartId: partId,
         parts: [createBlankPart(partId, 'Основное полотно')]
-      },
-      {
-        id: demoCompletedId,
-        name: 'Шапка «Резинка 2×2»',
-        status: 'completed',
-        folder: 'Шапки',
-        tags: ['зима', 'меринос'],
-        createdAt: '2025-12-01T10:00:00.000Z',
-        completedAt: '2025-12-10T18:30:00.000Z',
-        toolType: 'needles',
-        needleSize: '4 мм',
-        knittingMethod: 'circular',
-        stitchPattern: 'Резинка 2×2',
-        yarns: [],
-        notes: 'Мягкая тёплая шапка с отворотом.',
-        photoDataUrl: DEMO_HAT_SVG,
-        gauge: createDefaultGauge(),
-        activePartId: 'part-demo-1',
-        parts: [
-          {
-            ...createBlankPart('part-demo-1', 'Отворот и основа', 84),
-            currentRow: 84,
-            timer: {
-              elapsedMs: 5_400_000,
-              runningSince: null
-            }
-          }
-        ]
       }
     ]
   };
@@ -214,6 +143,32 @@ export function isValidStoreState(candidate) {
 }
 
 /**
+ * @param {string} id
+ * @param {string} name
+ * @param {number | null} [targetRows]
+ * @returns {Part}
+ */
+function createBlankPart(id, name, targetRows = null) {
+  return {
+    id,
+    name,
+    currentRow: 0,
+    targetRows,
+    rowLog: [],
+    timer: {
+      elapsedMs: 0,
+      runningSince: null
+    },
+    sessions: [],
+    stitchCheckInterval: 10,
+    targetStitchCount: null,
+    actualStitchCount: null,
+    rowRules: [],
+    rowMarkers: []
+  };
+}
+
+/**
  * Normalizes loaded state so legacy parts receive default check/rule/marker fields.
  * @param {StoreState} loaded
  * @returns {StoreState}
@@ -222,6 +177,10 @@ export function normalizeStoreState(loaded) {
   if (typeof loaded.activeProjectId !== 'string' || !loaded.projects.some((p) => p.id === loaded.activeProjectId)) {
     loaded.activeProjectId = loaded.projects[0].id;
   }
+  const initialFolders = Array.isArray(loaded.folders)
+    ? loaded.folders.map((f) => String(f).trim()).filter(Boolean)
+    : [];
+  const folderSet = new Set(initialFolders);
 
   for (const project of loaded.projects) {
     if (project.status !== 'active' && project.status !== 'completed') {
@@ -229,6 +188,8 @@ export function normalizeStoreState(loaded) {
     }
     if (typeof project.folder !== 'string') {
       project.folder = '';
+    } else if (project.folder.trim()) {
+      folderSet.add(project.folder.trim());
     }
     if (!Array.isArray(project.tags)) {
       project.tags = [];
@@ -292,6 +253,7 @@ export function normalizeStoreState(loaded) {
       }
     }
   }
+  loaded.folders = Array.from(folderSet);
   return loaded;
 }
 
@@ -850,10 +812,24 @@ export function createKnitStore(options = {}) {
     },
 
     /**
-     * Creates a new project from a quick template ('simple' | 'paired' | 'complex') and activates it.
+     * Adds a user-created folder if non-empty and not already present.
+     * @param {string} name
+     * @returns {string | null}
+     */
+    addFolder(name) {
+      const trimmed = String(name || '').trim();
+      if (!trimmed) return null;
+      if (!state.folders.includes(trimmed)) {
+        state.folders.push(trimmed);
+        commit();
+      }
+      return trimmed;
+    },
+
+    /**
+     * Creates a new project and activates it.
      * @param {{
      *   name: string,
-     *   template?: 'simple' | 'paired' | 'complex',
      *   folder?: string,
      *   tags?: string[],
      *   toolType?: 'needles' | 'hook',
@@ -864,18 +840,12 @@ export function createKnitStore(options = {}) {
     createProject(input) {
       const timestamp = now();
       const projectId = createId('project', timestamp);
-      const template = input.template || 'simple';
       const folder = String(input.folder || '').trim();
-      const partNames =
-        template === 'paired'
-          ? (folder === 'Носки' ? ['Носок 1', 'Носок 2'] : ['Деталь 1', 'Деталь 2'])
-          : template === 'complex'
-            ? ['Отворот / Резинка', 'Основное полотно', 'Завершение']
-            : ['Основное полотно'];
+      if (folder && !state.folders.includes(folder)) {
+        state.folders.push(folder);
+      }
 
-      const parts = partNames.map((partName, idx) =>
-        createBlankPart(createId(`part-${idx + 1}`, timestamp), partName)
-      );
+      const parts = [createBlankPart(createId('part-1', timestamp), 'Основное полотно')];
 
       /** @type {Project} */
       const project = {
