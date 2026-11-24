@@ -248,6 +248,7 @@ export function initApp() {
   const passportScrollEl = /** @type {HTMLElement | null} */ (passportModalEl?.querySelector('.passport-scroll') ?? null);
   attachScrollFade(passportScrollEl);
   const btnClosePassport = document.getElementById('btn-close-passport');
+  const btnPassportEditMeta = document.getElementById('btn-passport-edit-meta');
   const inputProjectName = /** @type {HTMLInputElement | null} */ (document.getElementById('input-project-name'));
   const passportStatusChips = Array.from(document.querySelectorAll('[data-passport-status]'));
   const passportFolderChipsEl = document.getElementById('passport-folder-chips');
@@ -877,6 +878,9 @@ export function initApp() {
 
   btnOpenPassport?.addEventListener('click', passportModal.open);
   btnClosePassport?.addEventListener('click', passportModal.close);
+  btnPassportEditMeta?.addEventListener('click', () => {
+    openEditProjectModal(store.getActiveProject().id);
+  });
 
   inputProjectName?.addEventListener('change', () => {
     store.updateProjectPassport({ name: inputProjectName.value });
@@ -1542,9 +1546,6 @@ export function initApp() {
       }
     }
 
-    const editPencilSvg =
-      '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>';
-
     /** @param {import('./core/knit-store.js').Project} proj */
     const createProjectSquareTile = (proj) => {
       const tile = document.createElement('div');
@@ -1560,16 +1561,6 @@ export function initApp() {
         tile.appendChild(thumb);
       }
 
-      const editBtn = document.createElement('button');
-      editBtn.type = 'button';
-      editBtn.className = 'square-tile-edit';
-      editBtn.setAttribute('aria-label', `Редактировать ${proj.name}`);
-      editBtn.innerHTML = editPencilSvg;
-      editBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        openEditProjectModal(proj.id);
-      });
-
       const iconWrap = document.createElement('div');
       iconWrap.className = 'square-tile-icon';
       iconWrap.style.color = proj.color || '#8e8e93';
@@ -1584,7 +1575,7 @@ export function initApp() {
       sub.className = 'square-tile-sub';
       sub.textContent = `${totalRows} р. · ${formatHoursMinutes(store.getProjectTotalElapsedMs(proj.id))}`;
 
-      tile.append(editBtn, iconWrap, title, sub);
+      tile.append(iconWrap, title, sub);
 
       const openProject = () => {
         store.setActiveProject(proj.id);
@@ -1613,16 +1604,6 @@ export function initApp() {
             folderTile.setAttribute('role', 'button');
             folderTile.tabIndex = 0;
 
-            const editBtn = document.createElement('button');
-            editBtn.type = 'button';
-            editBtn.className = 'square-tile-edit';
-            editBtn.setAttribute('aria-label', `Редактировать папку ${folderObj.name}`);
-            editBtn.innerHTML = editPencilSvg;
-            editBtn.addEventListener('click', (e) => {
-              e.stopPropagation();
-              openEditFolderModal(folderObj.name);
-            });
-
             const iconWrap = document.createElement('div');
             iconWrap.className = 'square-tile-icon';
             iconWrap.style.color = folderObj.color || '#8e8e93';
@@ -1637,7 +1618,7 @@ export function initApp() {
             sub.className = 'square-tile-sub';
             sub.textContent = `${count} шт.`;
 
-            folderTile.append(editBtn, iconWrap, title, sub);
+            folderTile.append(iconWrap, title, sub);
             const openFolder = () => {
               openedFolder = folderObj.name;
               renderDashboard();
@@ -1902,7 +1883,8 @@ export function initApp() {
         return;
       }
       deleteConfirmModal.close();
-      renderDashboard();
+      passportModal.close();
+      setActiveView('dashboard');
     });
 
     const btnCancel = document.createElement('button');

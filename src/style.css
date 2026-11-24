@@ -1718,10 +1718,10 @@ button.active-part-header:active {
 }
 
 .square-tile-icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 12px;
-  background: var(--bg-card-inner);
+  width: 38px;
+  height: 38px;
+  border-radius: 13px;
+  background: color-mix(in srgb, currentColor 18%, transparent);
   color: var(--text-primary);
   display: inline-flex;
   align-items: center;
@@ -2238,18 +2238,25 @@ button.active-part-header:active {
 }
 
 .full-page-header {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  min-height: 40px;
   margin-bottom: 12px;
   flex-shrink: 0;
 }
 
 .full-page-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
   font-size: 18px;
   font-weight: 700;
   color: var(--text-primary);
+  pointer-events: none;
+  white-space: nowrap;
 }
 
 .full-page-spacer {
