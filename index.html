@@ -75,6 +75,14 @@
           </svg>
         </button>
 
+        <!-- Create Menu (+) Button (shown on home screen) -->
+        <button id="btn-open-create-menu" class="btn-icon" aria-label="Создать проект или папку">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </button>
+
         <!-- Stats Button (shown on home screen) -->
         <button id="btn-open-stats" class="btn-icon" aria-label="Статистика активности">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -97,29 +105,7 @@
     <!-- Main Content: Home Dashboard Screen -->
     <section class="dashboard-view" id="dashboard-view">
       <div class="dashboard-scroll scroll-fade" id="dashboard-scroll">
-        <!-- Projects Catalog (Top) -->
-        <div class="catalog-section">
-          <div class="catalog-header">
-            <h2 class="catalog-title">Проекты</h2>
-          </div>
-
-          <!-- Status Segmented Control (hidden when no completed projects exist) -->
-          <div class="segmented-control" id="catalog-status-tabs" role="tablist" aria-label="Статус проектов" hidden>
-            <button type="button" class="segmented-tab active" data-catalog-status="active" role="tab" aria-selected="true">В процессе</button>
-            <button type="button" class="segmented-tab" data-catalog-status="completed" role="tab" aria-selected="false">Готовые</button>
-          </div>
-
-          <!-- Folder Filter Chips (user-created only + Add button) -->
-          <div class="filter-chips-scroll" id="catalog-folder-chips"></div>
-
-          <!-- Tag Filter Chips -->
-          <div class="filter-chips-scroll filter-tags-row" id="catalog-tag-chips" hidden></div>
-
-          <!-- Project Cards List -->
-          <div class="projects-catalog-list" id="projects-catalog-list"></div>
-        </div>
-
-        <!-- Active Project Quick-Resume Card -->
+        <!-- Active Project Quick-Resume Card (Pinned Top) -->
         <div class="glass-card active-hero-card" id="active-hero-card">
           <div class="hero-top-row">
             <span class="hero-badge" id="hero-folder-badge">Сейчас в работе</span>
@@ -134,10 +120,33 @@
             <span>Продолжить вязать</span>
           </button>
         </div>
-      </div>
 
-      <!-- Floating Action Button (bottom-right) -->
-      <button type="button" id="btn-new-project" class="fab-new-project">+ Новое изделие</button>
+        <!-- Projects Catalog -->
+        <div class="catalog-section">
+          <div class="catalog-header">
+            <div class="catalog-title-row">
+              <button type="button" id="btn-catalog-folder-back" class="btn-folder-back" aria-label="Назад ко всем проектам" hidden>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+              </button>
+              <h2 class="catalog-title" id="catalog-title">Проекты</h2>
+            </div>
+          </div>
+
+          <!-- Status Segmented Control (hidden when no completed projects exist) -->
+          <div class="segmented-control" id="catalog-status-tabs" role="tablist" aria-label="Статус проектов" hidden>
+            <button type="button" class="segmented-tab active" data-catalog-status="active" role="tab" aria-selected="true">В процессе</button>
+            <button type="button" class="segmented-tab" data-catalog-status="completed" role="tab" aria-selected="false">Готовые</button>
+          </div>
+
+          <!-- Tag Filter Chips -->
+          <div class="filter-chips-scroll filter-tags-row" id="catalog-tag-chips" hidden></div>
+
+          <!-- 3-Column Square Grid (Folders & Projects) -->
+          <div class="projects-catalog-grid" id="projects-catalog-list"></div>
+        </div>
+      </div>
     </section>
 
     <!-- Main Content: Active Knitting Screen -->
@@ -893,6 +902,33 @@
               <strong class="stats-modal-val" id="stat-completed-count">0</strong>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Create Choice Modal Sheet (+ button) -->
+    <div id="create-menu-modal" class="modal-backdrop">
+      <div class="modal-sheet">
+        <div class="modal-header">
+          <h3 class="modal-title">Создать</h3>
+          <button id="btn-close-create-menu" class="modal-close-btn" aria-label="Закрыть">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <div class="ios-grouped-section">
+          <button type="button" class="ios-row ios-row-action" id="btn-create-choice-project">
+            <span class="ios-row-label">Новое изделие</span>
+            <span class="ios-row-action-badge">+</span>
+          </button>
+          <div class="ios-divider"></div>
+          <button type="button" class="ios-row ios-row-action" id="btn-create-choice-folder">
+            <span class="ios-row-label">Новая папка</span>
+            <span class="ios-row-action-badge">+</span>
+          </button>
         </div>
       </div>
     </div>

@@ -83,14 +83,19 @@ export function initApp() {
   const statMonthTimeEl = document.getElementById('stat-month-time');
   const statTotalTimeEl = document.getElementById('stat-total-time');
   const statCompletedCountEl = document.getElementById('stat-completed-count');
-  const btnNewProject = document.getElementById('btn-new-project');
   const catalogStatusTabsWrap = document.getElementById('catalog-status-tabs');
   const catalogStatusTabs = Array.from(document.querySelectorAll('[data-catalog-status]'));
-  const catalogFolderChipsEl = document.getElementById('catalog-folder-chips');
+  const catalogTitleEl = document.getElementById('catalog-title');
+  const btnCatalogFolderBack = document.getElementById('btn-catalog-folder-back');
   const catalogTagChipsEl = document.getElementById('catalog-tag-chips');
   const projectsCatalogListEl = document.getElementById('projects-catalog-list');
 
-  // Stats Modal Elements
+  // Create Menu (+) & Stats Modal Elements
+  const btnOpenCreateMenu = document.getElementById('btn-open-create-menu');
+  const createMenuModalEl = document.getElementById('create-menu-modal');
+  const btnCloseCreateMenu = document.getElementById('btn-close-create-menu');
+  const btnCreateChoiceProject = document.getElementById('btn-create-choice-project');
+  const btnCreateChoiceFolder = document.getElementById('btn-create-choice-folder');
   const btnOpenStats = document.getElementById('btn-open-stats');
   const statsModalEl = document.getElementById('stats-modal');
   const btnCloseStats = document.getElementById('btn-close-stats');
@@ -1181,11 +1186,23 @@ export function initApp() {
   // View Navigation & Catalog State
   let currentView = /** @type {'dashboard' | 'counter'} */ ('dashboard');
   let catalogStatus = /** @type {'active' | 'completed'} */ ('active');
-  let catalogFolder = 'all';
+  let openedFolder = /** @type {string | null} */ (null);
   let catalogTag = 'all';
   let activeStatsTab = /** @type {'today' | 'month' | 'all'} */ ('today');
   /** @type {((folderName: string) => void) | null} */
   let pendingFolderCallback = null;
+
+  const createMenuModal = createModalController(createMenuModalEl);
+  btnOpenCreateMenu?.addEventListener('click', createMenuModal.open);
+  btnCloseCreateMenu?.addEventListener('click', createMenuModal.close);
+  btnCreateChoiceProject?.addEventListener('click', () => {
+    createMenuModal.close();
+    setTimeout(() => newProjectModal.open(), 180);
+  });
+  btnCreateChoiceFolder?.addEventListener('click', () => {
+    createMenuModal.close();
+    setTimeout(() => openNewFolderDialog(() => renderDashboard()), 180);
+  });
 
   const newFolderModal = createModalController(newFolderModalEl, {
     onOpen: () => {
@@ -1253,9 +1270,9 @@ export function initApp() {
     if (dashboardViewEl) dashboardViewEl.hidden = !isDashboard;
     if (appMainEl) appMainEl.hidden = isDashboard;
     if (btnBackDashboard) btnBackDashboard.hidden = isDashboard;
-    if (btnNewProject) btnNewProject.hidden = !isDashboard;
     if (btnOpenGauge) btnOpenGauge.hidden = isDashboard;
     if (btnOpenPassport) btnOpenPassport.hidden = isDashboard;
+    if (btnOpenCreateMenu) btnOpenCreateMenu.hidden = !isDashboard;
     if (btnOpenStats) btnOpenStats.hidden = !isDashboard;
     if (openSettingsBtn) openSettingsBtn.hidden = !isDashboard;
     if (isDashboard) {
@@ -1350,24 +1367,25 @@ export function initApp() {
     });
 
     const statusProjects = allProjects.filter((p) => p.status === catalogStatus);
+    const folders = store.getState().folders;
 
-    if (catalogFolder !== 'all' && !store.getState().folders.includes(catalogFolder)) {
-      catalogFolder = 'all';
+    if (openedFolder !== null && !folders.includes(openedFolder)) {
+      openedFolder = null;
     }
-    if (catalogFolderChipsEl) {
-      renderFolderChips(
-        catalogFolderChipsEl,
-        catalogFolder,
-        (selected) => {
-          catalogFolder = selected;
-          renderDashboard();
-        },
-        { includeAll: true }
-      );
+
+    if (btnCatalogFolderBack) {
+      btnCatalogFolderBack.hidden = openedFolder === null;
     }
+    if (catalogTitleEl) {
+      catalogTitleEl.textContent = openedFolder !== null ? openedFolder : 'Проекты';
+    }
+
+    const scopeProjects = openedFolder !== null
+      ? statusProjects.filter((p) => p.folder === openedFolder)
+      : statusProjects;
 
     // Tag filter chips
-    const allTags = Array.from(new Set(statusProjects.flatMap((p) => p.tags)));
+    const allTags = Array.from(new Set(scopeProjects.flatMap((p) => p.tags)));
     if (catalogTag !== 'all' && !allTags.includes(catalogTag)) {
       catalogTag = 'all';
     }
@@ -1392,81 +1410,122 @@ export function initApp() {
       }
     }
 
-    // Filtered projects list
-    const filtered = statusProjects.filter((p) => {
-      if (catalogFolder !== 'all' && p.folder !== catalogFolder) return false;
-      if (catalogTag !== 'all' && !p.tags.includes(catalogTag)) return false;
-      return true;
-    });
+    /** @param {import('./core/knit-store.js').Project} proj */
+    const createProjectSquareTile = (proj) => {
+      const tile = document.createElement('div');
+      tile.className = `square-tile ${proj.id === activeProject.id ? 'is-active' : ''}`;
+      tile.setAttribute('role', 'button');
+      tile.tabIndex = 0;
+
+      if (proj.status === 'completed' && proj.photoDataUrl) {
+        const thumb = document.createElement('img');
+        thumb.className = 'square-tile-thumb';
+        thumb.src = proj.photoDataUrl;
+        thumb.alt = proj.name;
+        tile.appendChild(thumb);
+      }
+
+      const totalRows = proj.parts.reduce((s, pt) => s + pt.currentRow, 0);
+      const badge = document.createElement('span');
+      badge.className = 'square-tile-badge';
+      badge.textContent = `${totalRows} р.`;
+
+      const title = document.createElement('div');
+      title.className = 'square-tile-title';
+      title.textContent = proj.name;
+
+      const sub = document.createElement('div');
+      sub.className = 'square-tile-sub';
+      sub.textContent = formatHoursMinutes(store.getProjectTotalElapsedMs(proj.id));
+
+      tile.append(badge, title, sub);
+
+      const openProject = () => {
+        store.setActiveProject(proj.id);
+        setActiveView('counter');
+      };
+      tile.addEventListener('click', openProject);
+      tile.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          openProject();
+        }
+      });
+      return tile;
+    };
 
     if (projectsCatalogListEl) {
-      projectsCatalogListEl.replaceChildren();
-      if (filtered.length === 0) {
+      /** @type {HTMLElement[]} */
+      const tiles = [];
+
+      if (openedFolder === null) {
+        // Folder square tiles (when no tag filter is active)
+        if (catalogTag === 'all') {
+          for (const folderName of folders) {
+            const count = statusProjects.filter((p) => p.folder === folderName).length;
+            const folderTile = document.createElement('div');
+            folderTile.className = 'square-tile';
+            folderTile.setAttribute('role', 'button');
+            folderTile.tabIndex = 0;
+
+            const iconWrap = document.createElement('div');
+            iconWrap.className = 'square-tile-icon';
+            iconWrap.innerHTML =
+              '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>';
+
+            const title = document.createElement('div');
+            title.className = 'square-tile-title';
+            title.textContent = folderName;
+
+            const sub = document.createElement('div');
+            sub.className = 'square-tile-sub';
+            sub.textContent = `${count} шт.`;
+
+            folderTile.append(iconWrap, title, sub);
+            const openFolder = () => {
+              openedFolder = folderName;
+              renderDashboard();
+            };
+            folderTile.addEventListener('click', openFolder);
+            folderTile.addEventListener('keydown', (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                openFolder();
+              }
+            });
+            tiles.push(folderTile);
+          }
+        }
+
+        // Root projects (without folder, or matching active tag)
+        const rootProjects = statusProjects.filter((p) => {
+          if (catalogTag !== 'all') return p.tags.includes(catalogTag);
+          return !p.folder;
+        });
+        for (const proj of rootProjects) {
+          tiles.push(createProjectSquareTile(proj));
+        }
+      } else {
+        // Inside an opened folder: show all projects in this folder
+        const folderProjects = scopeProjects.filter(
+          (p) => catalogTag === 'all' || p.tags.includes(catalogTag)
+        );
+        for (const proj of folderProjects) {
+          tiles.push(createProjectSquareTile(proj));
+        }
+      }
+
+      if (tiles.length === 0) {
         const empty = document.createElement('div');
         empty.className = 'catalog-empty';
-        empty.textContent = catalogStatus === 'completed'
-          ? 'Завершённых проектов по выбранным фильтрам пока нет.'
-          : 'Нет активных проектов по выбранным фильтрам.';
-        projectsCatalogListEl.appendChild(empty);
+        empty.textContent = openedFolder !== null
+          ? 'В этой папке пока нет проектов.'
+          : (catalogStatus === 'completed'
+            ? 'Завершённых проектов пока нет.'
+            : 'Проектов пока нет.');
+        projectsCatalogListEl.replaceChildren(empty);
       } else {
-        for (const proj of filtered) {
-          const card = document.createElement('div');
-          card.className = `project-card ${proj.id === activeProject.id ? 'is-active' : ''}`;
-          card.setAttribute('role', 'button');
-          card.tabIndex = 0;
-
-          if (proj.status === 'completed' && proj.photoDataUrl) {
-            const thumb = document.createElement('img');
-            thumb.className = 'project-card-thumb';
-            thumb.src = proj.photoDataUrl;
-            thumb.alt = proj.name;
-            card.appendChild(thumb);
-          }
-
-          const body = document.createElement('div');
-          body.className = 'project-card-body';
-
-          const title = document.createElement('div');
-          title.className = 'project-card-title';
-          title.textContent = proj.name;
-
-          const meta = document.createElement('div');
-          meta.className = 'project-card-meta';
-          const projTime = formatHoursMinutes(store.getProjectTotalElapsedMs(proj.id));
-          const totalRows = proj.parts.reduce((s, pt) => s + pt.currentRow, 0);
-          const folderLabel = proj.folder ? `${proj.folder} · ` : '';
-          meta.textContent = `${folderLabel}${proj.parts.length} ч. · ${totalRows} р. · ${projTime}`;
-
-          body.append(title, meta);
-
-          if (proj.tags.length > 0) {
-            const tagsRow = document.createElement('div');
-            tagsRow.className = 'project-card-tags';
-            for (const tag of proj.tags) {
-              const pill = document.createElement('span');
-              pill.className = 'project-tag-pill';
-              pill.textContent = `#${tag}`;
-              tagsRow.appendChild(pill);
-            }
-            body.appendChild(tagsRow);
-          }
-
-          card.appendChild(body);
-
-          const openProject = () => {
-            store.setActiveProject(proj.id);
-            setActiveView('counter');
-          };
-          card.addEventListener('click', openProject);
-          card.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              openProject();
-            }
-          });
-
-          projectsCatalogListEl.appendChild(card);
-        }
+        projectsCatalogListEl.replaceChildren(...tiles);
       }
     }
 
@@ -1474,6 +1533,11 @@ export function initApp() {
       requestAnimationFrame(() => updateScrollFadeMask(dashboardScrollEl));
     }
   }
+
+  btnCatalogFolderBack?.addEventListener('click', () => {
+    openedFolder = null;
+    renderDashboard();
+  });
 
   // New Project Modal Logic (no templates)
   let newFolder = '';
@@ -1502,7 +1566,6 @@ export function initApp() {
     }
   });
 
-  btnNewProject?.addEventListener('click', newProjectModal.open);
   btnCloseNewProject?.addEventListener('click', newProjectModal.close);
 
   newToolChips.forEach((chip) => {
