@@ -1,7 +1,7 @@
 import { createThemeManager } from './core/theme-manager.js';
 import { createWakeLockManager } from './core/wake-lock-manager.js';
 import { createKnitStore } from './core/knit-store.js';
-import { COLOR_PALETTE, KNITTING_ICONS, renderKnittingIconSvg } from './core/knitting-icons.js';
+import { COLOR_PALETTE, DEFAULT_COLOR, DEFAULT_ICON, KNITTING_ICONS, getFolderBadgeStyle, renderKnittingIconSvg } from './core/knitting-icons.js';
 import { createBackupPayload, parseAndValidateBackup } from './core/backup-manager.js';
 import {
   shouldTriggerStitchCheck,
@@ -1263,7 +1263,7 @@ export function initApp() {
   });
 
   /**
-   * Renders 7 classic color swatches into a container.
+   * Renders 8 agreed Liquid Glass color swatches into a container.
    * @param {HTMLElement | null} containerEl
    * @param {string} selectedHex
    * @param {(hex: string) => void} onSelect
@@ -1284,7 +1284,7 @@ export function initApp() {
   }
 
   /**
-   * Renders the 10 knitting icons colored with selectedHex when active.
+   * Renders the 15 knitting icons colored with selectedHex when active.
    * @param {HTMLElement | null} containerEl
    * @param {string} selectedIcon
    * @param {string} selectedHex
@@ -1307,11 +1307,11 @@ export function initApp() {
     );
   }
 
-  let newFolderColor = COLOR_PALETTE[4].hex;
+  let newFolderColor = DEFAULT_COLOR;
 
   const newFolderModal = createModalController(newFolderModalEl, {
     onOpen: () => {
-      newFolderColor = COLOR_PALETTE[4].hex;
+      newFolderColor = DEFAULT_COLOR;
       if (newFolderErrorEl) newFolderErrorEl.hidden = true;
       if (inputNewFolderName) {
         inputNewFolderName.value = '';
@@ -1467,6 +1467,13 @@ export function initApp() {
         pinnedProject.status === 'completed'
           ? 'Завершён'
           : (pinnedProject.folder || 'Сейчас в работе');
+      const badgeStyle = getFolderBadgeStyle(
+        pinnedProject.status === 'completed' ? '' : pinnedProject.folder,
+        store.getState().folders
+      );
+      heroFolderBadgeEl.style.backgroundColor = badgeStyle.backgroundColor;
+      heroFolderBadgeEl.style.borderColor = badgeStyle.borderColor;
+      heroFolderBadgeEl.style.color = badgeStyle.color;
     }
     if (btnContinueKnitting) {
       const labelEl = btnContinueKnitting.querySelector('span');
@@ -1564,7 +1571,7 @@ export function initApp() {
       const iconWrap = document.createElement('div');
       iconWrap.className = 'square-tile-icon';
       iconWrap.style.color = proj.color || '#8e8e93';
-      iconWrap.innerHTML = renderKnittingIconSvg(proj.icon || 'yarn', 20);
+      iconWrap.innerHTML = renderKnittingIconSvg(proj.icon || DEFAULT_ICON, 20);
 
       const title = document.createElement('div');
       title.className = 'square-tile-title';
@@ -1683,8 +1690,8 @@ export function initApp() {
   // New Project Modal Logic (with icons, colors & unique names)
   let newFolder = '';
   let newTool = /** @type {'needles' | 'hook'} */ ('needles');
-  let newProjectIcon = 'yarn';
-  let newProjectColor = COLOR_PALETTE[4].hex;
+  let newProjectIcon = DEFAULT_ICON;
+  let newProjectColor = DEFAULT_COLOR;
 
   function renderNewProjectFolders() {
     if (!newProjectFolderChipsEl) return;
@@ -1713,8 +1720,8 @@ export function initApp() {
   const newProjectModal = createModalController(newProjectModalEl, {
     onOpen: () => {
       newFolder = '';
-      newProjectIcon = 'yarn';
-      newProjectColor = COLOR_PALETTE[4].hex;
+      newProjectIcon = DEFAULT_ICON;
+      newProjectColor = DEFAULT_COLOR;
       if (newProjectErrorEl) newProjectErrorEl.hidden = true;
       if (inputNewProjectName) inputNewProjectName.value = '';
       if (inputNewProjectTags) inputNewProjectTags.value = '';
@@ -1763,7 +1770,7 @@ export function initApp() {
 
   // Edit Folder, Edit Project, Delete Confirmation & Trash
   let editingFolderName = '';
-  let editingFolderColor = COLOR_PALETTE[4].hex;
+  let editingFolderColor = DEFAULT_COLOR;
 
   function refreshEditFolderColors() {
     renderColorSwatches(editFolderColorsEl, editingFolderColor, (hex) => {
@@ -1780,7 +1787,7 @@ export function initApp() {
     const found = store.getState().folders.find((f) => f.name === folderName);
     if (!found) return;
     editingFolderName = found.name;
-    editingFolderColor = found.color || COLOR_PALETTE[4].hex;
+    editingFolderColor = found.color || DEFAULT_COLOR;
     if (inputEditFolderName) inputEditFolderName.value = found.name;
     if (editFolderErrorEl) editFolderErrorEl.hidden = true;
     refreshEditFolderColors();
@@ -1808,8 +1815,8 @@ export function initApp() {
   });
 
   let editingProjectId = '';
-  let editingProjectIcon = 'yarn';
-  let editingProjectColor = COLOR_PALETTE[4].hex;
+  let editingProjectIcon = DEFAULT_ICON;
+  let editingProjectColor = DEFAULT_COLOR;
 
   function refreshEditProjectAppearance() {
     renderIconPicker(editProjectIconsEl, editingProjectIcon, editingProjectColor, (ic) => {
@@ -1830,8 +1837,8 @@ export function initApp() {
     const proj = store.getState().projects.find((p) => p.id === projectId);
     if (!proj) return;
     editingProjectId = proj.id;
-    editingProjectIcon = proj.icon || 'yarn';
-    editingProjectColor = proj.color || COLOR_PALETTE[4].hex;
+    editingProjectIcon = proj.icon || DEFAULT_ICON;
+    editingProjectColor = proj.color || DEFAULT_COLOR;
     if (inputEditProjectName) inputEditProjectName.value = proj.name;
     if (editProjectErrorEl) editProjectErrorEl.hidden = true;
     refreshEditProjectAppearance();

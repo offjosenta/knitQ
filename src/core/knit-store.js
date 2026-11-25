@@ -1,3 +1,5 @@
+import { DEFAULT_COLOR, DEFAULT_ICON } from './knitting-icons.js';
+
 export const KNIT_STORAGE_KEY = 'knitq_store_v1';
 
 /**
@@ -117,7 +119,7 @@ function createDefaultState() {
         status: 'active',
         folder: '',
         icon: 'scarf',
-        color: '#8e8e93',
+        color: DEFAULT_COLOR,
         tags: [],
         createdAt: '2026-01-10T10:00:00.000Z',
         completedAt: null,
@@ -216,7 +218,7 @@ export function normalizeStoreState(loaded) {
       if (typeof item === 'string') {
         const trimmed = item.trim();
         if (trimmed && !folderMap.has(trimmed)) {
-          folderMap.set(trimmed, { name: trimmed, color: '#8e8e93' });
+          folderMap.set(trimmed, { name: trimmed, color: DEFAULT_COLOR });
         }
       } else if (item && typeof item === 'object' && typeof (/** @type {any} */ (item)).name === 'string') {
         const obj = /** @type {{ name: string, color?: unknown }} */ (item);
@@ -224,7 +226,7 @@ export function normalizeStoreState(loaded) {
         if (trimmed && !folderMap.has(trimmed)) {
           folderMap.set(trimmed, {
             name: trimmed,
-            color: typeof obj.color === 'string' && obj.color ? obj.color : '#8e8e93'
+            color: typeof obj.color === 'string' && obj.color ? obj.color : DEFAULT_COLOR
           });
         }
       }
@@ -238,13 +240,13 @@ export function normalizeStoreState(loaded) {
     if (typeof project.folder !== 'string') {
       project.folder = '';
     } else if (project.folder.trim() && !folderMap.has(project.folder.trim())) {
-      folderMap.set(project.folder.trim(), { name: project.folder.trim(), color: '#8e8e93' });
+      folderMap.set(project.folder.trim(), { name: project.folder.trim(), color: DEFAULT_COLOR });
     }
     if (typeof project.icon !== 'string' || !project.icon) {
-      project.icon = 'yarn';
+      project.icon = DEFAULT_ICON;
     }
     if (typeof project.color !== 'string' || !project.color) {
-      project.color = '#8e8e93';
+      project.color = DEFAULT_COLOR;
     }
     if (!Array.isArray(project.tags)) {
       project.tags = [];
@@ -907,14 +909,14 @@ export function createKnitStore(options = {}) {
      * @param {string} [color]
      * @returns {FolderItem | null}
      */
-    addFolder(name, color = '#8e8e93') {
+    addFolder(name, color = DEFAULT_COLOR) {
       const trimmed = String(name || '').trim();
       if (!trimmed) return null;
       const existing = state.folders.find(
         (f) => f.name.toLocaleLowerCase('ru') === trimmed.toLocaleLowerCase('ru')
       );
       if (existing) return existing;
-      const folder = { name: trimmed, color: color || '#8e8e93' };
+      const folder = { name: trimmed, color: color || DEFAULT_COLOR };
       state.folders.push(folder);
       commit();
       return folder;
@@ -1025,7 +1027,7 @@ export function createKnitStore(options = {}) {
       const projectId = createId('project', timestamp);
       const folder = String(input.folder || '').trim();
       if (folder && !state.folders.some((f) => f.name === folder)) {
-        state.folders.push({ name: folder, color: '#8e8e93' });
+        state.folders.push({ name: folder, color: DEFAULT_COLOR });
       }
 
       const parts = [createBlankPart(createId('part-1', timestamp), 'Основное полотно')];
@@ -1036,8 +1038,8 @@ export function createKnitStore(options = {}) {
         name: String(input.name || '').trim() || 'Новый проект',
         status: 'active',
         folder,
-        icon: String(input.icon || 'yarn'),
-        color: String(input.color || '#8e8e93'),
+        icon: String(input.icon || DEFAULT_ICON),
+        color: String(input.color || DEFAULT_COLOR),
         tags: Array.isArray(input.tags) ? input.tags.map((t) => String(t).trim()).filter(Boolean) : [],
         createdAt: new Date(timestamp).toISOString(),
         completedAt: null,
