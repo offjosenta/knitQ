@@ -58,12 +58,14 @@ test('KNITTING_ICONS contains 15 unique knitted garment/accessory icons without 
 
   assert.ok(ids.includes('longsleeve'), 'Expected longsleeve icon');
   assert.ok(ids.includes('shorts'), 'Expected shorts icon');
+  assert.ok(labels.includes('Манишка'), 'Expected Манишка label');
+  assert.ok(labels.includes('Платок Софи'), 'Expected Платок Софи label');
 
-  for (const forbidden of ['yarn', 'blanket', 'needles', 'hook', 'dress']) {
+  for (const forbidden of ['yarn', 'blanket', 'needles', 'hook', 'dress', 'beret']) {
     assert.ok(!ids.includes(forbidden), `Forbidden icon id found: ${forbidden}`);
   }
   for (const label of labels) {
-    assert.doesNotMatch(label, /клубок|плед|спиц|крюч/i);
+    assert.doesNotMatch(label, /клубок|плед|спиц|крюч|\//i);
   }
 });
 

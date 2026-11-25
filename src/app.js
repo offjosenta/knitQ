@@ -1300,7 +1300,7 @@ export function initApp() {
         btn.className = `icon-picker-btn ${isActive ? 'active' : ''}`;
         btn.style.color = isActive ? selectedHex : 'var(--text-secondary)';
         btn.setAttribute('aria-label', ic.label);
-        btn.innerHTML = renderKnittingIconSvg(ic.id, 20);
+        btn.innerHTML = renderKnittingIconSvg(ic.id, 24);
         btn.addEventListener('click', () => onSelect(ic.id));
         return btn;
       })
