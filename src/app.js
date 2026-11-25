@@ -1742,7 +1742,7 @@ export function initApp() {
     if (!name) return;
     if (store.isProjectNameTaken(name)) {
       if (newProjectErrorEl) {
-        newProjectErrorEl.textContent = 'Изделие с таким названием уже есть. Измените хотя бы один символ.';
+        newProjectErrorEl.textContent = 'Проект с таким названием уже есть. Измените хотя бы один символ.';
         newProjectErrorEl.hidden = false;
       }
       return;
@@ -1863,15 +1863,15 @@ export function initApp() {
     const proj = store.getState().projects.find((p) => p.id === editingProjectId);
     if (!proj || !deleteConfirmActionsEl) return;
     editProjectModal.close();
-    if (deleteConfirmTitleEl) deleteConfirmTitleEl.textContent = 'Удалить изделие?';
+    if (deleteConfirmTitleEl) deleteConfirmTitleEl.textContent = 'Удалить проект?';
     if (deleteConfirmDescEl) {
-      deleteConfirmDescEl.textContent = `Точно удалить «${proj.name}»? Изделие переместится в корзину.`;
+      deleteConfirmDescEl.textContent = `Точно удалить «${proj.name}»? Проект переместится в корзину.`;
     }
     if (deleteConfirmErrorEl) deleteConfirmErrorEl.hidden = true;
 
     const btnDel = document.createElement('button');
     btnDel.type = 'button';
-    btnDel.className = 'btn-glass-add btn-photo-remove';
+    btnDel.className = 'btn-destructive-action';
     btnDel.textContent = 'Удалить в корзину';
     btnDel.addEventListener('click', () => {
       const res = store.deleteProject(proj.id);
@@ -1889,7 +1889,7 @@ export function initApp() {
 
     const btnCancel = document.createElement('button');
     btnCancel.type = 'button';
-    btnCancel.className = 'btn-continue-knitting';
+    btnCancel.className = 'btn-secondary-action';
     btnCancel.textContent = 'Отмена';
     btnCancel.addEventListener('click', deleteConfirmModal.close);
 
@@ -1914,7 +1914,7 @@ export function initApp() {
       }
       const btnDel = document.createElement('button');
       btnDel.type = 'button';
-      btnDel.className = 'btn-glass-add btn-photo-remove';
+      btnDel.className = 'btn-destructive-action';
       btnDel.textContent = 'Удалить папку';
       btnDel.addEventListener('click', () => {
         store.deleteFolder(folderName, 'move-to-root');
@@ -1925,12 +1925,12 @@ export function initApp() {
       actions.push(btnDel);
     } else {
       if (deleteConfirmDescEl) {
-        deleteConfirmDescEl.textContent = `В папке «${folderName}» есть изделия (${insideCount} шт.). Выберите действие:`;
+        deleteConfirmDescEl.textContent = `В папке «${folderName}» есть проекты (${insideCount} шт.). Выберите действие:`;
       }
       const btnMove = document.createElement('button');
       btnMove.type = 'button';
-      btnMove.className = 'btn-continue-knitting';
-      btnMove.textContent = 'Перенести изделия на главный экран';
+      btnMove.className = 'btn-secondary-action';
+      btnMove.textContent = 'Перенести проекты на главный экран';
       btnMove.addEventListener('click', () => {
         store.deleteFolder(folderName, 'move-to-root');
         if (openedFolder === folderName) openedFolder = null;
@@ -1940,8 +1940,8 @@ export function initApp() {
 
       const btnTrash = document.createElement('button');
       btnTrash.type = 'button';
-      btnTrash.className = 'btn-glass-add btn-photo-remove';
-      btnTrash.textContent = 'Удалить папку с изделиями в корзину';
+      btnTrash.className = 'btn-destructive-action';
+      btnTrash.textContent = 'Удалить папку с проектами в корзину';
       btnTrash.addEventListener('click', () => {
         const res = store.deleteFolder(folderName, 'trash');
         if (!res.ok) {
@@ -1960,7 +1960,7 @@ export function initApp() {
 
     const btnCancel = document.createElement('button');
     btnCancel.type = 'button';
-    btnCancel.className = 'btn-glass-add';
+    btnCancel.className = 'btn-secondary-action';
     btnCancel.textContent = 'Отмена';
     btnCancel.addEventListener('click', deleteConfirmModal.close);
     actions.push(btnCancel);
@@ -1995,7 +1995,7 @@ export function initApp() {
       title.textContent = `Папка «${f.name}»`;
       const sub = document.createElement('div');
       sub.className = 'project-card-meta';
-      sub.textContent = `Изделий: ${f.projects.length}`;
+      sub.textContent = `Проектов: ${f.projects.length}`;
       info.append(title, sub);
 
       const btn = document.createElement('button');
@@ -2020,7 +2020,7 @@ export function initApp() {
       title.textContent = proj.name;
       const sub = document.createElement('div');
       sub.className = 'project-card-meta';
-      sub.textContent = proj.folder ? `Из папки «${proj.folder}»` : 'Отдельное изделие';
+      sub.textContent = proj.folder ? `Из папки «${proj.folder}»` : 'Отдельный проект';
       info.append(title, sub);
 
       const btn = document.createElement('button');

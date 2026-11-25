@@ -1071,11 +1071,11 @@ export function createKnitStore(options = {}) {
 
       if (typeof updates.name === 'string') {
         const trimmed = updates.name.trim();
-        if (!trimmed) return { ok: false, error: 'Введите название изделия.' };
+        if (!trimmed) return { ok: false, error: 'Введите название проекта.' };
         const duplicate = state.projects.some(
           (p) => p.id !== projectId && p.name.trim().toLocaleLowerCase('ru') === trimmed.toLocaleLowerCase('ru')
         );
-        if (duplicate) return { ok: false, error: 'Изделие с таким названием уже существует.' };
+        if (duplicate) return { ok: false, error: 'Проект с таким названием уже существует.' };
         project.name = trimmed;
       }
       if (typeof updates.color === 'string' && updates.color) {
