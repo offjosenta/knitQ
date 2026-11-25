@@ -27,10 +27,10 @@ test('COLOR_PALETTE contains the 8 agreed Liquid Glass colors', () => {
   assert.deepEqual(
     COLOR_PALETTE.map((c) => ({ label: c.label, hex: c.hex })),
     [
-      { label: 'Яркий лайм', hex: '#45FF38' },
-      { label: 'Тиффани', hex: '#0ABAB5' },
-      { label: 'Глубокий бордо', hex: '#B91C1C' },
-      { label: 'Кобальт', hex: '#3043FC' },
+      { label: 'Мягкий зелёный', hex: '#86EFAC' },
+      { label: 'Тёплый янтарь', hex: '#FBBF24' },
+      { label: 'Алый', hex: '#F87171' },
+      { label: 'Василёк', hex: '#5E81F4' },
       { label: 'Небесный лёд', hex: '#38BDF8' },
       { label: 'Лаванда', hex: '#A78BFA' },
       { label: 'Пыльная роза', hex: '#F472B6' },
@@ -59,7 +59,7 @@ test('KNITTING_ICONS contains 15 unique knitted garment/accessory icons without 
   assert.ok(ids.includes('longsleeve'), 'Expected longsleeve icon');
   assert.ok(ids.includes('shorts'), 'Expected shorts icon');
 
-  for (const forbidden of ['yarn', 'blanket', 'needles', 'hook']) {
+  for (const forbidden of ['yarn', 'blanket', 'needles', 'hook', 'dress']) {
     assert.ok(!ids.includes(forbidden), `Forbidden icon id found: ${forbidden}`);
   }
   for (const label of labels) {
