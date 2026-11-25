@@ -1895,6 +1895,19 @@ button.active-part-header:active {
   gap: 14px;
 }
 
+.modal-sheet-scrollable .new-project-form {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 4px;
+}
+
+.new-project-form > .btn-primary-action,
+.new-project-form > .btn-destructive-action {
+  flex-shrink: 0;
+}
+
 .ios-row-action {
   width: 100%;
   background: transparent;
@@ -2024,7 +2037,8 @@ button.active-part-header:active {
 }
 
 .color-swatch.active {
-  border-color: var(--text-primary);
+  border-color: var(--bg-card);
+  box-shadow: 0 0 0 2px #64748b;
   transform: scale(1.1);
 }
 
@@ -2036,7 +2050,7 @@ button.active-part-header:active {
 }
 
 .icon-picker-btn {
-  height: 44px;
+  height: 52px;
   border-radius: var(--radius-button);
   border: 1px solid var(--border-color);
   background: var(--bg-card-inner);
