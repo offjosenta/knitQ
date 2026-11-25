@@ -68,3 +68,11 @@ test('modal form buttons use unified modal action classes instead of btn-continu
   assert.doesNotMatch(html, /<button[^>]*type="submit"[^>]*btn-continue-knitting/);
   assert.doesNotMatch(appJs, /deleteConfirmActionsEl[\s\S]*btn-continue-knitting/);
 });
+
+test('disclosure buttons match ios-row card height, padding, and radius', () => {
+  const disclosureBlock = css.match(/\.btn-glass-disclosure\s*\{([^}]+)\}/);
+  assert.ok(disclosureBlock, 'Expected .btn-glass-disclosure rule');
+  assert.match(disclosureBlock[1], /min-height:\s*56px;/);
+  assert.match(disclosureBlock[1], /padding:\s*15px 18px;/);
+  assert.match(disclosureBlock[1], /border-radius:\s*var\(--radius-card\);/);
+});
