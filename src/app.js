@@ -194,7 +194,6 @@ export function initApp() {
   const btnRowLog = document.getElementById('btn-row-log');
   const btnRowMinus = /** @type {HTMLButtonElement | null} */ (document.getElementById('btn-row-minus'));
   const btnTimerToggle = document.getElementById('btn-timer-toggle');
-  const timerModeBadgeEl = document.getElementById('timer-mode-badge');
   const timerDisplayEl = document.getElementById('timer-display');
   const timerAwayModalEl = document.getElementById('timer-away-modal');
   const timerAwayDescEl = document.getElementById('timer-away-desc');
@@ -2128,9 +2127,6 @@ export function initApp() {
     if (btnTimerToggle) {
       btnTimerToggle.classList.toggle('running', isMainRunning || isFixRunning);
       btnTimerToggle.classList.toggle('fix-mode', isFixRunning);
-    }
-    if (timerModeBadgeEl) {
-      timerModeBadgeEl.hidden = !isFixRunning;
     }
   }
 

@@ -656,6 +656,7 @@ input:checked + .slider:before {
 
 .control-timer-btn {
   flex: 1;
+  min-width: 0;
   gap: 10px;
   padding: 0 18px;
   font-variant-numeric: tabular-nums;
@@ -682,13 +683,6 @@ input:checked + .slider:before {
 .control-timer-btn.fix-mode .timer-status-dot {
   background: #ff9f0a;
   box-shadow: 0 0 8px rgba(255, 159, 10, 0.7);
-}
-
-.timer-mode-badge {
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: #ff9f0a;
-  letter-spacing: 0.01em;
 }
 
 .timer-display {
