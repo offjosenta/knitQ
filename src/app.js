@@ -1831,6 +1831,8 @@ export function initApp() {
     });
   }
 
+  attachScrollFade(formNewProject);
+
   const newProjectModal = createModalController(newProjectModalEl, {
     onOpen: () => {
       newFolder = '';
@@ -1842,6 +1844,10 @@ export function initApp() {
       if (inputNewProjectNeedle) inputNewProjectNeedle.value = '';
       renderNewProjectFolders();
       refreshNewProjectAppearance();
+      if (formNewProject) {
+        formNewProject.scrollTop = 0;
+        requestAnimationFrame(() => updateScrollFadeMask(formNewProject));
+      }
     }
   });
 
@@ -2191,9 +2197,14 @@ export function initApp() {
     });
   });
 
-  btnContinueKnitting?.addEventListener('click', () => {
+  const openPinnedProject = () => {
     store.setActiveProject(store.getPinnedProject().id);
     setActiveView('counter');
+  };
+  document.getElementById('active-hero-card')?.addEventListener('click', openPinnedProject);
+  btnContinueKnitting?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openPinnedProject();
   });
   btnBackDashboard?.addEventListener('click', () => setActiveView('dashboard'));
 

@@ -868,67 +868,71 @@
             </button>
           </div>
 
-          <button id="btn-toggle-gist-sync" type="button" class="btn-glass-disclosure" aria-expanded="false">
-            <span class="disclosure-label">
-              <span>Облачная синхронизация (GitHub Gist)</span>
-            </span>
-            <span class="disclosure-right">
-              <span class="ios-row-action-badge" id="gist-sync-badge">Выкл</span>
-              <svg class="disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
-            </span>
-          </button>
+          <div class="disclosure-group">
+            <button id="btn-toggle-gist-sync" type="button" class="btn-glass-disclosure" aria-expanded="false">
+              <span class="disclosure-label">
+                <span>Облачная синхронизация</span>
+              </span>
+              <span class="disclosure-right">
+                <span class="ios-row-action-badge" id="gist-sync-badge">Выкл</span>
+                <svg class="disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </span>
+            </button>
 
-          <div id="gist-sync-panel" class="passport-advanced-panel">
-            <div class="passport-advanced-inner">
-              <div class="ios-grouped-section">
-                <div class="ios-row gist-token-row">
-                  <input
-                    type="password"
-                    id="input-gist-token"
-                    class="glass-input gist-token-input"
-                    placeholder="GitHub Token (право gist)"
-                    autocomplete="off"
-                    spellcheck="false"
-                    aria-label="GitHub Personal Access Token"
-                  >
-                  <button type="button" id="btn-save-gist-token" class="gist-save-btn">Сохранить</button>
+            <div id="gist-sync-panel" class="passport-advanced-panel">
+              <div class="passport-advanced-inner">
+                <div class="ios-grouped-section">
+                  <div class="ios-row gist-token-row">
+                    <input
+                      type="password"
+                      id="input-gist-token"
+                      class="glass-input gist-token-input"
+                      placeholder="GitHub Token (право gist)"
+                      autocomplete="off"
+                      spellcheck="false"
+                      aria-label="GitHub Personal Access Token"
+                    >
+                    <button type="button" id="btn-save-gist-token" class="gist-save-btn">Сохранить</button>
+                  </div>
+                  <div class="ios-divider"></div>
+                  <button type="button" class="ios-row ios-row-action" id="btn-gist-sync-now">
+                    <span class="ios-row-label">Синхронизировать сейчас</span>
+                    <span class="ios-row-action-badge" id="gist-sync-last-time">—</span>
+                  </button>
                 </div>
-                <div class="ios-divider"></div>
-                <button type="button" class="ios-row ios-row-action" id="btn-gist-sync-now">
-                  <span class="ios-row-label">Синхронизировать сейчас</span>
-                  <span class="ios-row-action-badge" id="gist-sync-last-time">—</span>
-                </button>
+                <p id="gist-sync-status-msg" class="backup-status-msg" hidden></p>
               </div>
-              <p id="gist-sync-status-msg" class="backup-status-msg" hidden></p>
             </div>
           </div>
 
-          <button id="btn-toggle-backup" type="button" class="btn-glass-disclosure" aria-expanded="false">
-            <span class="disclosure-label">
-              <span>Резервное копирование</span>
-            </span>
-            <svg class="disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
-          </button>
+          <div class="disclosure-group">
+            <button id="btn-toggle-backup" type="button" class="btn-glass-disclosure" aria-expanded="false">
+              <span class="disclosure-label">
+                <span>Резервное копирование</span>
+              </span>
+              <svg class="disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
 
-          <div id="backup-panel" class="passport-advanced-panel">
-            <div class="passport-advanced-inner">
-              <div class="ios-grouped-section">
-                <button type="button" class="ios-row ios-row-action" id="btn-export-backup">
-                  <span class="ios-row-label">Экспорт в файл (.json)</span>
-                  <span class="ios-row-action-badge">Сохранить</span>
-                </button>
-                <div class="ios-divider"></div>
-                <label class="ios-row ios-row-action" for="input-import-backup" id="btn-import-backup">
-                  <span class="ios-row-label">Восстановить из файла (.json)</span>
-                  <span class="ios-row-action-badge">Выбрать</span>
-                  <input type="file" id="input-import-backup" accept=".json,application/json" hidden>
-                </label>
+            <div id="backup-panel" class="passport-advanced-panel">
+              <div class="passport-advanced-inner">
+                <div class="ios-grouped-section">
+                  <button type="button" class="ios-row ios-row-action" id="btn-export-backup">
+                    <span class="ios-row-label">Экспорт в файл (.json)</span>
+                    <span class="ios-row-action-badge">Сохранить</span>
+                  </button>
+                  <div class="ios-divider"></div>
+                  <label class="ios-row ios-row-action" for="input-import-backup" id="btn-import-backup">
+                    <span class="ios-row-label">Восстановить из файла (.json)</span>
+                    <span class="ios-row-action-badge">Выбрать</span>
+                    <input type="file" id="input-import-backup" accept=".json,application/json" hidden>
+                  </label>
+                </div>
+                <p id="backup-status-msg" class="backup-status-msg" hidden></p>
               </div>
-              <p id="backup-status-msg" class="backup-status-msg" hidden></p>
             </div>
           </div>
         </div>

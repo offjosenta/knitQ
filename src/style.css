@@ -246,6 +246,10 @@ html, body {
   opacity: 1;
 }
 
+#new-folder-modal {
+  z-index: 1050;
+}
+
 .modal-sheet {
   background: var(--bg-secondary);
   backdrop-filter: blur(32px) saturate(180%);
@@ -1718,6 +1722,12 @@ button.active-part-header:active {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  cursor: pointer;
+  transition: transform 0.14s ease;
+}
+
+.active-hero-card:active {
+  transform: scale(0.985);
 }
 
 .hero-top-row {
@@ -2009,10 +2019,20 @@ button.active-part-header:active {
   color: #34c759;
 }
 
+.disclosure-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.disclosure-group .passport-advanced-panel.open {
+  margin-top: var(--space-sm);
+}
+
 .disclosure-right {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .gist-token-row {

@@ -10,6 +10,8 @@ export const COLOR_PALETTE = [
   { id: 'sky-ice', label: 'Небесный лёд', hex: '#38BDF8' },
   { id: 'lavender', label: 'Лаванда', hex: '#A78BFA' },
   { id: 'dusty-rose', label: 'Пыльная роза', hex: '#F472B6' },
+  { id: 'emerald-teal', label: 'Бирюзовый изумруд', hex: '#2DD4BF' },
+  { id: 'terracotta', label: 'Терракота', hex: '#E07A5F' },
   { id: 'titanium', label: 'Титан', hex: '#94A3B8' }
 ];
 

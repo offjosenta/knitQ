@@ -22,8 +22,8 @@ function createMemoryStorage() {
   };
 }
 
-test('COLOR_PALETTE contains the 8 agreed Liquid Glass colors', () => {
-  assert.equal(COLOR_PALETTE.length, 8);
+test('COLOR_PALETTE contains the 10 agreed Liquid Glass colors', () => {
+  assert.equal(COLOR_PALETTE.length, 10);
   assert.deepEqual(
     COLOR_PALETTE.map((c) => ({ label: c.label, hex: c.hex })),
     [
@@ -34,6 +34,8 @@ test('COLOR_PALETTE contains the 8 agreed Liquid Glass colors', () => {
       { label: 'Небесный лёд', hex: '#38BDF8' },
       { label: 'Лаванда', hex: '#A78BFA' },
       { label: 'Пыльная роза', hex: '#F472B6' },
+      { label: 'Бирюзовый изумруд', hex: '#2DD4BF' },
+      { label: 'Терракота', hex: '#E07A5F' },
       { label: 'Титан', hex: '#94A3B8' }
     ]
   );
