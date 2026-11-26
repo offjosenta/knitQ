@@ -89,29 +89,74 @@ function sdQuadraticBezier(px, py, p0, p1, p2, steps = 28) {
 }
 
 /**
- * Renders a cylindrical Liquid Silver stroke pixel given signed distance and half-width.
+ * Smooth minimum for organic liquid-metal blending.
  */
-function shadeLiquidSilver(r, g, b, dist, halfW, x, y, aa) {
-  const alpha = 1.0 - smoothstep(halfW - aa, halfW + aa, dist);
-  if (alpha <= 0) return [r, g, b];
-
-  const profile = clamp01(1.0 - dist / halfW);
-  const specular = Math.pow(profile, 2.4);
-  const diagGrad = clamp01(1.0 - ((x - 0.18) * 0.55 + (y - 0.15) * 0.65));
-
-  const baseR = mix(172, 238, diagGrad);
-  const baseG = mix(180, 242, diagGrad);
-  const baseB = mix(196, 250, diagGrad);
-
-  const sr = mix(baseR, 255, specular * 0.65);
-  const sg = mix(baseG, 255, specular * 0.65);
-  const sb = mix(baseB, 255, specular * 0.62);
-  return blendOver(r, g, b, sr, sg, sb, alpha);
+function smin(a, b, k) {
+  const h = clamp01(0.5 + 0.5 * (b - a) / k);
+  return mix(b, a, h) - k * h * (1.0 - h);
 }
 
 /**
- * Generates the Apple iOS Liquid Glass KnitQ icon:
- * Minimalist "Q" monogram formed from a sculpted Liquid Silver yarn strand.
+ * Signed distance to the fluid "Q" monogram (negative inside, positive outside).
+ * Sized large (~78% of canvas) with organic liquid-metal proportions.
+ */
+function sdLiquidQ(x, y) {
+  const cx = 0.47;
+  const cy = 0.47;
+  const loopR = 0.285;
+  const dx = x - cx;
+  const dy = y - cy;
+  const angle = Math.atan2(dy, dx);
+
+  // Subtle organic swell in stroke thickness for a fluid, molten-metal silhouette
+  const ringHalfW = 0.068 + 0.010 * Math.sin(angle * 2.0 - 0.7);
+  const ringDist = Math.abs(Math.hypot(dx, dy) - loopR) - ringHalfW;
+
+  // Fluid S-curved tail emerging from inside the lower-right of the loop
+  const tailDist = sdQuadraticBezier(x, y, [0.49, 0.50], [0.68, 0.65], [0.84, 0.84]) - 0.064;
+
+  // Liquid-metal smooth union at the junction
+  return smin(ringDist, tailDist, 0.032);
+}
+
+/**
+ * Height profile inside the liquid-metal SDF (0 at edge, 1 at spine ridge).
+ */
+function liquidHeight(x, y, maxDepth) {
+  const d = sdLiquidQ(x, y);
+  if (d >= 0) return 0;
+  const t = clamp01(-d / maxDepth);
+  return Math.sqrt(clamp01(t * (2.0 - t)));
+}
+
+/**
+ * High-contrast studio chrome environment map for molten silver / liquid mercury reflections.
+ */
+function sampleChromeEnv(rx, ry, rz) {
+  // Primary studio softbox horizon + secondary upper-left & lower-right specular bands
+  const band1 = smoothstep(0.18, 0.55, -ry * 0.78 - rx * 0.48 + rz * 0.35);
+  const hot1 = smoothstep(0.62, 0.88, -ry * 0.75 - rx * 0.55 + rz * 0.30);
+  const band2 = smoothstep(0.35, 0.75, ry * 0.65 + rx * 0.60);
+  const rim = Math.pow(1.0 - clamp01(rz), 2.4);
+
+  // Deep dark chrome troughs contrasted against sharp mirror-white highlights
+  let lum = 18;
+  lum = mix(lum, 165, band1);
+  lum = mix(lum, 255, hot1);
+  lum = mix(lum, 145, band2 * 0.68);
+  lum = mix(lum, 225, rim * 0.45);
+
+  // Slight cool silver tint
+  return [
+    clamp01((lum * 0.99) / 255) * 255,
+    clamp01((lum * 1.00) / 255) * 255,
+    clamp01((lum * 1.03) / 255) * 255,
+  ];
+}
+
+/**
+ * Generates the Apple iOS pure OLED black (#000000) KnitQ icon:
+ * Maximally large, fluid 3D liquid-chrome "Q" monogram with mirror-silver highlights.
  */
 function generateKnitIconPNG(size) {
   const signature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
@@ -127,18 +172,9 @@ function generateKnitIconPNG(size) {
   const ihdrChunk = writeChunk('IHDR', ihdr);
 
   const rawData = Buffer.alloc(size * (size * 4 + 1));
-  const aa = 1.3 / size;
-
-  const cx = 0.48;
-  const cy = 0.48;
-  const loopR = 0.26;
-  const discR = 0.33;
-  const halfStroke = 0.041;
-  const tailCurve = [
-    [0.52, 0.54],
-    [0.66, 0.66],
-    [0.78, 0.78],
-  ];
+  const aa = 1.25 / size;
+  const eps = 1.1 / size;
+  const maxDepth = 0.078;
 
   let pos = 0;
   for (let py = 0; py < size; py++) {
@@ -148,36 +184,38 @@ function generateKnitIconPNG(size) {
     for (let px = 0; px < size; px++) {
       const x = (px + 0.5) / size;
 
-      // 1. Deep Apple OLED / Liquid Glass background
-      let r = mix(7, 17, y);
-      let g = mix(8, 20, y);
-      let b = mix(12, 27, y);
+      // Pure OLED black background (#000000)
+      let r = 0;
+      let g = 0;
+      let b = 0;
 
-      const topGlow = Math.exp(-((x - 0.5) * (x - 0.5) * 3.0 + (y - 0.26) * (y - 0.26) * 3.6));
-      r = mix(r, 38, topGlow * 0.55);
-      g = mix(g, 43, topGlow * 0.55);
-      b = mix(b, 56, topGlow * 0.55);
+      const dist = sdLiquidQ(x, y);
+      const alpha = 1.0 - smoothstep(-aa, aa, dist);
 
-      // 2. Subtle frosted glass disc framing the Q monogram
-      const discDist = Math.hypot(x - cx, y - cy);
-      const discAlpha = 1.0 - smoothstep(discR - aa, discR + aa, discDist);
-      if (discAlpha > 0) {
-        [r, g, b] = blendOver(r, g, b, 255, 255, 255, discAlpha * 0.04);
+      if (alpha > 0) {
+        // Compute 3D surface normal from liquid-metal height field
+        const hx1 = liquidHeight(x + eps, y, maxDepth);
+        const hx0 = liquidHeight(x - eps, y, maxDepth);
+        const hy1 = liquidHeight(x, y + eps, maxDepth);
+        const hy0 = liquidHeight(x, y - eps, maxDepth);
+
+        const slopeScale = 0.048;
+        let nx = -(hx1 - hx0) / (2 * eps) * slopeScale;
+        let ny = -(hy1 - hy0) / (2 * eps) * slopeScale;
+        let nz = 1.0;
+        const nLen = Math.hypot(nx, ny, nz);
+        nx /= nLen;
+        ny /= nLen;
+        nz /= nLen;
+
+        // Reflection vector for view vector V = (0, 0, 1)
+        const rx = 2 * nz * nx;
+        const ry = 2 * nz * ny;
+        const rz = 2 * nz * nz - 1;
+
+        const [mr, mg, mb] = sampleChromeEnv(rx, ry, rz);
+        [r, g, b] = blendOver(r, g, b, mr, mg, mb, alpha);
       }
-
-      // 3. Main circular yarn loop of the Q
-      const ringDist = Math.abs(discDist - loopR);
-      [r, g, b] = shadeLiquidSilver(r, g, b, ringDist, halfStroke, x, y, aa);
-
-      // 4. Crossing Q yarn tail with soft drop shadow for depth
-      const tailDist = sdQuadraticBezier(x, y, tailCurve[0], tailCurve[1], tailCurve[2]);
-      const shadowDist = sdQuadraticBezier(x, y - 0.014, tailCurve[0], tailCurve[1], tailCurve[2]);
-      const shadowAlpha = (1.0 - smoothstep(halfStroke * 0.85, halfStroke * 1.85, shadowDist)) * 0.42;
-      if (shadowAlpha > 0) {
-        [r, g, b] = blendOver(r, g, b, 0, 0, 0, shadowAlpha);
-      }
-
-      [r, g, b] = shadeLiquidSilver(r, g, b, tailDist, halfStroke, x, y, aa);
 
       rawData[pos++] = Math.round(clamp01(r / 255) * 255);
       rawData[pos++] = Math.round(clamp01(g / 255) * 255);
