@@ -49,3 +49,27 @@ test('sw.js exists and precaches application resources for offline use', () => {
   assert.match(swCode, /addEventListener\(['"]fetch['"]/i, 'sw.js must handle fetch event');
   assert.match(swCode, /addEventListener\(['"]activate['"]/i, 'sw.js must handle activate event');
 });
+
+test('index.html brand-icon renders minimalist Q monogram SVG', () => {
+  const html = fs.readFileSync(path.join(ROOT_DIR, 'index.html'), 'utf8');
+  const brandIconMatch = html.match(/<div class="brand-icon">([\s\S]*?)<\/div>/);
+  assert.ok(brandIconMatch, 'index.html must contain .brand-icon');
+  assert.match(brandIconMatch[1], /M18\.2 14\.2A7 7/, 'brand-icon SVG must render the Q yarn monogram');
+  assert.doesNotMatch(brandIconMatch[1], /crossed knitting needles/i, 'legacy yarn-ball needles icon must be replaced');
+});
+
+test('generated PNG icons exist with valid PNG headers and exact required dimensions', () => {
+  const expectedIcons = [
+    { file: 'icons/apple-touch-icon.png', width: 180, height: 180 },
+    { file: 'icons/icon-192.png', width: 192, height: 192 },
+    { file: 'icons/icon-512.png', width: 512, height: 512 },
+  ];
+
+  for (const { file, width, height } of expectedIcons) {
+    const buf = fs.readFileSync(path.join(ROOT_DIR, file));
+    assert.strictEqual(buf.subarray(0, 8).toString('hex'), '89504e470d0a1a0a', `${file} must have valid PNG signature`);
+    assert.strictEqual(buf.subarray(12, 16).toString('ascii'), 'IHDR', `${file} must start with IHDR chunk`);
+    assert.strictEqual(buf.readUInt32BE(16), width, `${file} width must be ${width}`);
+    assert.strictEqual(buf.readUInt32BE(20), height, `${file} height must be ${height}`);
+  }
+});

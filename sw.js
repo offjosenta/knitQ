@@ -1,4 +1,4 @@
-const CACHE_NAME = 'knitq-v32';
+const CACHE_NAME = 'knitq-v33';
 
 const STATIC_ASSETS = [
   './',

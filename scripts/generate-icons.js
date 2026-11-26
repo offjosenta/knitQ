@@ -89,9 +89,29 @@ function sdQuadraticBezier(px, py, p0, p1, p2, steps = 28) {
 }
 
 /**
- * Generates a large, unmistakable Apple iOS minimalist KnitQ icon:
- * Full-length crossed knitting needles with round stoppers passing behind
- * a clean Liquid Silver yarn ball with parallel yarn-wrap arcs and a trailing thread.
+ * Renders a cylindrical Liquid Silver stroke pixel given signed distance and half-width.
+ */
+function shadeLiquidSilver(r, g, b, dist, halfW, x, y, aa) {
+  const alpha = 1.0 - smoothstep(halfW - aa, halfW + aa, dist);
+  if (alpha <= 0) return [r, g, b];
+
+  const profile = clamp01(1.0 - dist / halfW);
+  const specular = Math.pow(profile, 2.4);
+  const diagGrad = clamp01(1.0 - ((x - 0.18) * 0.55 + (y - 0.15) * 0.65));
+
+  const baseR = mix(172, 238, diagGrad);
+  const baseG = mix(180, 242, diagGrad);
+  const baseB = mix(196, 250, diagGrad);
+
+  const sr = mix(baseR, 255, specular * 0.65);
+  const sg = mix(baseG, 255, specular * 0.65);
+  const sb = mix(baseB, 255, specular * 0.62);
+  return blendOver(r, g, b, sr, sg, sb, alpha);
+}
+
+/**
+ * Generates the Apple iOS Liquid Glass KnitQ icon:
+ * Minimalist "Q" monogram formed from a sculpted Liquid Silver yarn strand.
  */
 function generateKnitIconPNG(size) {
   const signature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
@@ -109,18 +129,16 @@ function generateKnitIconPNG(size) {
   const rawData = Buffer.alloc(size * (size * 4 + 1));
   const aa = 1.3 / size;
 
-  const cx = 0.5;
-  const cy = 0.53;
-  const ballR = 0.255;
-  const strokeW = 0.020;
-
-  // Full-length crossed knitting needles passing behind the yarn ball
-  const needles = [
-    { a: [0.19, 0.19], b: [0.80, 0.80] },
-    { a: [0.81, 0.19], b: [0.20, 0.80] },
+  const cx = 0.48;
+  const cy = 0.48;
+  const loopR = 0.26;
+  const discR = 0.33;
+  const halfStroke = 0.041;
+  const tailCurve = [
+    [0.52, 0.54],
+    [0.66, 0.66],
+    [0.78, 0.78],
   ];
-  const needleW = 0.018;
-  const stopperR = 0.042;
 
   let pos = 0;
   for (let py = 0; py < size; py++) {
@@ -131,74 +149,35 @@ function generateKnitIconPNG(size) {
       const x = (px + 0.5) / size;
 
       // 1. Deep Apple OLED / Liquid Glass background
-      let r = mix(6, 16, y);
-      let g = mix(7, 18, y);
-      let b = mix(10, 24, y);
+      let r = mix(7, 17, y);
+      let g = mix(8, 20, y);
+      let b = mix(12, 27, y);
 
-      const topGlow = Math.exp(-((x - 0.5) * (x - 0.5) * 3.2 + (y - 0.28) * (y - 0.28) * 3.8));
-      r = mix(r, 34, topGlow * 0.55);
-      g = mix(g, 38, topGlow * 0.55);
-      b = mix(b, 50, topGlow * 0.55);
+      const topGlow = Math.exp(-((x - 0.5) * (x - 0.5) * 3.0 + (y - 0.26) * (y - 0.26) * 3.6));
+      r = mix(r, 38, topGlow * 0.55);
+      g = mix(g, 43, topGlow * 0.55);
+      b = mix(b, 56, topGlow * 0.55);
 
-      // 2. Full-length crossed knitting needles (behind the yarn ball)
-      for (const n of needles) {
-        const seg = sdSegment(x, y, n.a[0], n.a[1], n.b[0], n.b[1]);
-        const taperedW = needleW * (1.0 - 0.42 * seg.t);
-        const shaftAlpha = 1.0 - smoothstep(taperedW - aa, taperedW + aa, seg.dist);
-        if (shaftAlpha > 0) {
-          const shine = 1.0 - clamp01(seg.dist / taperedW);
-          const sv = mix(160, 238, shine);
-          [r, g, b] = blendOver(r, g, b, sv, sv + 4, sv + 10, shaftAlpha);
-        }
-
-        // Minimalist round stopper knob at the top of each needle
-        const capDist = Math.hypot(x - n.a[0], y - n.a[1]);
-        const capAlpha = 1.0 - smoothstep(stopperR - aa, stopperR + aa, capDist);
-        if (capAlpha > 0) {
-          const lx = (x - n.a[0]) / stopperR;
-          const ly = (y - n.a[1]) / stopperR;
-          const light = clamp01(0.65 - 0.4 * lx - 0.5 * ly);
-          const cv = mix(165, 248, light);
-          [r, g, b] = blendOver(r, g, b, cv, cv + 3, cv + 8, capAlpha);
-        }
-      }
-
-      // 3. Trailing yarn thread at bottom-right
-      const tailDist = sdQuadraticBezier(x, y, [0.68, 0.70], [0.76, 0.78], [0.85, 0.72]);
-      const tailAlpha = 1.0 - smoothstep(strokeW * 0.9 - aa, strokeW * 0.9 + aa, tailDist);
-      if (tailAlpha > 0) {
-        [r, g, b] = blendOver(r, g, b, 215, 222, 232, tailAlpha);
-      }
-
-      // 4. Yarn ball disc (masks the needle intersection cleanly)
+      // 2. Subtle frosted glass disc framing the Q monogram
       const discDist = Math.hypot(x - cx, y - cy);
-      const discAlpha = 1.0 - smoothstep(ballR - aa, ballR + aa, discDist);
+      const discAlpha = 1.0 - smoothstep(discR - aa, discR + aa, discDist);
       if (discAlpha > 0) {
-        const glassGrad = clamp01(1.0 - (y - (cy - ballR)) / (ballR * 2));
-        const br = mix(22, 42, glassGrad);
-        const bg = mix(24, 46, glassGrad);
-        const bb = mix(28, 54, glassGrad);
-        [r, g, b] = blendOver(r, g, b, br, bg, bb, discAlpha);
+        [r, g, b] = blendOver(r, g, b, 255, 255, 255, discAlpha * 0.04);
       }
 
-      // 5. Crisp Liquid Silver yarn ball outline + clean parallel wrap arcs
-      const ringDist = Math.abs(discDist - ballR);
-      const insideBall = 1.0 - smoothstep(ballR - aa, ballR + aa, discDist);
+      // 3. Main circular yarn loop of the Q
+      const ringDist = Math.abs(discDist - loopR);
+      [r, g, b] = shadeLiquidSilver(r, g, b, ringDist, halfStroke, x, y, aa);
 
-      // Parallel curved yarn strands inside the ball (2 upper-right, 2 lower-left)
-      const a1 = sdQuadraticBezier(x, y, [0.27, 0.44], [0.49, 0.37], [0.72, 0.53]) + (1.0 - insideBall);
-      const a2 = sdQuadraticBezier(x, y, [0.25, 0.55], [0.49, 0.48], [0.72, 0.64]) + (1.0 - insideBall);
-      const a3 = sdQuadraticBezier(x, y, [0.35, 0.72], [0.47, 0.63], [0.64, 0.68]) + (1.0 - insideBall);
-
-      const glyphDist = Math.min(ringDist, a1, a2, a3);
-      const glyphAlpha = 1.0 - smoothstep(strokeW - aa, strokeW + aa, glyphDist);
-      if (glyphAlpha > 0) {
-        const silverT = clamp01(1.0 - (y - 0.25) / 0.55);
-        const sr = mix(205, 250, silverT);
-        const sg = mix(210, 252, silverT);
-        const sb = mix(220, 255, silverT);
-        [r, g, b] = blendOver(r, g, b, sr, sg, sb, glyphAlpha);
+      // 4. Crossing Q yarn tail with soft drop shadow for depth
+      const tailDist = sdQuadraticBezier(x, y, tailCurve[0], tailCurve[1], tailCurve[2]);
+      const shadowDist = sdQuadraticBezier(x, y - 0.014, tailCurve[0], tailCurve[1], tailCurve[2]);
+      const shadowAlpha = (1.0 - smoothstep(halfStroke * 0.85, halfStroke * 1.85, shadowDist)) * 0.42;
+      if (shadowAlpha > 0) {
+        [r, g, b] = blendOver(r, g, b, 0, 0, 0, shadowAlpha);
       }
+
+      [r, g, b] = shadeLiquidSilver(r, g, b, tailDist, halfStroke, x, y, aa);
 
       rawData[pos++] = Math.round(clamp01(r / 255) * 255);
       rawData[pos++] = Math.round(clamp01(g / 255) * 255);
