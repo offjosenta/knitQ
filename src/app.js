@@ -13,6 +13,7 @@ import {
   calculateTargetCounts
 } from './core/gauge-calculator.js';
 import { formatDuration, formatRowTimestamp } from './core/time-format.js';
+import { buildCatalogView } from './core/catalog-view.js';
 
 /**
  * Helper to manage iOS-style modal sheets with smooth open/close transitions.
@@ -1493,25 +1494,27 @@ export function initApp() {
     }
 
     const allProjects = store.getState().projects;
-    const hasCompleted = allProjects.some((p) => p.status === 'completed');
-    if (!hasCompleted) {
-      catalogStatus = 'active';
-    }
+    const folders = store.getState().folders;
+    const catalogView = buildCatalogView({
+      projects: allProjects,
+      folders,
+      status: catalogStatus,
+      openedFolder,
+      tag: catalogTag
+    });
+
+    catalogStatus = catalogView.effectiveStatus;
+    openedFolder = catalogView.effectiveOpenedFolder;
+    catalogTag = catalogView.effectiveTag;
+
     if (catalogStatusTabsWrap) {
-      catalogStatusTabsWrap.hidden = !hasCompleted;
+      catalogStatusTabsWrap.hidden = !catalogView.showStatusTabs;
     }
     catalogStatusTabs.forEach((t) => {
       const isMatch = t.getAttribute('data-catalog-status') === catalogStatus;
       t.classList.toggle('active', isMatch);
       t.setAttribute('aria-selected', String(isMatch));
     });
-
-    const statusProjects = allProjects.filter((p) => p.status === catalogStatus);
-    const folders = store.getState().folders;
-
-    if (openedFolder !== null && !folders.some((f) => f.name === openedFolder)) {
-      openedFolder = null;
-    }
 
     if (btnCatalogFolderBack) {
       btnCatalogFolderBack.hidden = openedFolder === null;
@@ -1523,15 +1526,8 @@ export function initApp() {
       catalogTitleEl.textContent = openedFolder !== null ? openedFolder : 'Проекты';
     }
 
-    const scopeProjects = openedFolder !== null
-      ? statusProjects.filter((p) => p.folder === openedFolder)
-      : statusProjects;
-
     // Tag filter chips
-    const allTags = Array.from(new Set(scopeProjects.flatMap((p) => p.tags)));
-    if (catalogTag !== 'all' && !allTags.includes(catalogTag)) {
-      catalogTag = 'all';
-    }
+    const allTags = catalogView.availableTags;
     if (catalogTagChipsEl) {
       if (allTags.length === 0) {
         catalogTagChipsEl.hidden = true;
@@ -1553,14 +1549,29 @@ export function initApp() {
       }
     }
 
+    /**
+     * @param {HTMLElement} tile
+     * @param {() => void} onActivate
+     */
+    const attachTileActivation = (tile, onActivate) => {
+      tile.addEventListener('click', onActivate);
+      tile.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onActivate();
+        }
+      });
+    };
+
     /** @param {import('./core/knit-store.js').Project} proj */
     const createProjectSquareTile = (proj) => {
       const tile = document.createElement('div');
-      tile.className = `square-tile ${proj.id === pinnedProject.id ? 'is-active' : ''}`;
+      const hasPhoto = proj.status === 'completed' && Boolean(proj.photoDataUrl);
+      tile.className = `square-tile ${proj.id === pinnedProject.id ? 'is-active' : ''} ${hasPhoto ? 'has-photo' : ''}`.trim();
       tile.setAttribute('role', 'button');
       tile.tabIndex = 0;
 
-      if (proj.status === 'completed' && proj.photoDataUrl) {
+      if (hasPhoto && proj.photoDataUrl) {
         const thumb = document.createElement('img');
         thumb.className = 'square-tile-thumb';
         thumb.src = proj.photoDataUrl;
@@ -1577,82 +1588,76 @@ export function initApp() {
       title.className = 'square-tile-title';
       title.textContent = proj.name;
 
-      const totalRows = proj.parts.reduce((s, pt) => s + pt.currentRow, 0);
       const sub = document.createElement('div');
       sub.className = 'square-tile-sub';
-      sub.textContent = `${totalRows} р. · ${formatHoursMinutes(store.getProjectTotalElapsedMs(proj.id))}`;
+      sub.textContent = formatHoursMinutes(store.getProjectTotalElapsedMs(proj.id));
 
       tile.append(iconWrap, title, sub);
 
-      const openProject = () => {
+      attachTileActivation(tile, () => {
         store.setActiveProject(proj.id);
         setActiveView('counter');
-      };
-      tile.addEventListener('click', openProject);
-      tile.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          openProject();
-        }
       });
       return tile;
+    };
+
+    /** @param {string} label */
+    const createSubsectionHeader = (label) => {
+      const heading = document.createElement('div');
+      heading.className = 'catalog-subsection-title';
+      heading.textContent = label;
+      return heading;
     };
 
     if (projectsCatalogListEl) {
       /** @type {HTMLElement[]} */
       const tiles = [];
 
-      if (openedFolder === null) {
-        if (catalogTag === 'all') {
-          for (const folderObj of folders) {
-            const count = statusProjects.filter((p) => p.folder === folderObj.name).length;
-            const folderTile = document.createElement('div');
-            folderTile.className = 'square-tile';
-            folderTile.setAttribute('role', 'button');
-            folderTile.tabIndex = 0;
-
-            const iconWrap = document.createElement('div');
-            iconWrap.className = 'square-tile-icon';
-            iconWrap.style.color = folderObj.color || '#8e8e93';
-            iconWrap.innerHTML =
-              '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>';
-
-            const title = document.createElement('div');
-            title.className = 'square-tile-title';
-            title.textContent = folderObj.name;
-
-            const sub = document.createElement('div');
-            sub.className = 'square-tile-sub';
-            sub.textContent = `${count} шт.`;
-
-            folderTile.append(iconWrap, title, sub);
-            const openFolder = () => {
-              openedFolder = folderObj.name;
-              renderDashboard();
-            };
-            folderTile.addEventListener('click', openFolder);
-            folderTile.addEventListener('keydown', (e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                openFolder();
-              }
-            });
-            tiles.push(folderTile);
+      if (catalogView.openedFolderSections) {
+        const { active, completed } = catalogView.openedFolderSections;
+        const showHeaders = completed.length > 0;
+        if (active.length > 0) {
+          if (showHeaders) tiles.push(createSubsectionHeader('Активные'));
+          for (const proj of active) {
+            tiles.push(createProjectSquareTile(proj));
           }
         }
-
-        const rootProjects = statusProjects.filter((p) => {
-          if (catalogTag !== 'all') return p.tags.includes(catalogTag);
-          return !p.folder;
-        });
-        for (const proj of rootProjects) {
-          tiles.push(createProjectSquareTile(proj));
+        if (completed.length > 0) {
+          if (showHeaders) tiles.push(createSubsectionHeader('Завершённые'));
+          for (const proj of completed) {
+            tiles.push(createProjectSquareTile(proj));
+          }
         }
       } else {
-        const folderProjects = scopeProjects.filter(
-          (p) => catalogTag === 'all' || p.tags.includes(catalogTag)
-        );
-        for (const proj of folderProjects) {
+        for (const { folder: folderObj, projectCount } of catalogView.folderItems) {
+          const folderTile = document.createElement('div');
+          folderTile.className = 'square-tile';
+          folderTile.setAttribute('role', 'button');
+          folderTile.tabIndex = 0;
+
+          const iconWrap = document.createElement('div');
+          iconWrap.className = 'square-tile-icon';
+          iconWrap.style.color = folderObj.color || '#8e8e93';
+          iconWrap.innerHTML =
+            '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>';
+
+          const title = document.createElement('div');
+          title.className = 'square-tile-title';
+          title.textContent = folderObj.name;
+
+          const sub = document.createElement('div');
+          sub.className = 'square-tile-sub';
+          sub.textContent = `${projectCount} шт.`;
+
+          folderTile.append(iconWrap, title, sub);
+          attachTileActivation(folderTile, () => {
+            openedFolder = folderObj.name;
+            renderDashboard();
+          });
+          tiles.push(folderTile);
+        }
+
+        for (const proj of catalogView.rootProjects) {
           tiles.push(createProjectSquareTile(proj));
         }
       }
@@ -2066,6 +2071,7 @@ export function initApp() {
       const status = tab.getAttribute('data-catalog-status');
       if (status === 'active' || status === 'completed') {
         catalogStatus = status;
+        openedFolder = null;
         catalogStatusTabs.forEach((t) => {
           const isMatch = t === tab;
           t.classList.toggle('active', isMatch);

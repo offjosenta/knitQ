@@ -1,4 +1,4 @@
-const CACHE_NAME = 'knitq-v31';
+const CACHE_NAME = 'knitq-v32';
 
 const STATIC_ASSETS = [
   './',
@@ -11,6 +11,7 @@ const STATIC_ASSETS = [
   './src/core/haptic-manager.js',
   './src/core/knit-store.js',
   './src/core/knitting-icons.js',
+  './src/core/catalog-view.js',
   './src/core/backup-manager.js',
   './src/core/checkpoint-engine.js',
   './src/core/gauge-calculator.js',
