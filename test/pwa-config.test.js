@@ -73,3 +73,54 @@ test('generated PNG icons exist with valid PNG headers and exact required dimens
     assert.strictEqual(buf.readUInt32BE(20), height, `${file} height must be ${height}`);
   }
 });
+
+test('sw.js STATIC_ASSETS uses relative paths and precaches all src and icon files', () => {
+  const swCode = fs.readFileSync(path.join(ROOT_DIR, 'sw.js'), 'utf8');
+  const assetsMatch = swCode.match(/const\s+STATIC_ASSETS\s*=\s*\[([\s\S]*?)\];/);
+  assert.ok(assetsMatch, 'sw.js must define STATIC_ASSETS array');
+
+  const entries = [...assetsMatch[1].matchAll(/['"]([^'"]+)['"]/g)].map((m) => m[1]);
+  assert.ok(entries.includes('./'), 'STATIC_ASSETS must include "./"');
+  assert.ok(entries.includes('./index.html'), 'STATIC_ASSETS must include "./index.html"');
+  assert.ok(entries.includes('./manifest.json'), 'STATIC_ASSETS must include "./manifest.json"');
+
+  for (const entry of entries) {
+    assert.ok(entry.startsWith('./'), `STATIC_ASSETS entry "${entry}" must be relative (start with "./") for GitHub Pages`);
+    if (entry !== './') {
+      const diskPath = path.join(ROOT_DIR, entry.slice(2));
+      assert.ok(fs.existsSync(diskPath), `STATIC_ASSETS entry "${entry}" must exist on disk`);
+    }
+  }
+
+  /**
+   * @param {string} dir
+   * @returns {string[]}
+   */
+  const collectFiles = (dir) => {
+    const results = [];
+    for (const item of fs.readdirSync(path.join(ROOT_DIR, dir), { withFileTypes: true })) {
+      const rel = `${dir}/${item.name}`;
+      if (item.isDirectory()) {
+        results.push(...collectFiles(rel));
+      } else {
+        results.push(`./${rel}`);
+      }
+    }
+    return results;
+  };
+
+  const requiredAssets = [...collectFiles('src'), ...collectFiles('icons')];
+  for (const asset of requiredAssets) {
+    assert.ok(entries.includes(asset), `STATIC_ASSETS must precache "${asset}" for offline mode`);
+  }
+});
+
+test('manifest.json uses relative paths and .nojekyll exists for GitHub Pages', () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(ROOT_DIR, 'manifest.json'), 'utf8'));
+  assert.ok(!manifest.start_url.startsWith('/'), 'manifest start_url must be relative');
+  assert.ok(!manifest.scope.startsWith('/'), 'manifest scope must be relative');
+  for (const icon of manifest.icons) {
+    assert.ok(!icon.src.startsWith('/'), `manifest icon src "${icon.src}" must be relative`);
+  }
+  assert.ok(fs.existsSync(path.join(ROOT_DIR, '.nojekyll')), '.nojekyll must exist at repo root for GitHub Pages');
+});
