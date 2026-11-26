@@ -232,6 +232,14 @@ function generateKnitIconPNG(size) {
 }
 
 const iconsDir = path.resolve('icons');
+const targetFiles = ['icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
+const force = process.argv.includes('--force');
+
+if (!force && targetFiles.every((file) => fs.existsSync(path.join(iconsDir, file)))) {
+  console.log('Icons already exist in icons/. Skipping procedural generation to preserve the 3D Liquid Chrome icons (pass --force to overwrite).');
+  process.exit(0);
+}
+
 if (!fs.existsSync(iconsDir)) {
   fs.mkdirSync(iconsDir, { recursive: true });
 }
