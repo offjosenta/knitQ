@@ -214,6 +214,7 @@
           aria-label="Запустить или поставить таймер на паузу"
         >
           <span class="timer-status-dot" aria-hidden="true"></span>
+          <span id="timer-mode-badge" class="timer-mode-badge" hidden>Исправление</span>
           <span id="timer-display" class="timer-display">00:00:00</span>
           <span id="timer-state-icon" class="timer-state-icon" aria-hidden="true">
             <svg class="icon-play" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -276,6 +277,50 @@
         <div class="reset-confirm-actions">
           <button id="btn-cancel-reset" type="button" class="btn-secondary-action">Отмена</button>
           <button id="btn-confirm-reset" type="button" class="btn-destructive-action">Сбросить</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Timer Away Guard Modal Sheet (5+ min absence) -->
+    <div id="timer-away-modal" class="modal-backdrop">
+      <div class="modal-sheet">
+        <div class="modal-header">
+          <h3 class="modal-title">Таймер был активен</h3>
+          <button id="btn-close-timer-away" class="modal-close-btn" aria-label="Закрыть">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <p id="timer-away-desc" class="reset-confirm-desc">
+          Вы отсутствовали более 5 минут. Оставить это время или обрезать до момента выхода?
+        </p>
+        <div class="reset-confirm-actions">
+          <button id="btn-timer-away-trim" type="button" class="btn-secondary-action">Обрезать</button>
+          <button id="btn-timer-away-keep" type="button" class="btn-primary-action">Оставить</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Timer Idle Auto-Pause Modal Sheet (60 min without +1 row) -->
+    <div id="timer-idle-modal" class="modal-backdrop">
+      <div class="modal-sheet">
+        <div class="modal-header">
+          <h3 class="modal-title">Авто-пауза таймера</h3>
+          <button id="btn-close-timer-idle" class="modal-close-btn" aria-label="Закрыть">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <p id="timer-idle-desc" class="reset-confirm-desc">
+          60 минут не было нажатий «+1 ряд». Таймер поставлен на паузу.
+        </p>
+        <div class="reset-confirm-actions">
+          <button id="btn-timer-idle-keep-paused" type="button" class="btn-secondary-action">Оставить на паузе</button>
+          <button id="btn-timer-idle-restore" type="button" class="btn-primary-action">Вернуть время</button>
         </div>
       </div>
     </div>
@@ -884,6 +929,11 @@
               <span class="ios-row-label">Время за спицами</span>
               <strong class="stats-modal-val" id="stat-today-time">0 мин</strong>
             </div>
+            <div class="ios-divider"></div>
+            <div class="ios-row">
+              <span class="ios-row-label">Время исправлений</span>
+              <strong class="stats-modal-val" id="stat-today-fix-time">0 мин</strong>
+            </div>
           </div>
         </div>
 
@@ -893,6 +943,11 @@
               <span class="ios-row-label">Время за месяц</span>
               <strong class="stats-modal-val" id="stat-month-time">0 мин</strong>
             </div>
+            <div class="ios-divider"></div>
+            <div class="ios-row">
+              <span class="ios-row-label">Время исправлений</span>
+              <strong class="stats-modal-val" id="stat-month-fix-time">0 мин</strong>
+            </div>
           </div>
         </div>
 
@@ -901,6 +956,11 @@
             <div class="ios-row">
               <span class="ios-row-label">Всего часов</span>
               <strong class="stats-modal-val" id="stat-total-time">0 мин</strong>
+            </div>
+            <div class="ios-divider"></div>
+            <div class="ios-row">
+              <span class="ios-row-label">Время исправлений</span>
+              <strong class="stats-modal-val" id="stat-total-fix-time">0 мин</strong>
             </div>
             <div class="ios-divider"></div>
             <div class="ios-row">

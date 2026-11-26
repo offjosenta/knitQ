@@ -430,3 +430,84 @@ test('KnitStore aggregates daily rows and time across morning and evening sessio
   assert.equal(stats.totalTimeMs >= 105 * 60_000, true);
   assert.equal(stats.completedProjectsCount, 1);
 });
+
+test('startFixTimer pauses main timer, tracks fix time separately, and incrementRow switches back to main timer', () => {
+  let currentTime = 1_700_000_000_000;
+  const store = createKnitStore({ storage: createMemoryStorage(), now: () => currentTime });
+
+  store.startTimer();
+  currentTime += 10_000;
+  assert.equal(store.isTimerRunning(), true);
+  assert.equal(store.getElapsedMs(), 10_000);
+
+  // Switch to fix timer: main timer pauses at 10s, fix timer starts
+  store.startFixTimer();
+  assert.equal(store.isTimerRunning(), false);
+  assert.equal(store.isFixTimerRunning(), true);
+  assert.equal(store.getElapsedMs(), 10_000);
+  assert.equal(store.getFixElapsedMs(), 0);
+
+  currentTime += 25_000;
+  assert.equal(store.getElapsedMs(), 10_000);
+  assert.equal(store.getFixElapsedMs(), 25_000);
+  assert.equal(store.getProjectTotalElapsedMs(), 10_000);
+  assert.equal(store.getProjectTotalFixElapsedMs(), 25_000);
+
+  // Pressing +1 row stops fix timer and resumes main timer
+  store.incrementRow();
+  assert.equal(store.isFixTimerRunning(), false);
+  assert.equal(store.isTimerRunning(), true);
+  assert.equal(store.getFixElapsedMs(), 25_000);
+
+  currentTime += 5_000;
+  assert.equal(store.getElapsedMs(), 15_000);
+  assert.equal(store.getFixElapsedMs(), 25_000);
+});
+
+test('getActivityStats aggregates fix time separately for today, month, and all time', () => {
+  let currentTime = new Date(2026, 10, 23, 18, 0, 0).getTime();
+  const store = createKnitStore({ storage: createMemoryStorage(), now: () => currentTime });
+
+  // Previous day (Nov 23): 15 min knitting, 10 min fix
+  store.startTimer();
+  currentTime += 15 * 60_000;
+  store.startFixTimer();
+  currentTime += 10 * 60_000;
+  store.pauseFixTimer();
+
+  // Today (Nov 24): 20 min knitting, 5 min active fix (still running)
+  currentTime = new Date(2026, 10, 24, 10, 0, 0).getTime();
+  store.startTimer();
+  currentTime += 20 * 60_000;
+  store.startFixTimer();
+  currentTime += 5 * 60_000;
+
+  const stats = store.getActivityStats();
+  assert.equal(stats.todayTimeMs, 20 * 60_000);
+  assert.equal(stats.monthTimeMs, 35 * 60_000);
+  assert.equal(stats.totalTimeMs, 35 * 60_000);
+  assert.equal(stats.todayFixTimeMs, 5 * 60_000);
+  assert.equal(stats.monthFixTimeMs, 15 * 60_000);
+  assert.equal(stats.totalFixTimeMs, 15 * 60_000);
+});
+
+test('pauseActiveTimerAt trims running timer back to exit moment and restoreTimerDuration restores idle time', () => {
+  let currentTime = 1_700_000_000_000;
+  const store = createKnitStore({ storage: createMemoryStorage(), now: () => currentTime });
+
+  store.startTimer();
+  currentTime += 120_000; // 2 min knitting
+  const leftAtMs = currentTime;
+  currentTime += 10 * 60_000; // 10 min away
+
+  // Trim back to leftAtMs
+  const trimmed = store.pauseActiveTimerAt(leftAtMs);
+  assert.equal(trimmed, 'main');
+  assert.equal(store.isTimerRunning(), false);
+  assert.equal(store.getElapsedMs(), 120_000);
+
+  // Restore 60 min idle time and resume
+  store.restoreTimerDuration(60 * 60_000, true);
+  assert.equal(store.isTimerRunning(), true);
+  assert.equal(store.getElapsedMs(), 120_000 + 60 * 60_000);
+});

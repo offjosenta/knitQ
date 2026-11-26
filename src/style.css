@@ -674,6 +674,23 @@ input:checked + .slider:before {
   box-shadow: 0 0 8px rgba(52, 199, 89, 0.65);
 }
 
+.control-timer-btn.fix-mode {
+  border-color: rgba(255, 159, 10, 0.45);
+  box-shadow: 0 0 18px rgba(255, 159, 10, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.control-timer-btn.fix-mode .timer-status-dot {
+  background: #ff9f0a;
+  box-shadow: 0 0 8px rgba(255, 159, 10, 0.7);
+}
+
+.timer-mode-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #ff9f0a;
+  letter-spacing: 0.01em;
+}
+
 .timer-display {
   font-size: 1.15rem;
   font-weight: 600;

@@ -14,6 +14,7 @@ import {
 } from './core/gauge-calculator.js';
 import { formatDuration, formatRowTimestamp } from './core/time-format.js';
 import { buildCatalogView } from './core/catalog-view.js';
+import { createTimerGuard } from './core/timer-guard.js';
 
 /**
  * Helper to manage iOS-style modal sheets with smooth open/close transitions.
@@ -83,8 +84,11 @@ export function initApp() {
   const heroProjectMetaEl = document.getElementById('hero-project-meta');
   const statTodayRowsEl = document.getElementById('stat-today-rows');
   const statTodayTimeEl = document.getElementById('stat-today-time');
+  const statTodayFixTimeEl = document.getElementById('stat-today-fix-time');
   const statMonthTimeEl = document.getElementById('stat-month-time');
+  const statMonthFixTimeEl = document.getElementById('stat-month-fix-time');
   const statTotalTimeEl = document.getElementById('stat-total-time');
+  const statTotalFixTimeEl = document.getElementById('stat-total-fix-time');
   const statCompletedCountEl = document.getElementById('stat-completed-count');
   const catalogStatusTabsWrap = document.getElementById('catalog-status-tabs');
   const catalogStatusTabs = Array.from(document.querySelectorAll('[data-catalog-status]'));
@@ -190,7 +194,18 @@ export function initApp() {
   const btnRowLog = document.getElementById('btn-row-log');
   const btnRowMinus = /** @type {HTMLButtonElement | null} */ (document.getElementById('btn-row-minus'));
   const btnTimerToggle = document.getElementById('btn-timer-toggle');
+  const timerModeBadgeEl = document.getElementById('timer-mode-badge');
   const timerDisplayEl = document.getElementById('timer-display');
+  const timerAwayModalEl = document.getElementById('timer-away-modal');
+  const timerAwayDescEl = document.getElementById('timer-away-desc');
+  const btnCloseTimerAway = document.getElementById('btn-close-timer-away');
+  const btnTimerAwayTrim = document.getElementById('btn-timer-away-trim');
+  const btnTimerAwayKeep = document.getElementById('btn-timer-away-keep');
+  const timerIdleModalEl = document.getElementById('timer-idle-modal');
+  const timerIdleDescEl = document.getElementById('timer-idle-desc');
+  const btnCloseTimerIdle = document.getElementById('btn-close-timer-idle');
+  const btnTimerIdleKeepPaused = document.getElementById('btn-timer-idle-keep-paused');
+  const btnTimerIdleRestore = document.getElementById('btn-timer-idle-restore');
   const btnRowReset = /** @type {HTMLButtonElement | null} */ (document.getElementById('btn-row-reset'));
 
   // Row Log Modal Elements
@@ -1427,8 +1442,11 @@ export function initApp() {
     const stats = store.getActivityStats();
     if (statTodayRowsEl) statTodayRowsEl.textContent = String(stats.todayRows);
     if (statTodayTimeEl) statTodayTimeEl.textContent = formatHoursMinutes(stats.todayTimeMs);
+    if (statTodayFixTimeEl) statTodayFixTimeEl.textContent = formatHoursMinutes(stats.todayFixTimeMs);
     if (statMonthTimeEl) statMonthTimeEl.textContent = formatHoursMinutes(stats.monthTimeMs);
+    if (statMonthFixTimeEl) statMonthFixTimeEl.textContent = formatHoursMinutes(stats.monthFixTimeMs);
     if (statTotalTimeEl) statTotalTimeEl.textContent = formatHoursMinutes(stats.totalTimeMs);
+    if (statTotalFixTimeEl) statTotalFixTimeEl.textContent = formatHoursMinutes(stats.totalFixTimeMs);
     if (statCompletedCountEl) statCompletedCountEl.textContent = String(stats.completedProjectsCount);
 
     statsTabButtons.forEach((btn) => {
@@ -2088,16 +2106,31 @@ export function initApp() {
   });
   btnBackDashboard?.addEventListener('click', () => setActiveView('dashboard'));
 
+  const timerGuard = createTimerGuard();
+  const timerAwayModal = createModalController(timerAwayModalEl);
+  const timerIdleModal = createModalController(timerIdleModalEl);
+  /** @type {number | null} */
+  let pendingAwayLeftAtMs = null;
+  let pendingIdleRestoreMs = 0;
+
   // Render active knitting UI
   function renderTimer() {
+    const isMainRunning = store.isTimerRunning();
+    const isFixRunning = store.isFixTimerRunning();
     if (timerDisplayEl) {
-      timerDisplayEl.textContent = formatDuration(store.getElapsedMs());
+      timerDisplayEl.textContent = formatDuration(
+        isFixRunning ? store.getFixElapsedMs() : store.getElapsedMs()
+      );
     }
     if (heroActiveTimeEl && currentView === 'dashboard') {
       heroActiveTimeEl.textContent = formatDuration(store.getProjectTotalElapsedMs());
     }
     if (btnTimerToggle) {
-      btnTimerToggle.classList.toggle('running', store.isTimerRunning());
+      btnTimerToggle.classList.toggle('running', isMainRunning || isFixRunning);
+      btnTimerToggle.classList.toggle('fix-mode', isFixRunning);
+    }
+    if (timerModeBadgeEl) {
+      timerModeBadgeEl.hidden = !isFixRunning;
     }
   }
 
@@ -2186,6 +2219,7 @@ export function initApp() {
   const tapZoneCard = tapZonePlus?.closest('.tap-zone-card');
   function handleTapIncrement() {
     store.incrementRow();
+    timerGuard.recordRowActivity(Date.now());
     if (tapZoneCard) {
       tapZoneCard.classList.add('tapped');
       setTimeout(() => tapZoneCard.classList.remove('tapped'), 130);
@@ -2256,17 +2290,147 @@ export function initApp() {
     store.decrementRow();
   });
 
-  // Timer Play/Pause Button
+  // Timer Play/Pause & Long-Press Fix Timer
+  /** @type {ReturnType<typeof setTimeout> | null} */
+  let timerLongPressHandle = null;
+  let suppressNextTimerClick = false;
+
+  const clearTimerLongPress = () => {
+    if (timerLongPressHandle !== null) {
+      clearTimeout(timerLongPressHandle);
+      timerLongPressHandle = null;
+    }
+  };
+
+  btnTimerToggle?.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
+    clearTimerLongPress();
+    timerLongPressHandle = setTimeout(() => {
+      timerLongPressHandle = null;
+      suppressNextTimerClick = true;
+      if (store.isFixTimerRunning()) {
+        store.startTimer();
+      } else {
+        store.startFixTimer();
+      }
+      timerGuard.ensureActivityBaseline(Date.now(), store.isTimerRunning());
+    }, 500);
+  });
+
+  btnTimerToggle?.addEventListener('pointerup', clearTimerLongPress);
+  btnTimerToggle?.addEventListener('pointercancel', clearTimerLongPress);
+  btnTimerToggle?.addEventListener('pointerleave', clearTimerLongPress);
+
   btnTimerToggle?.addEventListener('click', () => {
-    store.toggleTimer();
+    if (suppressNextTimerClick) {
+      suppressNextTimerClick = false;
+      return;
+    }
+    if (store.isFixTimerRunning()) {
+      store.startTimer();
+      timerGuard.recordRowActivity(Date.now());
+    } else {
+      store.toggleTimer();
+      if (store.isTimerRunning()) {
+        timerGuard.recordRowActivity(Date.now());
+      } else {
+        timerGuard.ensureActivityBaseline(Date.now(), false);
+      }
+    }
+  });
+
+  // Timer Guard: 5+ min away prompt & 60 min idle auto-pause
+  const checkIdleAutoPause = () => {
+    if (pendingAwayLeftAtMs !== null) return;
+    const nowMs = Date.now();
+    timerGuard.ensureActivityBaseline(nowMs, store.isTimerRunning());
+    const idleResult = timerGuard.evaluateIdle(nowMs, store.isTimerRunning());
+    if (idleResult.shouldAutoPause && idleResult.idleSinceMs !== null) {
+      store.pauseActiveTimerAt(idleResult.idleSinceMs);
+      timerGuard.ensureActivityBaseline(nowMs, false);
+      pendingIdleRestoreMs = idleResult.idleMs;
+      if (timerIdleDescEl) {
+        const idleMins = Math.max(60, Math.round(idleResult.idleMs / 60_000));
+        timerIdleDescEl.textContent = `${idleMins} мин без нажатий «+1 ряд». Таймер поставлен на паузу, чтобы не исказить статистику.`;
+      }
+      timerIdleModal.open();
+    }
+  };
+
+  const handleAppHidden = () => {
+    timerGuard.markLeft(Date.now(), store.isTimerRunning() || store.isFixTimerRunning());
+  };
+
+  const handleAppVisible = () => {
+    const nowMs = Date.now();
+    const anyRunning = store.isTimerRunning() || store.isFixTimerRunning();
+    const awayResult = timerGuard.evaluateReturn(nowMs, anyRunning);
+    if (awayResult.shouldPrompt && awayResult.leftAtMs !== null) {
+      pendingAwayLeftAtMs = awayResult.leftAtMs;
+      if (timerAwayDescEl) {
+        const awayMins = Math.max(5, Math.round(awayResult.awayMs / 60_000));
+        timerAwayDescEl.textContent = `Таймер работал без вас ${awayMins} мин. Оставить время или обрезать до момента выхода?`;
+      }
+      timerAwayModal.open();
+      return;
+    }
+    checkIdleAutoPause();
+  };
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      handleAppHidden();
+    } else if (document.visibilityState === 'visible') {
+      handleAppVisible();
+    }
+  });
+  window.addEventListener('pagehide', handleAppHidden);
+  window.addEventListener('pageshow', handleAppVisible);
+
+  btnTimerAwayTrim?.addEventListener('click', () => {
+    if (pendingAwayLeftAtMs !== null) {
+      store.pauseActiveTimerAt(pendingAwayLeftAtMs);
+      timerGuard.ensureActivityBaseline(Date.now(), store.isTimerRunning());
+      pendingAwayLeftAtMs = null;
+    }
+    timerAwayModal.close();
+  });
+
+  const keepAwayAndClose = () => {
+    pendingAwayLeftAtMs = null;
+    if (store.isTimerRunning()) {
+      timerGuard.recordRowActivity(Date.now());
+    }
+    timerAwayModal.close();
+  };
+  btnTimerAwayKeep?.addEventListener('click', keepAwayAndClose);
+  btnCloseTimerAway?.addEventListener('click', keepAwayAndClose);
+
+  const keepIdlePausedAndClose = () => {
+    pendingIdleRestoreMs = 0;
+    timerIdleModal.close();
+  };
+  btnTimerIdleKeepPaused?.addEventListener('click', keepIdlePausedAndClose);
+  btnCloseTimerIdle?.addEventListener('click', keepIdlePausedAndClose);
+
+  btnTimerIdleRestore?.addEventListener('click', () => {
+    if (pendingIdleRestoreMs > 0) {
+      store.restoreTimerDuration(pendingIdleRestoreMs, true);
+      timerGuard.recordRowActivity(Date.now());
+      pendingIdleRestoreMs = 0;
+    }
+    timerIdleModal.close();
   });
 
   // Live timer tick
   setInterval(() => {
-    if (store.isTimerRunning()) {
+    if (store.isTimerRunning() || store.isFixTimerRunning()) {
       renderTimer();
     }
+    checkIdleAutoPause();
   }, 500);
+
+  handleAppVisible();
 
   store.subscribe(() => {
     renderKnittingState();

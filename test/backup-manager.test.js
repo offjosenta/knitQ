@@ -44,3 +44,24 @@ test('parseAndValidateBackup rejects corrupted JSON and invalid schemas safely',
   );
   assert.equal(brokenPart.ok, false);
 });
+
+test('backup round-trip preserves fixTimer and fixSessions separately from main timer', () => {
+  let currentTime = 1_700_000_000_000;
+  const store = createKnitStore({ storage: null, now: () => currentTime });
+  store.startTimer();
+  currentTime += 12_000;
+  store.startFixTimer();
+  currentTime += 8_000;
+  store.pauseFixTimer();
+
+  const payload = createBackupPayload(store.getState(), null, currentTime);
+  const parsed = parseAndValidateBackup(JSON.stringify(payload));
+  assert.equal(parsed.ok, true);
+  if (parsed.ok) {
+    const restored = createKnitStore({ storage: null, now: () => currentTime });
+    restored.replaceState(parsed.data);
+    assert.equal(restored.getElapsedMs(), 12_000);
+    assert.equal(restored.getFixElapsedMs(), 8_000);
+    assert.equal(restored.getActivePart().fixSessions.length, 1);
+  }
+});

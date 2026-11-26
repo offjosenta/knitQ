@@ -1,4 +1,4 @@
-const CACHE_NAME = 'knitq-v35';
+const CACHE_NAME = 'knitq-v36';
 
 const STATIC_ASSETS = [
   './',
@@ -16,6 +16,7 @@ const STATIC_ASSETS = [
   './src/core/checkpoint-engine.js',
   './src/core/gauge-calculator.js',
   './src/core/time-format.js',
+  './src/core/timer-guard.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/apple-touch-icon.png'

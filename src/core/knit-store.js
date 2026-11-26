@@ -35,6 +35,8 @@ export const KNIT_STORAGE_KEY = 'knitq_store_v1';
  *   rowLog: RowLogEntry[],
  *   timer: PartTimerState,
  *   sessions: TimeSession[],
+ *   fixTimer: PartTimerState,
+ *   fixSessions: TimeSession[],
  *   stitchCheckInterval: number | null,
  *   targetStitchCount: number | null,
  *   actualStitchCount: number | null,
@@ -184,6 +186,11 @@ function createBlankPart(id, name, targetRows = null) {
       runningSince: null
     },
     sessions: [],
+    fixTimer: {
+      elapsedMs: 0,
+      runningSince: null
+    },
+    fixSessions: [],
     stitchCheckInterval: 10,
     targetStitchCount: null,
     actualStitchCount: null,
@@ -293,6 +300,17 @@ export function normalizeStoreState(loaded) {
       if (!Array.isArray(part.sessions)) {
         part.sessions = [];
       }
+      if (!part.fixTimer || typeof part.fixTimer !== 'object') {
+        part.fixTimer = { elapsedMs: 0, runningSince: null };
+      } else {
+        part.fixTimer = {
+          elapsedMs: typeof part.fixTimer.elapsedMs === 'number' && Number.isFinite(part.fixTimer.elapsedMs) ? part.fixTimer.elapsedMs : 0,
+          runningSince: typeof part.fixTimer.runningSince === 'number' && Number.isFinite(part.fixTimer.runningSince) ? part.fixTimer.runningSince : null
+        };
+      }
+      if (!Array.isArray(part.fixSessions)) {
+        part.fixSessions = [];
+      }
       if (part.stitchCheckInterval === undefined) {
         part.stitchCheckInterval = 10;
       }
@@ -394,13 +412,83 @@ export function createKnitStore(options = {}) {
    * @param {Part} part
    * @returns {number}
    */
-  const getPartElapsedMs = (part) => {
-    const { elapsedMs, runningSince } = part.timer;
+  /**
+   * @param {PartTimerState} timerState
+   * @returns {number}
+   */
+  const getTimerStateElapsedMs = (timerState) => {
+    const { elapsedMs, runningSince } = timerState;
     if (runningSince === null) {
       return elapsedMs;
     }
     return elapsedMs + Math.max(0, now() - runningSince);
   };
+
+  /**
+   * @param {PartTimerState} timerState
+   * @param {TimeSession[]} sessions
+   * @param {number} [targetEndMs]
+   * @returns {boolean}
+   */
+  const pauseTimerStateAt = (timerState, sessions, targetEndMs = now()) => {
+    if (timerState.runningSince === null) {
+      return false;
+    }
+    const clampedEnd = Math.max(timerState.runningSince, targetEndMs);
+    if (clampedEnd > timerState.runningSince) {
+      sessions.push({
+        startMs: timerState.runningSince,
+        endMs: clampedEnd
+      });
+    }
+    timerState.elapsedMs = timerState.elapsedMs + (clampedEnd - timerState.runningSince);
+    timerState.runningSince = null;
+    return true;
+  };
+
+  /**
+   * @param {PartTimerState} targetTimer
+   * @param {PartTimerState} otherTimer
+   * @param {TimeSession[]} otherSessions
+   */
+  const startExclusiveTimer = (targetTimer, otherTimer, otherSessions) => {
+    const project = getActiveProject();
+    const timestampMs = now();
+    if (otherTimer.runningSince !== null) {
+      pauseTimerStateAt(otherTimer, otherSessions, timestampMs);
+    }
+    if (targetTimer.runningSince !== null) {
+      return;
+    }
+    targetTimer.runningSince = timestampMs;
+    state.lastTimedProjectId = project.id;
+    commit();
+  };
+
+  /**
+   * @param {PartTimerState} targetTimer
+   * @param {TimeSession[]} targetSessions
+   */
+  const pauseExclusiveTimer = (targetTimer, targetSessions) => {
+    const project = getActiveProject();
+    if (!pauseTimerStateAt(targetTimer, targetSessions, now())) {
+      return;
+    }
+    state.lastTimedProjectId = project.id;
+    commit();
+  };
+
+  /**
+   * @param {Part} part
+   * @returns {number}
+   */
+  const getPartElapsedMs = (part) => getTimerStateElapsedMs(part.timer);
+
+  /**
+   * @param {Part} part
+   * @returns {number}
+   */
+  const getPartFixElapsedMs = (part) => getTimerStateElapsedMs(part.fixTimer);
 
   return {
     getState() {
@@ -419,6 +507,9 @@ export function createKnitStore(options = {}) {
         rowNumber: part.currentRow,
         timestamp: new Date(timestampMs).toISOString()
       });
+      if (part.fixTimer.runningSince !== null) {
+        pauseTimerStateAt(part.fixTimer, part.fixSessions, timestampMs);
+      }
       if (part.timer.runningSince === null) {
         part.timer.runningSince = timestampMs;
       }
@@ -447,6 +538,11 @@ export function createKnitStore(options = {}) {
         elapsedMs: 0,
         runningSince: null
       };
+      part.fixSessions = [];
+      part.fixTimer = {
+        elapsedMs: 0,
+        runningSince: null
+      };
       commit();
     },
 
@@ -454,34 +550,18 @@ export function createKnitStore(options = {}) {
       return getActivePart().timer.runningSince !== null;
     },
 
+    isFixTimerRunning() {
+      return getActivePart().fixTimer.runningSince !== null;
+    },
+
     startTimer() {
-      const project = getActiveProject();
       const part = getActivePart();
-      if (part.timer.runningSince !== null) {
-        return;
-      }
-      part.timer.runningSince = now();
-      state.lastTimedProjectId = project.id;
-      commit();
+      startExclusiveTimer(part.timer, part.fixTimer, part.fixSessions);
     },
 
     pauseTimer() {
-      const project = getActiveProject();
       const part = getActivePart();
-      if (part.timer.runningSince === null) {
-        return;
-      }
-      const currentNow = now();
-      if (currentNow > part.timer.runningSince) {
-        part.sessions.push({
-          startMs: part.timer.runningSince,
-          endMs: currentNow
-        });
-      }
-      part.timer.elapsedMs = getPartElapsedMs(part);
-      part.timer.runningSince = null;
-      state.lastTimedProjectId = project.id;
-      commit();
+      pauseExclusiveTimer(part.timer, part.sessions);
     },
 
     toggleTimer() {
@@ -492,8 +572,73 @@ export function createKnitStore(options = {}) {
       }
     },
 
+    startFixTimer() {
+      const part = getActivePart();
+      startExclusiveTimer(part.fixTimer, part.timer, part.sessions);
+    },
+
+    pauseFixTimer() {
+      const part = getActivePart();
+      pauseExclusiveTimer(part.fixTimer, part.fixSessions);
+    },
+
     getElapsedMs() {
       return getPartElapsedMs(getActivePart());
+    },
+
+    getFixElapsedMs() {
+      return getPartFixElapsedMs(getActivePart());
+    },
+
+    /**
+     * Pauses whichever timer (main or fix) is currently running at targetEndMs.
+     * Returns 'main', 'fix', or null if neither was running.
+     * @param {number} targetEndMs
+     * @returns {'main' | 'fix' | null}
+     */
+    pauseActiveTimerAt(targetEndMs) {
+      const project = getActiveProject();
+      const part = getActivePart();
+      if (part.timer.runningSince !== null) {
+        pauseTimerStateAt(part.timer, part.sessions, targetEndMs);
+        state.lastTimedProjectId = project.id;
+        commit();
+        return 'main';
+      }
+      if (part.fixTimer.runningSince !== null) {
+        pauseTimerStateAt(part.fixTimer, part.fixSessions, targetEndMs);
+        state.lastTimedProjectId = project.id;
+        commit();
+        return 'fix';
+      }
+      return null;
+    },
+
+    /**
+     * Restores previously trimmed duration to the main timer and optionally resumes it.
+     * @param {number} durationMs
+     * @param {boolean} [resume]
+     */
+    restoreTimerDuration(durationMs, resume = true) {
+      const safeDuration = Math.max(0, Math.floor(durationMs));
+      const project = getActiveProject();
+      const part = getActivePart();
+      const currentNow = now();
+      if (safeDuration > 0) {
+        part.timer.elapsedMs += safeDuration;
+        part.sessions.push({
+          startMs: currentNow - safeDuration,
+          endMs: currentNow
+        });
+      }
+      if (resume && part.timer.runningSince === null) {
+        if (part.fixTimer.runningSince !== null) {
+          pauseTimerStateAt(part.fixTimer, part.fixSessions, currentNow);
+        }
+        part.timer.runningSince = currentNow;
+      }
+      state.lastTimedProjectId = project.id;
+      commit();
     },
 
     /**
@@ -778,6 +923,11 @@ export function createKnitStore(options = {}) {
           runningSince: null
         },
         sessions: [],
+        fixTimer: {
+          elapsedMs: 0,
+          runningSince: null
+        },
+        fixSessions: [],
         stitchCheckInterval: source.stitchCheckInterval,
         targetStitchCount: source.targetStitchCount,
         actualStitchCount: null,
@@ -830,6 +980,11 @@ export function createKnitStore(options = {}) {
           runningSince: null
         },
         sessions: [],
+        fixTimer: {
+          elapsedMs: 0,
+          runningSince: null
+        },
+        fixSessions: [],
         stitchCheckInterval: 10,
         targetStitchCount: null,
         actualStitchCount: null,
@@ -1203,13 +1358,29 @@ export function createKnitStore(options = {}) {
     },
 
     /**
+     * @param {string} [projectId]
+     * @returns {number}
+     */
+    getProjectTotalFixElapsedMs(projectId) {
+      const project = projectId
+        ? state.projects.find((p) => p.id === projectId)
+        : getActiveProject();
+      if (!project) return 0;
+      return project.parts.reduce((sum, part) => sum + getPartFixElapsedMs(part), 0);
+    },
+
+    /**
      * Aggregates daily rows/time, monthly time, and all-time totals across all projects.
+     * Fix timer time is tracked separately from pure knitting time.
      * @param {number} [referenceMs]
      * @returns {{
      *   todayRows: number,
      *   todayTimeMs: number,
      *   monthTimeMs: number,
      *   totalTimeMs: number,
+     *   todayFixTimeMs: number,
+     *   monthFixTimeMs: number,
+     *   totalFixTimeMs: number,
      *   completedProjectsCount: number
      * }}
      */
@@ -1223,10 +1394,30 @@ export function createKnitStore(options = {}) {
       const overlapMs = (/** @type {number} */ start, /** @type {number} */ end, /** @type {number} */ winStart, /** @type {number} */ winEnd) =>
         Math.max(0, Math.min(end, winEnd) - Math.max(start, winStart));
 
+      const accumulateWindowTime = (
+        /** @type {PartTimerState} */ timerState,
+        /** @type {TimeSession[]} */ sessions
+      ) => {
+        let todayMs = 0;
+        let monthMs = 0;
+        for (const session of sessions) {
+          todayMs += overlapMs(session.startMs, session.endMs, todayStart, todayEnd);
+          monthMs += overlapMs(session.startMs, session.endMs, monthStart, monthEnd);
+        }
+        if (timerState.runningSince !== null) {
+          todayMs += overlapMs(timerState.runningSince, referenceMs, todayStart, todayEnd);
+          monthMs += overlapMs(timerState.runningSince, referenceMs, monthStart, monthEnd);
+        }
+        return { todayMs, monthMs };
+      };
+
       let todayRows = 0;
       let todayTimeMs = 0;
       let monthTimeMs = 0;
       let totalTimeMs = 0;
+      let todayFixTimeMs = 0;
+      let monthFixTimeMs = 0;
+      let totalFixTimeMs = 0;
       let completedProjectsCount = 0;
 
       for (const project of state.projects) {
@@ -1235,6 +1426,7 @@ export function createKnitStore(options = {}) {
         }
         for (const part of project.parts) {
           totalTimeMs += getPartElapsedMs(part);
+          totalFixTimeMs += getPartFixElapsedMs(part);
 
           for (const entry of part.rowLog) {
             const ts = Date.parse(entry.timestamp);
@@ -1243,15 +1435,13 @@ export function createKnitStore(options = {}) {
             }
           }
 
-          for (const session of part.sessions) {
-            todayTimeMs += overlapMs(session.startMs, session.endMs, todayStart, todayEnd);
-            monthTimeMs += overlapMs(session.startMs, session.endMs, monthStart, monthEnd);
-          }
+          const mainWindow = accumulateWindowTime(part.timer, part.sessions);
+          todayTimeMs += mainWindow.todayMs;
+          monthTimeMs += mainWindow.monthMs;
 
-          if (part.timer.runningSince !== null) {
-            todayTimeMs += overlapMs(part.timer.runningSince, referenceMs, todayStart, todayEnd);
-            monthTimeMs += overlapMs(part.timer.runningSince, referenceMs, monthStart, monthEnd);
-          }
+          const fixWindow = accumulateWindowTime(part.fixTimer, part.fixSessions);
+          todayFixTimeMs += fixWindow.todayMs;
+          monthFixTimeMs += fixWindow.monthMs;
         }
       }
 
@@ -1260,6 +1450,9 @@ export function createKnitStore(options = {}) {
         todayTimeMs,
         monthTimeMs,
         totalTimeMs,
+        todayFixTimeMs,
+        monthFixTimeMs,
+        totalFixTimeMs,
         completedProjectsCount
       };
     },
