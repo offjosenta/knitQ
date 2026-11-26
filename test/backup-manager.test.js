@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createKnitStore } from '../src/core/knit-store.js';
-import { createBackupPayload, parseAndValidateBackup } from '../src/core/backup-manager.js';
+import { createBackupPayload, isDefaultStoreState, parseAndValidateBackup } from '../src/core/backup-manager.js';
 
 test('createBackupPayload packages store state and theme into a versioned JSON envelope', () => {
   const store = createKnitStore({ storage: null, now: () => 1_700_000_000_000 });
@@ -64,4 +64,21 @@ test('backup round-trip preserves fixTimer and fixSessions separately from main 
     assert.equal(restored.getFixElapsedMs(), 8_000);
     assert.equal(restored.getActivePart().fixSessions.length, 1);
   }
+});
+
+test('isDefaultStoreState returns true only for untouched starter state', () => {
+  const fresh = createKnitStore({ storage: null, now: () => 1_700_000_000_000 });
+  assert.equal(isDefaultStoreState(fresh.getState()), true);
+
+  const withRow = createKnitStore({ storage: null, now: () => 1_700_000_000_000 });
+  withRow.incrementRow();
+  assert.equal(isDefaultStoreState(withRow.getState()), false);
+
+  const withFolder = createKnitStore({ storage: null, now: () => 1_700_000_000_000 });
+  withFolder.addFolder('Носки');
+  assert.equal(isDefaultStoreState(withFolder.getState()), false);
+
+  const withProject = createKnitStore({ storage: null, now: () => 1_700_000_000_000 });
+  withProject.createProject({ name: 'Свитер' });
+  assert.equal(isDefaultStoreState(withProject.getState()), false);
 });

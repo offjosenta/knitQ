@@ -2009,6 +2009,40 @@ button.active-part-header:active {
   color: #34c759;
 }
 
+.disclosure-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gist-token-row {
+  gap: 8px;
+}
+
+.gist-token-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.gist-save-btn {
+  flex-shrink: 0;
+  height: 36px;
+  padding: 0 14px;
+  border: 0.5px solid var(--border-glass);
+  border-radius: var(--radius-pill);
+  background: var(--bg-card-inner);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.14s ease, filter 0.14s ease;
+}
+
+.gist-save-btn:active {
+  transform: scale(0.95);
+  filter: brightness(1.14);
+}
+
 .full-page-view {
   position: fixed;
   inset: 0;

@@ -31,7 +31,7 @@ export function createBackupPayload(storeState, theme = null, timestampMs = Date
 /**
  * Parses and validates a KnitQ JSON backup string without mutating existing state.
  * @param {string} jsonText
- * @returns {{ ok: true, data: StoreState, theme: string | null } | { ok: false, error: string }}
+ * @returns {{ ok: true, data: StoreState, theme: string | null, exportedAt: string | null } | { ok: false, error: string }}
  */
 export function parseAndValidateBackup(jsonText) {
   if (typeof jsonText !== 'string' || !jsonText.trim()) {
@@ -50,9 +50,10 @@ export function parseAndValidateBackup(jsonText) {
     return { ok: false, error: 'Неверный формат резервной копии.' };
   }
 
-  const envelope = /** @type {{ app?: unknown, theme?: unknown, data?: unknown }} */ (parsed);
+  const envelope = /** @type {{ app?: unknown, theme?: unknown, exportedAt?: unknown, data?: unknown }} */ (parsed);
   const candidateData = envelope.app === 'KnitQ' && envelope.data !== undefined ? envelope.data : parsed;
   const theme = typeof envelope.theme === 'string' ? envelope.theme : null;
+  const exportedAt = typeof envelope.exportedAt === 'string' ? envelope.exportedAt : null;
 
   if (!isValidStoreState(candidateData)) {
     return { ok: false, error: 'Структура проектов в файле повреждена или неполная.' };
@@ -62,6 +63,50 @@ export function parseAndValidateBackup(jsonText) {
   return {
     ok: true,
     data: normalized,
-    theme
+    theme,
+    exportedAt
   };
+}
+
+/**
+ * Checks whether the store state is still the untouched initial starter project.
+ * @param {StoreState} state
+ * @returns {boolean}
+ */
+export function isDefaultStoreState(state) {
+  if (!state || state.projects.length !== 1) return false;
+  if (state.folders.length > 0) return false;
+  if (state.trash.projects.length > 0 || state.trash.folders.length > 0) return false;
+
+  const project = state.projects[0];
+  if (
+    project.id !== 'project-1' ||
+    project.name !== 'Шарф «Лицевая гладь»' ||
+    project.status !== 'active' ||
+    project.folder !== '' ||
+    project.notes !== '' ||
+    project.yarns.length > 0 ||
+    project.tags.length > 0 ||
+    project.photoDataUrl !== null ||
+    project.parts.length !== 1
+  ) {
+    return false;
+  }
+
+  const part = project.parts[0];
+  return (
+    part.id === 'part-1' &&
+    part.name === 'Основное полотно' &&
+    part.currentRow === 0 &&
+    part.targetRows === null &&
+    part.rowLog.length === 0 &&
+    part.timer.elapsedMs === 0 &&
+    part.timer.runningSince === null &&
+    part.sessions.length === 0 &&
+    part.fixTimer.elapsedMs === 0 &&
+    part.fixTimer.runningSince === null &&
+    part.fixSessions.length === 0 &&
+    part.rowRules.length === 0 &&
+    part.rowMarkers.length === 0
+  );
 }

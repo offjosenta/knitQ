@@ -2,7 +2,8 @@ import { createThemeManager } from './core/theme-manager.js';
 import { createWakeLockManager } from './core/wake-lock-manager.js';
 import { createKnitStore } from './core/knit-store.js';
 import { COLOR_PALETTE, DEFAULT_COLOR, DEFAULT_ICON, KNITTING_ICONS, getFolderBadgeStyle, renderKnittingIconSvg } from './core/knitting-icons.js';
-import { createBackupPayload, parseAndValidateBackup } from './core/backup-manager.js';
+import { createBackupPayload, isDefaultStoreState, parseAndValidateBackup } from './core/backup-manager.js';
+import { createGistSyncController, createGistSyncManager } from './core/gist-sync.js';
 import {
   shouldTriggerStitchCheck,
   evaluateRowRules,
@@ -181,6 +182,14 @@ export function initApp() {
   const btnExportBackup = document.getElementById('btn-export-backup');
   const inputImportBackup = /** @type {HTMLInputElement | null} */ (document.getElementById('input-import-backup'));
   const backupStatusMsgEl = document.getElementById('backup-status-msg');
+  const btnToggleGistSync = document.getElementById('btn-toggle-gist-sync');
+  const gistSyncPanelEl = document.getElementById('gist-sync-panel');
+  const gistSyncBadgeEl = document.getElementById('gist-sync-badge');
+  const inputGistToken = /** @type {HTMLInputElement | null} */ (document.getElementById('input-gist-token'));
+  const btnSaveGistToken = document.getElementById('btn-save-gist-token');
+  const btnGistSyncNow = document.getElementById('btn-gist-sync-now');
+  const gistSyncLastTimeEl = document.getElementById('gist-sync-last-time');
+  const gistSyncStatusMsgEl = document.getElementById('gist-sync-status-msg');
 
   // Active Knitting Elements
   const activeProjectNameEl = document.getElementById('active-project-name');
@@ -1136,10 +1145,79 @@ export function initApp() {
     renderPassportModal();
   });
 
+  // Gist Cloud Sync
+  const gistSyncManager = createGistSyncManager();
+  if (!isDefaultStoreState(store.getState()) && gistSyncManager.getConfig().localUpdatedAt === null) {
+    gistSyncManager.markLocalUpdated();
+  }
+  const gistSyncController = createGistSyncController({
+    manager: gistSyncManager,
+    getState: () => store.getState(),
+    getTheme: () => themeManager.getTheme(),
+    applyRemote: (remote) => {
+      store.replaceState(remote.data);
+      if (remote.theme) {
+        themeManager.setTheme(remote.theme);
+      }
+    }
+  });
+
+  /**
+   * @param {string | null} isoStr
+   * @returns {string}
+   */
+  const formatSyncTime = (isoStr) => {
+    if (!isoStr) return '—';
+    const d = new Date(isoStr);
+    if (Number.isNaN(d.getTime())) return '—';
+    return d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  /**
+   * @param {import('./core/gist-sync.js').SyncStatusSnapshot} status
+   */
+  const renderGistSyncStatus = (status) => {
+    if (gistSyncBadgeEl) {
+      if (status.phase === 'synced') gistSyncBadgeEl.textContent = formatSyncTime(status.lastSyncedAt);
+      else if (status.phase === 'syncing') gistSyncBadgeEl.textContent = 'Синхр…';
+      else if (status.phase === 'offline') gistSyncBadgeEl.textContent = 'Офлайн';
+      else if (status.phase === 'error') gistSyncBadgeEl.textContent = 'Ошибка';
+      else if (status.phase === 'idle') gistSyncBadgeEl.textContent = 'Вкл';
+      else gistSyncBadgeEl.textContent = 'Выкл';
+    }
+    if (gistSyncLastTimeEl) {
+      gistSyncLastTimeEl.textContent =
+        status.phase === 'offline' ? 'Офлайн' : formatSyncTime(status.lastSyncedAt);
+    }
+    if (gistSyncStatusMsgEl) {
+      if (status.phase === 'unconfigured') {
+        gistSyncStatusMsgEl.hidden = true;
+      } else {
+        const timeSuffix = status.lastSyncedAt && status.phase === 'synced'
+          ? ` (${formatSyncTime(status.lastSyncedAt)})`
+          : '';
+        gistSyncStatusMsgEl.textContent = `${status.message}${timeSuffix}`;
+        gistSyncStatusMsgEl.className = 'backup-status-msg';
+        if (status.phase === 'error') gistSyncStatusMsgEl.classList.add('is-error');
+        else if (status.phase === 'synced') gistSyncStatusMsgEl.classList.add('is-success');
+        gistSyncStatusMsgEl.hidden = false;
+      }
+    }
+  };
+
+  gistSyncController.onStatusChange(renderGistSyncStatus);
+  renderGistSyncStatus(gistSyncController.getStatus());
+
   openSettingsBtn?.addEventListener('click', () => {
     if (backupStatusMsgEl) backupStatusMsgEl.hidden = true;
     backupPanelEl?.classList.remove('open');
     btnToggleBackup?.setAttribute('aria-expanded', 'false');
+    gistSyncPanelEl?.classList.remove('open');
+    btnToggleGistSync?.setAttribute('aria-expanded', 'false');
+    if (inputGistToken) {
+      inputGistToken.value = gistSyncManager.getToken();
+    }
+    renderGistSyncStatus(gistSyncController.getStatus());
     if (trashCountBadgeEl) {
       const t = store.getState().trash;
       trashCountBadgeEl.textContent = String(t.projects.length + t.folders.length);
@@ -1147,6 +1225,20 @@ export function initApp() {
     settingsModal.open();
   });
   closeSettingsBtn?.addEventListener('click', settingsModal.close);
+
+  btnToggleGistSync?.addEventListener('click', () => {
+    const isOpen = gistSyncPanelEl?.classList.toggle('open') ?? false;
+    btnToggleGistSync.setAttribute('aria-expanded', String(isOpen));
+  });
+
+  btnSaveGistToken?.addEventListener('click', () => {
+    const token = inputGistToken ? inputGistToken.value.trim() : '';
+    void gistSyncController.setTokenAndSync(token);
+  });
+
+  btnGistSyncNow?.addEventListener('click', () => {
+    void gistSyncController.syncNow();
+  });
 
   btnToggleBackup?.addEventListener('click', () => {
     const isOpen = backupPanelEl?.classList.toggle('open') ?? false;
@@ -2355,9 +2447,11 @@ export function initApp() {
 
   const handleAppHidden = () => {
     timerGuard.markLeft(Date.now(), store.isTimerRunning() || store.isFixTimerRunning());
+    void gistSyncController.handleAppHidden();
   };
 
   const handleAppVisible = () => {
+    void gistSyncController.handleAppVisible();
     const nowMs = Date.now();
     const anyRunning = store.isTimerRunning() || store.isFixTimerRunning();
     const awayResult = timerGuard.evaluateReturn(nowMs, anyRunning);
@@ -2381,7 +2475,17 @@ export function initApp() {
     }
   });
   window.addEventListener('pagehide', handleAppHidden);
-  window.addEventListener('pageshow', handleAppVisible);
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) {
+      handleAppVisible();
+    }
+  });
+  window.addEventListener('online', () => {
+    void gistSyncController.handleOnline();
+  });
+  window.addEventListener('offline', () => {
+    gistSyncController.handleOffline();
+  });
 
   btnTimerAwayTrim?.addEventListener('click', () => {
     if (pendingAwayLeftAtMs !== null) {
@@ -2429,6 +2533,7 @@ export function initApp() {
   handleAppVisible();
 
   store.subscribe(() => {
+    gistSyncController.handleStoreChange();
     renderKnittingState();
     if (currentView === 'dashboard') {
       renderDashboard();

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'knitq-v37';
+const CACHE_NAME = 'knitq-v38';
 
 const STATIC_ASSETS = [
   './',
@@ -13,6 +13,7 @@ const STATIC_ASSETS = [
   './src/core/knitting-icons.js',
   './src/core/catalog-view.js',
   './src/core/backup-manager.js',
+  './src/core/gist-sync.js',
   './src/core/checkpoint-engine.js',
   './src/core/gauge-calculator.js',
   './src/core/time-format.js',
