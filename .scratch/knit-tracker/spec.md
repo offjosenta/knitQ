@@ -56,6 +56,7 @@ Status: ready-for-agent
 34. As a knitter who steps away without closing the app, I want the timer to auto-pause after 1 hour without row increments, with a clear option to restore that time if I was knitting a long row.
 35. As a knitter who also spends time frogging or fixing dropped stitches, I want a separate problem-solving timer activated by long-pressing the timer capsule so pure knitting time and fix time never mix and both appear separately in activity statistics.
 36. As an iPhone user without a constantly running computer, I want the app hosted on GitHub Pages so I can install it once from Safari to my home screen and use it offline anywhere without VPN or a PC.
+37. As a knitter using KnitQ on iPhone without a backend server, I want my projects, stats, and settings to automatically sync with a private GitHub Gist on app open and close/background (when online), so that even if I reinstall the Home Screen icon or switch devices, I can restore everything with my GitHub token without losing data.
 
 ## Implementation Decisions
 
@@ -100,6 +101,13 @@ Status: ready-for-agent
 8. **Прогрессивное раскрытие (Progressive Disclosure)**:
    Интерфейс создания и редактирования проекта по умолчанию отображает минимальный набор полей. Расширенные блоки (учет пряжи, парная деталь, калькулятор ВТО, фото, заметки) инкапсулированы в сворачиваемую секцию.
 
+9. **Автосинхронизация с приватным GitHub Gist**:
+   Для защиты данных от удаления иконки PWA или смены устройства без собственного сервера используется приватный GitHub Gist пользователя:
+   - В Настройках пользователь вводит GitHub Personal Access Token (с правом `gist`). Приложение автоматически находит существующий Gist с файлом `knitq-backup.json` или создаёт новый приватный Gist и сохраняет его ID локально.
+   - При открытии приложения (при наличии сети): проверяет метаданные/содержимое Gist и подтягивает облачный бэкап, если локальное хранилище ещё не инициализировано или облачная копия новее (с защитой от затирания несохранённой офлайн-работы).
+   - При сворачивании или закрытии приложения (`visibilitychange`, `pagehide`) и после изменений (с дебаунсом, при наличии сети): автоматически отправляет актуальный JSON-бэкап (`BackupManager`) в приватный Gist.
+   - В Настройках отображается статус последней синхронизации (время, офлайн-состояние или ошибка) и кнопка ручной синхронизации.
+
 ## Testing Decisions
 
 1. **Тестовый шов (Test Seam)**:
@@ -113,12 +121,13 @@ Status: ready-for-agent
    - `GaugeCalculator`: формулы плотности, проценты усадки/растяжения, точность рекомендаций по набору петель.
    - `CheckpointEngine`: триггеры контрольного пересчета на заданных рядах, правила реглана и маркеры.
    - `BackupManager`: валидация схемы JSON, корректность импорта и предотвращение повреждения данных.
+   - `GistSyncManager`: поиск/создание приватного GitHub Gist, загрузка/выгрузка бэкапа по меткам времени, защита от затирания более свежих локальных данных и корректная работа в офлайне.
 
 ## Out of Scope
 
 - Просмотр и редактирование графических схем и PDF-файлов с узорами (отложено до будущих версий).
 - Нативная сборка в Xcode / Swift и виджеты для экрана блокировки iOS (WidgetKit).
-- Серверная синхронизация, базы данных в облаке и учетные записи пользователей.
+- Собственный сервер синхронизации, базы данных на бэкенде и учётные записи пользователей (облачное хранение выполняется напрямую через приватный GitHub Gist пользователя).
 - Реклама, платные подписки и внешняя аналитика.
 
 ## Further Notes
